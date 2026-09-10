@@ -25,15 +25,16 @@ export const Solutions: React.FC = () => {
         >
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--accent-primary)]/10 border border-emerald-500/20 text-[var(--accent-primary)] text-xs font-semibold uppercase tracking-wider mb-3">
             <Users2 className="w-3.5 h-3.5" />
-            <span>Tailored Solutions</span>
+            <span>Use cases</span>
           </div>
 
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[var(--text-primary)] tracking-tight mb-4">
-            Built for teams that build.
+            Built for every kind of team.
           </h2>
 
           <p className="text-base sm:text-lg text-[var(--text-secondary)] leading-relaxed">
-            Whether you're coordinating engineering sprints, launching growth experiments, or managing client deliverables, NOVA adapts to how your team works best.
+            Whether you're managing a product roadmap, organizing group projects, or coordinating
+            across time zones — NOVA works the way your team does.
           </p>
         </motion.div>
 

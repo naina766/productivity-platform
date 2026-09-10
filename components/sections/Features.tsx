@@ -29,15 +29,16 @@ export const Features: React.FC = () => {
         >
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--accent-primary)]/10 border border-emerald-500/20 text-[var(--accent-primary)] text-xs font-semibold uppercase tracking-wider mb-3">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Intelligent Capabilities</span>
+            <span>Everything you need</span>
           </div>
 
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[var(--text-primary)] tracking-tight mb-4">
-            Engineered for speed, focus, and velocity.
+            Purpose-built for organized teams.
           </h2>
 
           <p className="text-base sm:text-lg text-[var(--text-secondary)] leading-relaxed">
-            Eliminate mundane status updates and administrative friction. NOVA automates the operational overhead so your team can focus on shipping breakthrough work.
+            Workspaces, tasks, collaboration, and progress tracking — everything your team needs to
+            keep work moving, all in one place.
           </p>
         </motion.div>
 

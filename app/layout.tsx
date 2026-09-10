@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
+import { AuthProvider } from '@/components/auth/AuthContext';
 import './globals.css';
 
 const inter = Inter({
@@ -25,11 +26,11 @@ export const metadata: Metadata = {
   metadataBase,
   title: 'NOVA — Build Better. Work Smarter.',
   description:
-    'NOVA is an AI-powered productivity platform for teams to manage projects, automate work, and collaborate efficiently.',
+    'NOVA is a collaborative productivity platform for teams to run projects, track tasks, and stay in sync — with shared boards, roles, activity feeds, and notifications.',
   openGraph: {
     title: 'NOVA — Build Better. Work Smarter.',
     description:
-      'NOVA is an AI-powered productivity platform for teams to manage projects, automate work, and collaborate efficiently.',
+      'NOVA is a collaborative productivity platform for teams to run projects, track tasks, and stay in sync — with shared boards, roles, activity feeds, and notifications.',
     type: 'website',
     siteName: 'NOVA',
   },
@@ -37,7 +38,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'NOVA — Build Better. Work Smarter.',
     description:
-      'NOVA is an AI-powered productivity platform for teams to manage projects, automate work, and collaborate efficiently.',
+      'NOVA is a collaborative productivity platform for teams to run projects, track tasks, and stay in sync — with shared boards, roles, activity feeds, and notifications.',
   },
   icons: {
     icon: '/favicon.svg',
@@ -70,7 +71,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="font-sans antialiased min-h-screen overflow-x-hidden transition-colors duration-200">
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

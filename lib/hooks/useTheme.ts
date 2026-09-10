@@ -8,7 +8,7 @@ export function useTheme() {
     if (stored === 'dark' || stored === 'light' || stored === 'system') {
       return stored;
     }
-    return 'dark'; // Dark mode is default per assignment requirement
+    return 'dark';
   });
 
   useEffect(() => {
@@ -24,11 +24,9 @@ export function useTheme() {
 
       if (isDark) {
         root.classList.add('dark');
-        root.classList.remove('light');
         root.style.colorScheme = 'dark';
       } else {
         root.classList.remove('dark');
-        root.classList.add('light');
         root.style.colorScheme = 'light';
       }
     };

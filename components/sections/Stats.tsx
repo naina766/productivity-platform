@@ -3,7 +3,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useCountUp } from '@/lib/hooks/useCountUp';
-import { FolderCheck, Zap, Clock, BarChart3 } from 'lucide-react';
+import { CheckSquare2, ShieldCheck, Palette, Layers } from 'lucide-react';
 
 interface StatItemProps {
   end: number;
@@ -34,7 +34,7 @@ const StatItem: React.FC<StatItemProps> = ({
   });
 
   return (
-    <div className="p-6 sm:p-8 rounded-2xl bg-[var(--card-main)] border border-[var(--border-color)] hover:border-emerald-500/30 dark:hover:border-emerald-500/30 shadow-xl transition-all duration-300 text-center flex flex-col items-center group">
+    <div className="p-6 sm:p-8 rounded-2xl bg-[var(--card-main)] border border-[var(--border-color)] hover:border-emerald-500/30 shadow-xl transition-all duration-300 text-center flex flex-col items-center group">
       <div className="w-12 h-12 rounded-xl bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] flex items-center justify-center mb-4 border border-emerald-500/20 group-hover:scale-110 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300">
         <Icon className="w-6 h-6" />
       </div>
@@ -89,45 +89,45 @@ export const Stats: React.FC = () => {
           className="text-center max-w-2xl mx-auto mb-14"
         >
           <h2 className="text-2xl sm:text-3xl font-extrabold text-[var(--text-primary)] tracking-tight">
-            Built for velocity.
+            A focused product, not a platform.
           </h2>
           <p className="mt-2 text-sm sm:text-base text-[var(--text-secondary)]">
-            Designed to help teams ship faster with less overhead.
+            The core building blocks of NOVA, built from the ground up.
           </p>
         </motion.div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatItem
+            end={4}
+            suffix=" states"
+            label="Task statuses"
+            sublabel="To do, in progress, in review, done"
+            startWhen={isInView}
+            icon={CheckSquare2}
+          />
+          <StatItem
             end={3}
-            suffix=" sec"
-            label="Avg. page load"
-            sublabel="Under 3 seconds globally"
+            suffix=" roles"
+            label="Workspace roles"
+            sublabel="Owner, admin, member"
             startWhen={isInView}
-            icon={Clock}
+            icon={ShieldCheck}
           />
           <StatItem
-            end={100}
-            suffix="%"
-            label="Open source ready"
-            sublabel="Self-host or use our cloud"
+            end={3}
+            suffix=" modes"
+            label="Theme modes"
+            sublabel="Dark, light, and system"
             startWhen={isInView}
-            icon={FolderCheck}
+            icon={Palette}
           />
           <StatItem
-            end={24}
-            suffix="/7"
-            label="Uptime target"
-            sublabel="Designed for reliability"
-            startWhen={isInView}
-            icon={Zap}
-          />
-          <StatItem
-            end={50}
+            end={10}
             suffix="+"
-            label="Built-in actions"
-            sublabel="Automation building blocks"
+            label="Core data models"
+            sublabel="Workspaces, projects, tasks, comments, and more"
             startWhen={isInView}
-            icon={BarChart3}
+            icon={Layers}
           />
         </div>
       </div>

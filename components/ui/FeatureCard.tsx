@@ -3,8 +3,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import {
-  Bot,
-  CalendarClock,
+  Layers,
+  CheckSquare2,
   Users,
   BarChart3,
   Zap,
@@ -16,8 +16,8 @@ import {
 import type { Feature } from '@/types';
 
 const iconMap: Record<string, LucideIcon> = {
-  Bot,
-  CalendarClock,
+  Layers,
+  CheckSquare2,
   Users,
   BarChart3,
   Zap,

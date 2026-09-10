@@ -2,36 +2,42 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, ArrowRight, Layers, MessageSquareCode, Rocket } from 'lucide-react';
+import { Layers, FolderKanban, CheckSquare2, BarChart3 } from 'lucide-react';
 
 export const HowItWorks: React.FC = () => {
   const steps = [
     {
       step: '01',
-      title: 'Create',
-      tagline: 'Set up projects, goals and teams in minutes.',
-      description: 'Import existing backlogs from Jira, GitHub, or Linear. Define milestone goals and assign squad capacity without starting from scratch.',
+      title: 'Create a workspace',
+      description:
+        'Create a workspace and invite your team. Owners can set up roles and permissions so every member has the right access.',
       icon: Layers,
     },
     {
       step: '02',
-      title: 'Collaborate',
-      tagline: 'Bring tasks, discussions and decisions together.',
-      description: 'Break down complex epics with AI task suggestions. Discuss blockers in live contextual threads tied directly to pull requests and design specs.',
-      icon: MessageSquareCode,
+      title: 'Organize projects',
+      description:
+        'Break your workspace into projects — one for each initiative, team, or product area. Each project gets its own board and task list.',
+      icon: FolderKanban,
     },
     {
       step: '03',
-      title: 'Deliver',
-      tagline: 'Use intelligent insights to eliminate bottlenecks and ship faster.',
-      description: 'Real-time velocity forecasts detect stalled reviews before they impact delivery dates. Auto-generate changelogs and publish release notes effortlessly.',
-      icon: Rocket,
+      title: 'Assign and track tasks',
+      description:
+        'Create tasks, assign owners, set due dates, and move them across statuses. Every change is logged in the activity feed.',
+      icon: CheckSquare2,
+    },
+    {
+      step: '04',
+      title: 'Review progress',
+      description:
+        'Check what is on track, what is overdue, and who is at capacity — all from a single overview without chasing status updates.',
+      icon: BarChart3,
     },
   ];
 
   return (
     <section className="py-24 relative overflow-hidden">
-      {/* Subtle emerald ambient */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-emerald-600/5 blur-[120px] rounded-full"
@@ -46,28 +52,26 @@ export const HowItWorks: React.FC = () => {
           className="text-center max-w-3xl mx-auto mb-16"
         >
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--accent-primary)]/10 border border-emerald-500/20 text-[var(--accent-primary)] text-xs font-semibold uppercase tracking-wider mb-3">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Seamless Workflow</span>
+            <span>How it works</span>
           </div>
 
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[var(--text-primary)] tracking-tight mb-4">
-            From idea to impact in three steps.
+            Four steps to a more organized team.
           </h2>
 
           <p className="text-base sm:text-lg text-[var(--text-secondary)] leading-relaxed">
-            Eliminate chaotic onboarding and steep learning curves. NOVA is engineered to get your squad into deep execution flow within minutes.
+            NOVA is designed to take you from sign-up to visible progress in minutes — no
+            complex setup, no migration guides.
           </p>
         </motion.div>
 
-        {/* 3-step grid with connecting line */}
         <div className="relative">
-          {/* Connector line (desktop only) */}
           <div
             aria-hidden="true"
             className="hidden lg:block absolute top-1/2 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-500/20 via-teal-500/30 to-lime-500/20 -translate-y-8 z-0"
           />
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
             {steps.map((item, index) => {
               const Icon = item.icon;
               return (
@@ -78,13 +82,11 @@ export const HowItWorks: React.FC = () => {
                   viewport={{ once: true, margin: '-40px' }}
                   transition={{ duration: 0.5, delay: index * 0.15 }}
                   whileHover={{ y: -4 }}
-                  className="relative p-7 rounded-2xl bg-[var(--card-main)] border border-[var(--border-color)] hover:border-emerald-500/35 dark:hover:border-emerald-500/35 shadow-xl transition-all duration-300 flex flex-col justify-between group"
+                  className="relative p-7 rounded-2xl bg-[var(--card-main)] border border-[var(--border-color)] hover:border-emerald-500/35 shadow-xl transition-all duration-300 flex flex-col justify-between group"
                 >
-                  {/* Hover glow */}
                   <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-emerald-500/4 to-transparent pointer-events-none" />
 
                   <div className="relative">
-                    {/* Top Row: Step Number & Icon */}
                     <div className="flex items-center justify-between mb-6">
                       <span className="text-3xl font-extrabold bg-gradient-to-r from-emerald-400 to-lime-400 bg-clip-text text-transparent font-mono">
                         {item.step}
@@ -94,22 +96,13 @@ export const HowItWorks: React.FC = () => {
                       </div>
                     </div>
 
-                    <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">
+                    <h3 className="text-xl font-bold text-[var(--text-primary)] mb-3">
                       {item.title}
                     </h3>
-
-                    <h4 className="text-sm font-semibold text-[var(--accent-primary)] mb-3">
-                      &ldquo;{item.tagline}&rdquo;
-                    </h4>
 
                     <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
                       {item.description}
                     </p>
-                  </div>
-
-                  <div className="relative pt-6 mt-6 border-t border-[var(--border-color)] flex items-center text-xs font-medium text-[var(--text-muted)] group-hover:text-[var(--accent-primary)] transition-colors">
-                    <span>Explore Step {item.step} Guide</span>
-                    <ArrowRight className="w-3.5 h-3.5 ml-1.5 group-hover:translate-x-1 transition-transform" />
                   </div>
                 </motion.div>
               );

@@ -1,12 +1,113 @@
-import Link from 'next/link';
-import type { Metadata } from 'next';
-import { Zap, ArrowRight } from 'lucide-react';
+﻿'use client';
 
-// oxlint-disable-next-line react/only-export-components
-export const metadata: Metadata = {
-  title: 'Log in — NOVA',
-  description: 'Log in to your NOVA workspace.',
-};
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useState, type FormEvent } from 'react';
+import { Zap, ArrowRight, Loader2 } from 'lucide-react';
+import { useAuth } from '@/components/auth/AuthContext';
+import { ApiError } from '@/lib/api/client';
+
+// Inner component that uses useSearchParams — must be wrapped in Suspense.
+function LoginForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get('next') ?? '/dashboard';
+  const { login } = useAuth();
+
+  const [email, setEmail]       = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError]       = useState<string | null>(null);
+  const [loading, setLoading]   = useState(false);
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+
+    if (!email || !password) {
+      setError('Please fill in all fields.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await login(email, password);
+      router.push(next);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError('Something went wrong. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <form className="space-y-4 text-left" onSubmit={handleSubmit} noValidate>
+      {error && (
+        <div
+          role="alert"
+          className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-400"
+        >
+          {error}
+        </div>
+      )}
+
+      <div>
+        <label htmlFor="email" className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">
+          Email address
+        </label>
+        <input
+          id="email"
+          type="email"
+          placeholder="you@example.com"
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          disabled={loading}
+          required
+          className="w-full px-4 py-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 transition-all disabled:opacity-50"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="password" className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">
+          Password
+        </label>
+        <input
+          id="password"
+          type="password"
+          placeholder="Enter your password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          disabled={loading}
+          required
+          className="w-full px-4 py-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 transition-all disabled:opacity-50"
+        />
+      </div>
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-500 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        {loading ? (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span>Signing in…</span>
+          </>
+        ) : (
+          <>
+            <span>Sign in</span>
+            <ArrowRight className="w-4 h-4" />
+          </>
+        )}
+      </button>
+    </form>
+  );
+}
 
 export default function LoginPage() {
   return (
@@ -35,39 +136,10 @@ export default function LoginPage() {
         </p>
 
         <div className="rounded-2xl bg-[var(--card-main)] border border-[var(--border-color)] p-8">
-          <form className="space-y-4 text-left">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">
-                Email address
-              </label>
-              <input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                autoComplete="email"
-                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 transition-all"
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                autoComplete="current-password"
-                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 transition-all"
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-500 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500"
-            >
-              <span>Sign in</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </form>
+          {/* Suspense required by Next.js for useSearchParams() */}
+          <Suspense fallback={<div className="h-52 animate-pulse rounded-xl bg-[var(--bg-main)]" />}>
+            <LoginForm />
+          </Suspense>
 
           <p className="mt-6 text-center text-sm text-[var(--text-muted)]">
             Don&apos;t have an account?{' '}

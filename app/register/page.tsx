@@ -1,14 +1,59 @@
-import Link from 'next/link';
-import type { Metadata } from 'next';
-import { Zap, ArrowRight } from 'lucide-react';
+﻿'use client';
 
-// oxlint-disable-next-line react/only-export-components
-export const metadata: Metadata = {
-  title: 'Create your account — NOVA',
-  description: 'Create a NOVA workspace and start building better.',
-};
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState, type FormEvent } from 'react';
+import { Zap, ArrowRight, Loader2 } from 'lucide-react';
+import { useAuth } from '@/components/auth/AuthContext';
+import { ApiError } from '@/lib/api/client';
 
 export default function RegisterPage() {
+  const router = useRouter();
+  const { register } = useAuth();
+
+  const [name, setName]             = useState('');
+  const [email, setEmail]           = useState('');
+  const [password, setPassword]     = useState('');
+  const [confirm, setConfirm]       = useState('');
+  const [error, setError]           = useState<string | null>(null);
+  const [loading, setLoading]       = useState(false);
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+
+    if (!name || !email || !password || !confirm) {
+      setError('Please fill in all fields.');
+      return;
+    }
+    if (name.trim().length < 2) {
+      setError('Name must be at least 2 characters.');
+      return;
+    }
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
+    if (password !== confirm) {
+      setError('Passwords do not match.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await register(name.trim(), email, password);
+      router.push('/dashboard');
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError('Something went wrong. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] flex flex-col items-center justify-center px-4 py-16 relative overflow-hidden">
       <div
@@ -35,7 +80,16 @@ export default function RegisterPage() {
         </p>
 
         <div className="rounded-2xl bg-[var(--card-main)] border border-[var(--border-color)] p-8">
-          <form className="space-y-4 text-left">
+          <form className="space-y-4 text-left" onSubmit={handleSubmit} noValidate>
+            {error && (
+              <div
+                role="alert"
+                className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-400"
+              >
+                {error}
+              </div>
+            )}
+
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">
                 Full name
@@ -45,9 +99,14 @@ export default function RegisterPage() {
                 type="text"
                 placeholder="Your name"
                 autoComplete="name"
-                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 transition-all"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                disabled={loading}
+                required
+                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 transition-all disabled:opacity-50"
               />
             </div>
+
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">
                 Email address
@@ -57,9 +116,14 @@ export default function RegisterPage() {
                 type="email"
                 placeholder="you@example.com"
                 autoComplete="email"
-                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 transition-all"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
+                required
+                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 transition-all disabled:opacity-50"
               />
             </div>
+
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">
                 Password
@@ -69,15 +133,47 @@ export default function RegisterPage() {
                 type="password"
                 placeholder="At least 8 characters"
                 autoComplete="new-password"
-                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 transition-all"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
+                required
+                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 transition-all disabled:opacity-50"
               />
             </div>
+
+            <div>
+              <label htmlFor="confirm" className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">
+                Confirm password
+              </label>
+              <input
+                id="confirm"
+                type="password"
+                placeholder="Re-enter your password"
+                autoComplete="new-password"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                disabled={loading}
+                required
+                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 transition-all disabled:opacity-50"
+              />
+            </div>
+
             <button
               type="submit"
-              className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-500 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500"
+              disabled={loading}
+              className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-500 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <span>Create account</span>
-              <ArrowRight className="w-4 h-4" />
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Creating account…</span>
+                </>
+              ) : (
+                <>
+                  <span>Create account</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
             </button>
           </form>
 

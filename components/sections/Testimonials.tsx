@@ -30,15 +30,15 @@ export const Testimonials: React.FC = () => {
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--accent-primary)]/10 border border-emerald-500/20 text-[var(--accent-primary)] text-xs font-semibold uppercase tracking-wider mb-3">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Customer Success</span>
+              <span>Example feedback</span>
             </div>
 
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[var(--text-primary)] tracking-tight">
-              Loved by high-velocity teams.
+              What early users say.
             </h2>
 
             <p className="mt-3 text-base sm:text-lg text-[var(--text-secondary)] max-w-xl">
-              See how visionary product and engineering leaders scale execution with NOVA.
+              Sample product feedback from early testing and concept validation.
             </p>
           </div>
 

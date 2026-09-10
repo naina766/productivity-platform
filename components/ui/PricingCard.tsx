@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Check, ArrowRight } from 'lucide-react';
 import type { PricingPlan } from '@/types';
@@ -13,6 +14,7 @@ interface PricingCardProps {
 
 export const PricingCard: React.FC<PricingCardProps> = ({ plan, isYearly, onOpenDemo }) => {
   const price = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
+  const isContact = plan.ctaText.toLowerCase().includes('contact');
 
   return (
     <motion.div
@@ -24,7 +26,6 @@ export const PricingCard: React.FC<PricingCardProps> = ({ plan, isYearly, onOpen
           : 'bg-[var(--card-main)] border border-[var(--border-color)] shadow-lg'
       }`}
     >
-      {/* Most Popular Badge */}
       {plan.badge && (
         <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
           <span
@@ -39,7 +40,6 @@ export const PricingCard: React.FC<PricingCardProps> = ({ plan, isYearly, onOpen
         </div>
       )}
 
-      {/* Subtle animated border beam for highlighted card */}
       {plan.highlighted && (
         <div
           aria-hidden="true"
@@ -50,7 +50,6 @@ export const PricingCard: React.FC<PricingCardProps> = ({ plan, isYearly, onOpen
       )}
 
       <div>
-        {/* Tier Name & Subtitle */}
         <div className="mb-6">
           <h3 className="text-2xl font-extrabold text-[var(--text-primary)] mb-2">
             {plan.name}
@@ -60,7 +59,6 @@ export const PricingCard: React.FC<PricingCardProps> = ({ plan, isYearly, onOpen
           </p>
         </div>
 
-        {/* Price Display */}
         <div className="mb-8 pb-6 border-b border-[var(--border-color)]">
           <div className="flex items-baseline gap-1">
             <span className="text-4xl sm:text-5xl font-extrabold text-[var(--text-primary)] font-mono">
@@ -82,7 +80,6 @@ export const PricingCard: React.FC<PricingCardProps> = ({ plan, isYearly, onOpen
           </div>
         </div>
 
-        {/* Feature List */}
         <div className="space-y-3.5 mb-8">
           <div className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
             Included in {plan.name}:
@@ -104,19 +101,28 @@ export const PricingCard: React.FC<PricingCardProps> = ({ plan, isYearly, onOpen
         </div>
       </div>
 
-      {/* Action Button */}
-      <button
-        type="button"
-        onClick={plan.ctaText.includes('Demo') ? onOpenDemo : undefined}
-        className={`w-full py-3.5 px-5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-emerald-500 ${
-          plan.highlighted
-            ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/35'
-            : 'bg-[var(--card-main)]/50 hover:bg-[var(--card-main)]/100 text-[var(--text-primary)] border border-[var(--border-color)]'
-        }`}
-      >
-        <span>{plan.ctaText}</span>
-        <ArrowRight className="w-4 h-4" />
-      </button>
+      {isContact ? (
+        <button
+          type="button"
+          onClick={onOpenDemo}
+          className="w-full py-3.5 px-5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-emerald-500 bg-[var(--card-main)]/50 hover:bg-[var(--card-main)]/100 text-[var(--text-primary)] border border-[var(--border-color)]"
+        >
+          <span>{plan.ctaText}</span>
+          <ArrowRight className="w-4 h-4" />
+        </button>
+      ) : (
+        <Link
+          href="/register"
+          className={`w-full py-3.5 px-5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+            plan.highlighted
+              ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/35'
+              : 'bg-[var(--card-main)]/50 hover:bg-[var(--card-main)]/100 text-[var(--text-primary)] border border-[var(--border-color)]'
+          }`}
+        >
+          <span>{plan.ctaText}</span>
+          <ArrowRight className="w-4 h-4" />
+        </Link>
+      )}
     </motion.div>
   );
 };

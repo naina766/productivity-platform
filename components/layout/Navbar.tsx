@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, Zap, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
@@ -36,6 +36,17 @@ export const Navbar: React.FC<NavbarProps> = ({
       targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
+
+  const closeMobileMenu = useCallback(() => setMobileMenuOpen(false), []);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeMobileMenu();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [mobileMenuOpen, closeMobileMenu]);
 
   return (
     <header
@@ -82,14 +93,14 @@ export const Navbar: React.FC<NavbarProps> = ({
             <ThemeToggle theme={theme} onThemeChange={onThemeChange} />
 
             <Link
-              href="/register"
-              className="px-3.5 py-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--card-main)]/50 transition-colors rounded-lg"
+              href="/login"
+              className="px-3.5 py-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--card-main)]/50 transition-colors rounded-lg focus-visible:ring-2 focus-visible:ring-emerald-500"
             >
               Log in
             </Link>
 
             <Link
-              href="/login"
+              href="/register"
               className="relative group inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-white rounded-lg bg-emerald-600 hover:bg-emerald-500 shadow-md shadow-emerald-500/20 hover:shadow-emerald-500/40 transition-all duration-200 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-emerald-500"
             >
               <span>Get Started</span>
@@ -104,6 +115,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               type="button"
               aria-label="Toggle navigation menu"
               aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-navigation"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-lg text-[var(--text-secondary)] hover:bg-[var(--card-main)]/50 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500"
             >
@@ -123,7 +135,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             transition={{ duration: 0.25, ease: 'easeInOut' }}
             className="md:hidden bg-[var(--bg-main)]/95 border-b border-[var(--border-color)] backdrop-blur-2xl overflow-hidden px-4 pt-3 pb-6 shadow-2xl"
           >
-            <nav className="flex flex-col space-y-1.5" aria-label="Mobile Navigation">
+            <nav id="mobile-navigation" className="flex flex-col space-y-1.5" aria-label="Mobile Navigation">
               {navLinks.map((link) => (
                 <a
                   key={link.label}
@@ -138,14 +150,14 @@ export const Navbar: React.FC<NavbarProps> = ({
 
               <div className="pt-4 mt-2 border-t border-[var(--border-color)] flex flex-col gap-2.5">
                 <Link
-                  href="/register"
+                  href="/login"
                   onClick={() => setMobileMenuOpen(false)}
                   className="w-full py-2.5 px-4 rounded-lg text-sm font-medium text-center text-[var(--text-secondary)] bg-[var(--card-main)]/50 border border-[var(--border-color)] hover:bg-[var(--card-main)] transition-colors"
                 >
                   Log in
                 </Link>
                 <Link
-                  href="/login"
+                  href="/register"
                   onClick={() => setMobileMenuOpen(false)}
                   className="w-full py-2.5 px-4 rounded-lg text-sm font-semibold text-center text-white bg-emerald-600 hover:bg-emerald-500 shadow-md shadow-emerald-500/25 transition-all"
                 >

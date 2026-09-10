@@ -9,6 +9,7 @@ import {
   Rocket,
   Briefcase,
   Globe,
+  Users2,
   type LucideIcon,
   CheckCircle,
 } from 'lucide-react';
@@ -21,6 +22,7 @@ const iconMap: Record<string, LucideIcon> = {
   Rocket,
   Briefcase,
   Globe,
+  Users2,
 };
 
 interface SolutionCardProps {

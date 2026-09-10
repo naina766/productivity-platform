@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
   Sparkles,
@@ -8,10 +9,8 @@ import {
   Play,
   CheckCircle2,
   Clock,
-  Bot,
   Zap,
-  Check,
-  TrendingUp,
+  Layers,
   Search,
   Shield,
 } from 'lucide-react';
@@ -21,8 +20,6 @@ interface HeroProps {
 }
 
 export const Hero: React.FC<HeroProps> = ({ onOpenDemo }) => {
-  const [suggestionAccepted, setSuggestionAccepted] = useState(false);
-
   return (
     <section className="relative pt-32 pb-20 md:pt-40 md:pb-28 overflow-hidden bg-dot-pattern">
       {/* Subtle green/teal glow backgrounds — NO blue/violet */}
@@ -48,8 +45,8 @@ export const Hero: React.FC<HeroProps> = ({ onOpenDemo }) => {
             transition={{ duration: 0.4 }}
             className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--accent-primary)]/10 border border-emerald-500/20 text-[var(--accent-primary)] text-xs sm:text-sm font-medium mb-6 shadow-sm"
           >
-            <Sparkles className="w-3.5 h-3.5 text-lime-400 animate-pulse" />
-            <span>AI-powered productivity for modern teams</span>
+            <Sparkles className="w-3.5 h-3.5 text-lime-400" />
+            <span>One workspace for every project</span>
           </motion.div>
 
           {/* Heading */}
@@ -60,9 +57,9 @@ export const Hero: React.FC<HeroProps> = ({ onOpenDemo }) => {
             className="font-extrabold tracking-tight text-[var(--text-primary)] font-sans leading-[1.08] mb-6"
             style={{ fontSize: 'clamp(2.8rem, 7vw, 6rem)' }}
           >
-            Build Better.{' '}
+            Plan, track, and{' '}
             <span className="bg-gradient-to-r from-emerald-400 via-lime-400 to-teal-400 bg-clip-text text-transparent">
-              Work Smarter.
+              ship together.
             </span>
           </motion.h1>
 
@@ -73,7 +70,8 @@ export const Hero: React.FC<HeroProps> = ({ onOpenDemo }) => {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="text-lg sm:text-xl text-[var(--text-secondary)] max-w-2xl mx-auto leading-relaxed mb-8"
           >
-            Projects, people, automation, and intelligent insights — all in one workspace designed for teams that move fast.
+            NOVA turns scattered projects and tasks into a single organized workspace
+            for teams that want to see progress at a glance.
           </motion.p>
 
           {/* Action buttons */}
@@ -83,13 +81,13 @@ export const Hero: React.FC<HeroProps> = ({ onOpenDemo }) => {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-3.5 mb-6"
           >
-            <a
-              href="#pricing"
+            <Link
+              href="/register"
               className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3.5 rounded-xl font-semibold text-white bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all duration-200 group active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-emerald-400"
             >
               <span>Start Free</span>
               <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-            </a>
+            </Link>
 
             <button
               type="button"
@@ -109,7 +107,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenDemo }) => {
             className="text-xs sm:text-sm text-[var(--text-muted)] flex items-center justify-center gap-2"
           >
             <Shield className="w-3.5 h-3.5 text-emerald-500" />
-            <span>No credit card required · Free 14-day trial</span>
+            <span>No credit card required · Free forever for small teams</span>
           </motion.p>
         </div>
 
@@ -130,16 +128,16 @@ export const Hero: React.FC<HeroProps> = ({ onOpenDemo }) => {
                   <div className="w-3 h-3 rounded-full bg-amber-500/80" />
                   <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
                   <span className="ml-3 text-xs text-neutral-500 font-mono hidden sm:inline-block">
-                    app.nova.io/workspace
+                    app.nova.io/projects
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="px-2.5 py-1 rounded bg-[var(--card-main)]/50 text-[11px] text-[var(--text-muted)] flex items-center gap-1.5">
                     <Search className="w-3 h-3" />
-                    <span className="hidden sm:inline">Search anything... ⌘K</span>
+                    <span className="hidden sm:inline">Search tasks, projects…</span>
                   </div>
                   <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-[11px] text-emerald-400 font-medium">Live Sync</span>
+                  <span className="text-[11px] text-emerald-400 font-medium">Saved</span>
                 </div>
               </div>
 
@@ -153,9 +151,9 @@ export const Hero: React.FC<HeroProps> = ({ onOpenDemo }) => {
                     </div>
                     <div>
                       <div className="text-xs font-semibold text-[var(--text-primary)]">
-                        Nova Core Team
+                        NOVA Workspace
                       </div>
-                      <div className="text-[10px] text-neutral-500">14 Active Members</div>
+                      <div className="text-[10px] text-neutral-500">Product Team</div>
                     </div>
                   </div>
 
@@ -163,9 +161,9 @@ export const Hero: React.FC<HeroProps> = ({ onOpenDemo }) => {
                   <div className="space-y-1 text-xs">
                     {[
                       { label: 'Overview', active: false },
-                      { label: 'Sprint 42 (Current)', active: true, badge: '82%' },
-                      { label: 'Roadmap Q3', active: false, meta: '12 tasks' },
-                      { label: 'Design System v2', active: false, meta: '6 tasks' },
+                      { label: 'Projects', active: true, badge: '4' },
+                      { label: 'Tasks', active: false, meta: '12' },
+                      { label: 'Team', active: false, meta: '5' },
                     ].map((item) => (
                       <div
                         key={item.label}
@@ -190,21 +188,19 @@ export const Hero: React.FC<HeroProps> = ({ onOpenDemo }) => {
 
                   <div className="pt-2">
                     <div className="text-[10px] uppercase tracking-wider font-semibold text-neutral-600 mb-2">
-                      Collaborators
+                      Members
                     </div>
                     <div className="flex -space-x-1.5">
-                      {['MC', 'EK', 'JL'].map((initials, i) => (
+                      {['bg-emerald-700', 'bg-teal-700', 'bg-lime-700'].map((color, i) => (
                         <div
-                          key={initials}
-                          className={`w-6 h-6 rounded-full border border-[#111111] flex items-center justify-center text-[8px] font-bold text-white ${
-                            ['bg-emerald-700', 'bg-teal-700', 'bg-lime-700'][i]
-                          }`}
+                          key={color}
+                          className={`w-6 h-6 rounded-full border border-[#111111] flex items-center justify-center text-[8px] font-bold text-white ${color}`}
                         >
-                          {initials}
+                          {i + 1}
                         </div>
                       ))}
                       <div className="w-6 h-6 rounded-full bg-neutral-800 border border-[#111111] flex items-center justify-center text-[10px] text-neutral-400 font-medium">
-                        +8
+                        +2
                       </div>
                     </div>
                   </div>
@@ -212,99 +208,76 @@ export const Hero: React.FC<HeroProps> = ({ onOpenDemo }) => {
 
                 {/* Main Content Area */}
                 <div className="lg:col-span-9 space-y-4">
-                  {/* Good morning greeting */}
+                  {/* Neutral greeting */}
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs text-[var(--text-muted)]">Sprint 42 · Current Cycle</p>
+                      <p className="text-xs text-[var(--text-muted)]">Today · All projects</p>
                       <h2 className="text-sm font-bold text-[var(--text-primary)]">
-                        Welcome to NOVA
+                        Good morning 👋
                       </h2>
                     </div>
                     <div className="flex items-center gap-1.5 text-[11px] text-neutral-500">
                       <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                      <span className="text-emerald-400 font-medium">3 tasks ready</span>
+                      <span className="text-emerald-400 font-medium">12 open tasks</span>
                     </div>
                   </div>
 
-                  {/* Top Stats */}
+                  {/* Top Stats — neutral product metrics */}
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     <div className="p-3 rounded-xl bg-[var(--card-elevated)] border border-[var(--border-color)]">
                       <div className="flex items-center justify-between text-[var(--text-muted)] text-xs mb-1">
-                        <span>Sprint Velocity</span>
-                        <TrendingUp className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
+                        <span>In Progress</span>
+                        <Clock className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
                       </div>
-                      <div className="text-lg font-bold text-[var(--text-primary)]">
-                        94.2%
-                      </div>
+                      <div className="text-lg font-bold text-[var(--text-primary)]">12</div>
                       <div className="w-full bg-[var(--border-color)] rounded-full h-1.5 mt-2">
-                        <div className="bg-gradient-to-r from-emerald-500 to-teal-400 h-1.5 rounded-full w-[94%]" />
+                        <div className="bg-gradient-to-r from-emerald-500 to-teal-400 h-1.5 rounded-full w-[63%]" />
                       </div>
                     </div>
 
                     <div className="p-3 rounded-xl bg-[var(--card-elevated)] border border-[var(--border-color)]">
                       <div className="flex items-center justify-between text-[var(--text-muted)] text-xs mb-1">
-                        <span>Automated Tasks</span>
-                        <Zap className="w-3.5 h-3.5 text-lime-400" />
+                        <span>Done This Week</span>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-lime-400" />
                       </div>
                       <div className="text-lg font-bold text-[var(--text-primary)]">
-                        128{' '}
-                        <span className="text-xs text-[var(--accent-primary)] font-normal">+18 today</span>
+                        28{' '}
+                        <span className="text-xs text-[var(--accent-primary)] font-normal">+6 today</span>
                       </div>
                       <div className="w-full bg-[var(--border-color)] rounded-full h-1.5 mt-2">
-                        <div className="bg-gradient-to-r from-lime-400 to-emerald-500 h-1.5 rounded-full w-[78%]" />
+                        <div className="bg-gradient-to-r from-lime-400 to-emerald-500 h-1.5 rounded-full w-[70%]" />
                       </div>
                     </div>
 
                     <div className="col-span-2 sm:col-span-1 p-3 rounded-xl bg-[var(--card-elevated)] border border-[var(--border-color)]">
                       <div className="flex items-center justify-between text-[var(--text-muted)] text-xs mb-1">
-                        <span>AI Score</span>
-                        <Bot className="w-3.5 h-3.5 text-[var(--accent-teal)]" />
+                        <span>Active Projects</span>
+                        <Layers className="w-3.5 h-3.5 text-[var(--accent-teal)]" />
                       </div>
                       <div className="text-lg font-bold text-[var(--text-primary)]">
-                        96{' '}
-                        <span className="text-xs text-[var(--accent-primary)] font-normal">Excellent</span>
+                        4{' '}
+                        <span className="text-xs text-[var(--accent-teal)] font-normal">across 1 workspace</span>
                       </div>
                       <div className="w-full bg-[var(--border-color)] rounded-full h-1.5 mt-2">
-                        <div className="bg-gradient-to-r from-teal-400 to-emerald-400 h-1.5 rounded-full w-[96%]" />
+                        <div className="bg-gradient-to-r from-teal-400 to-emerald-400 h-1.5 rounded-full w-[40%]" />
                       </div>
                     </div>
                   </div>
 
-                  {/* AI Suggestion Panel */}
-                  <div className="p-3 rounded-xl bg-gradient-to-r from-[var(--accent-primary)]/10 via-[var(--accent-teal)]/10 to-[var(--accent-primary)]/10 border border-emerald-500/25 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-                        <Bot className="w-4 h-4 text-emerald-400" />
+                  {/* Up next strip — neutral */}
+                  <div className="p-3 rounded-xl bg-[var(--card-elevated)] border border-[var(--border-color)] flex items-center justify-between gap-2.5">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-7 h-7 rounded-lg bg-emerald-500/15 flex items-center justify-center flex-shrink-0">
+                        <Zap className="w-4 h-4 text-emerald-400" />
                       </div>
-                      <div>
-                        <div className="text-xs font-semibold text-[var(--accent-primary)] flex items-center gap-1.5">
-                          <span>AI Copilot Recommendation</span>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">
-                            97% confidence
-                          </span>
+                      <div className="min-w-0">
+                        <div className="text-xs font-semibold text-[var(--text-primary)]">
+                          Up next
                         </div>
-                        <p className="text-[11px] text-[var(--text-secondary)]">
-                          {suggestionAccepted
-                            ? '✓ Workflows re-balanced! 2 PR review blockers automatically resolved.'
-                            : 'Workload imbalance detected in Backend Sprint. Shift 2 tasks to maintain 94% on-time delivery.'}
+                        <p className="text-[11px] text-[var(--text-secondary)] truncate">
+                          3 tasks due this week · no blockers
                         </p>
                       </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 self-end sm:self-center">
-                      {!suggestionAccepted ? (
-                        <button
-                          type="button"
-                          onClick={() => setSuggestionAccepted(true)}
-                          className="px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white transition-colors shadow-sm"
-                        >
-                          Apply Fix
-                        </button>
-                      ) : (
-                        <span className="inline-flex items-center text-xs text-emerald-400 font-medium">
-                          <Check className="w-3.5 h-3.5 mr-1" /> Applied
-                        </span>
-                      )}
                     </div>
                   </div>
 
@@ -317,21 +290,21 @@ export const Hero: React.FC<HeroProps> = ({ onOpenDemo }) => {
 
                     {[
                       {
-                        label: 'Deploy AI Summarization Pipeline to Prod',
+                        label: 'Sketch the onboarding checklist',
                         icon: <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />,
-                        badge: 'Completed',
+                        badge: 'Done',
                         badgeClass: 'bg-emerald-500/20 text-emerald-400',
                       },
                       {
-                        label: 'Automate Cross-Team PR Reviews & Retros',
+                        label: 'Design the task board layout',
                         icon: (
                           <div className="w-4 h-4 rounded-full border-2 border-teal-400 border-t-transparent animate-spin flex-shrink-0" />
                         ),
-                        badge: 'In Progress (85%)',
+                        badge: 'In Progress',
                         badgeClass: 'bg-teal-500/20 text-teal-400',
                       },
                       {
-                        label: 'Sync Multi-Tenant Enterprise RBAC Schema',
+                        label: 'Review the project roadmap',
                         icon: <Clock className="w-4 h-4 text-amber-400 flex-shrink-0" />,
                         badge: 'In Review',
                         badgeClass: 'bg-amber-500/20 text-amber-400',

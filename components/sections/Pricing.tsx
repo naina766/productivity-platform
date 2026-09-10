@@ -24,15 +24,19 @@ export const Pricing: React.FC<PricingProps> = ({ onOpenDemo }) => {
         <div className="text-center max-w-3xl mx-auto mb-14">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--accent-primary)]/10 border border-emerald-500/20 text-[var(--accent-primary)] text-xs font-semibold uppercase tracking-wider mb-3">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Transparent Investment</span>
+            <span>Pricing concept</span>
           </div>
 
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[var(--text-primary)] tracking-tight mb-4">
-            Simple, predictable pricing.
+            Simple, transparent pricing.
           </h2>
 
-          <p className="text-base sm:text-lg text-[var(--text-secondary)] leading-relaxed mb-8">
-            Start free. Unlock full AI workflows and enterprise velocity with Pro and Business.
+          <p className="text-base sm:text-lg text-[var(--text-secondary)] leading-relaxed mb-2">
+            Start free and upgrade when your team is ready. No surprises.
+          </p>
+
+          <p className="text-xs text-[var(--text-muted)] mb-8">
+            This is a portfolio demo. Actual pricing has not been finalized.
           </p>
 
           {/* Monthly / Yearly Toggle */}
@@ -78,16 +82,16 @@ export const Pricing: React.FC<PricingProps> = ({ onOpenDemo }) => {
           ))}
         </div>
 
-        {/* Enterprise footnote */}
+        {/* Footnote */}
         <div className="mt-14 text-center">
           <p className="text-xs sm:text-sm text-[var(--text-muted)] flex items-center justify-center gap-1.5">
             <HelpCircle className="w-4 h-4 text-[var(--accent-teal)]" />
-            <span>Need custom deployment or volume pricing?</span>
+            <span>Questions about a plan?</span>
             <a
               href="#faq"
               className="text-[var(--accent-primary)] hover:text-[var(--accent-highlight)] underline font-medium ml-1"
             >
-              Contact our team
+              Check the FAQ
             </a>
           </p>
         </div>
