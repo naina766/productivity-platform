@@ -34,13 +34,12 @@ export const HomePage: React.FC = () => {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#050505] dark:bg-[#050505] text-[#F5F5F5] dark:text-[#F5F5F5] transition-colors duration-200 light:bg-[#F7F7F5] light:text-[#171717]">
+    <div className="relative min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] transition-colors duration-200">
       {/* 1. Navigation Bar */}
       <Navbar
         theme={theme}
         onThemeChange={setTheme}
         isScrolled={isScrolled}
-        onOpenDemo={handleOpenDemo}
       />
 
       <main id="main-content">

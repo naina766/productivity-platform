@@ -18,7 +18,7 @@ export const Testimonials: React.FC = () => {
   };
 
   return (
-    <section className="py-24 bg-[#0A0A0A] dark:bg-[#0A0A0A] light:bg-neutral-50/60 border-y border-white/6 dark:border-white/6 light:border-neutral-200 relative overflow-hidden">
+    <section className="py-24 bg-[var(--bg-secondary)] border-y border-[var(--border-color)] relative overflow-hidden">
       {/* Subtle glow */}
       <div
         aria-hidden="true"
@@ -28,16 +28,16 @@ export const Testimonials: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-500/10 light:bg-emerald-50 border border-emerald-500/20 text-emerald-400 dark:text-emerald-400 light:text-emerald-700 text-xs font-semibold uppercase tracking-wider mb-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--accent-primary)]/10 border border-emerald-500/20 text-[var(--accent-primary)] text-xs font-semibold uppercase tracking-wider mb-3">
               <Sparkles className="w-3.5 h-3.5" />
               <span>Customer Success</span>
             </div>
 
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white dark:text-white light:text-neutral-950 tracking-tight">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[var(--text-primary)] tracking-tight">
               Loved by high-velocity teams.
             </h2>
 
-            <p className="mt-3 text-base sm:text-lg text-neutral-400 dark:text-neutral-400 light:text-neutral-600 max-w-xl">
+            <p className="mt-3 text-base sm:text-lg text-[var(--text-secondary)] max-w-xl">
               See how visionary product and engineering leaders scale execution with NOVA.
             </p>
           </div>
@@ -48,7 +48,7 @@ export const Testimonials: React.FC = () => {
               type="button"
               onClick={handlePrev}
               aria-label="Previous testimonial"
-              className="p-3 rounded-full bg-[#111111] dark:bg-[#111111] light:bg-white border border-white/8 dark:border-white/8 light:border-neutral-200 text-neutral-400 dark:text-neutral-400 light:text-neutral-700 hover:text-white dark:hover:text-white hover:border-emerald-500/40 shadow-md transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-emerald-500"
+              className="p-3 rounded-full bg-[var(--card-main)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-emerald-500/40 shadow-md transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-emerald-500"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
@@ -57,7 +57,7 @@ export const Testimonials: React.FC = () => {
               type="button"
               onClick={handleNext}
               aria-label="Next testimonial"
-              className="p-3 rounded-full bg-[#111111] dark:bg-[#111111] light:bg-white border border-white/8 dark:border-white/8 light:border-neutral-200 text-neutral-400 dark:text-neutral-400 light:text-neutral-700 hover:text-white dark:hover:text-white hover:border-emerald-500/40 shadow-md transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-emerald-500"
+              className="p-3 rounded-full bg-[var(--card-main)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-emerald-500/40 shadow-md transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-emerald-500"
             >
               <ChevronRight className="w-5 h-5" />
             </button>

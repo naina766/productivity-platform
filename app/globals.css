@@ -4,21 +4,6 @@
 
 @layer base {
   :root {
-    --bg-main: #050505;
-    --bg-secondary: #0A0A0A;
-    --card-main: #111111;
-    --card-elevated: #161616;
-    --text-primary: #F5F5F5;
-    --text-secondary: #A3A3A3;
-    --text-muted: #737373;
-    --border-color: rgba(255, 255, 255, 0.10);
-    --accent-primary: #22C55E;
-    --accent-secondary: #84CC16;
-    --accent-highlight: #A3E635;
-    --accent-teal: #14B8A6;
-  }
-
-  .light {
     --bg-main: #F7F7F5;
     --bg-secondary: #EFEFED;
     --card-main: #FFFFFF;
@@ -31,6 +16,21 @@
     --accent-secondary: #65A30D;
     --accent-highlight: #84CC16;
     --accent-teal: #0D9488;
+  }
+
+  .dark {
+    --bg-main: #050505;
+    --bg-secondary: #0A0A0A;
+    --card-main: #111111;
+    --card-elevated: #161616;
+    --text-primary: #F5F5F5;
+    --text-secondary: #A3A3A3;
+    --text-muted: #737373;
+    --border-color: rgba(255, 255, 255, 0.10);
+    --accent-primary: #22C55E;
+    --accent-secondary: #84CC16;
+    --accent-highlight: #A3E635;
+    --accent-teal: #14B8A6;
   }
 
   body {
@@ -48,27 +48,26 @@
 
 /* Subtle dot pattern background */
 .bg-dot-pattern {
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.06) 1px, transparent 1px);
   background-size: 28px 28px;
 }
 
-.light .bg-dot-pattern {
-  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.06) 1px, transparent 1px);
-  background-size: 28px 28px;
+.dark .bg-dot-pattern {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
 }
 
 /* Subtle grid pattern */
 .bg-grid-pattern {
   background-size: 40px 40px;
   background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-}
-
-.light .bg-grid-pattern {
-  background-image:
     linear-gradient(to right, rgba(15, 23, 42, 0.03) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(15, 23, 42, 0.03) 1px, transparent 1px);
+}
+
+.dark .bg-grid-pattern {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
 }
 
 /* Animated border-beam keyframe */
@@ -93,8 +92,12 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.08) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.08) 50%, transparent 100%);
   animation: shimmer 2s ease-in-out infinite;
+}
+
+.dark .shimmer-line::after {
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.08) 50%, transparent 100%);
 }
 
 /* Custom modern scrollbar — NOVA neutral */
@@ -104,28 +107,28 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #050505;
-}
-
-.light ::-webkit-scrollbar-track {
   background: #F7F7F5;
 }
 
+.dark ::-webkit-scrollbar-track {
+  background: #050505;
+}
+
 ::-webkit-scrollbar-thumb {
-  background: #262626;
+  background: #D4D4D4;
   border-radius: 3px;
 }
 
-.light ::-webkit-scrollbar-thumb {
-  background: #D4D4D4;
+.dark ::-webkit-scrollbar-thumb {
+  background: #262626;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #404040;
+  background: #A3A3A3;
 }
 
-.light ::-webkit-scrollbar-thumb:hover {
-  background: #A3A3A3;
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #404040;
 }
 
 /* Marquee animation */

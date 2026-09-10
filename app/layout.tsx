@@ -53,7 +53,7 @@ export const viewport: Viewport = {
 
 // Apply the saved theme to <html> before first paint to avoid a flash of
 // the wrong theme. Mirrors the logic in lib/hooks/useTheme.ts.
-const themeInitScript = `(function(){try{var t=localStorage.getItem('nova-theme')||'dark';var dark=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);var r=document.documentElement;r.classList.toggle('dark',dark);r.classList.toggle('light',!dark);r.style.colorScheme=dark?'dark':'light';}catch(e){}})();`;
+const themeInitScript = `(function(){try{var t=localStorage.getItem('nova-theme')||'dark';var dark=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);var r=document.documentElement;r.classList.toggle('dark',dark);r.style.colorScheme=dark?'dark':'light';}catch(e){}})();`;
 
 export default function RootLayout({
   children,

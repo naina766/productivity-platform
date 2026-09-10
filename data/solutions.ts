@@ -4,49 +4,49 @@ export const solutionsData: SolutionItem[] = [
   {
     id: 'product-teams',
     title: 'Product Teams',
-    description: 'Connect customer feedback, feature roadmaps, and delivery milestones. Automatically generate release notes from completed user stories.',
+    description: 'Connect customer feedback, feature roadmaps, and delivery milestones. Track release progress from planning to launch.',
     icon: 'Layers',
-    accent: '#22C55E',   // emerald-500
-    highlights: ['Interactive Roadmap Gantt', 'Feature Priority Scoring', 'Automated PRDs'],
+    accent: '#22C55E',
+    highlights: ['Roadmap tracking', 'Feature prioritization', 'Release notes'],
   },
   {
     id: 'engineering-teams',
     title: 'Engineering Teams',
-    description: 'Manage two-week sprints, triage critical bugs, and correlate pull requests directly to project requirements without jumping tabs.',
+    description: 'Manage sprints, triage bugs, and connect pull requests to project requirements without switching tools.',
     icon: 'Terminal',
-    accent: '#14B8A6',   // teal-500
-    highlights: ['Git Bidirectional Sync', 'Sprint Velocity Tracking', 'Blocker Detection'],
+    accent: '#14B8A6',
+    highlights: ['Sprint planning', 'Velocity tracking', 'PR linking'],
   },
   {
     id: 'marketing-teams',
     title: 'Marketing Teams',
-    description: 'Coordinate multi-channel campaigns, track asset production deadlines, and ensure brand launches go live without missing a beat.',
+    description: 'Coordinate campaigns, track content deadlines, and ensure launches stay on schedule.',
     icon: 'Megaphone',
-    accent: '#84CC16',   // lime-500
-    highlights: ['Content Editorial Calendar', 'Asset Approvals', 'Multi-channel Timelines'],
+    accent: '#84CC16',
+    highlights: ['Content calendar', 'Asset tracking', 'Campaign timelines'],
   },
   {
     id: 'startups',
     title: 'Startups',
-    description: 'Move from zero to shipping production features at hyper-speed. Cut through chaotic communication and maintain hyper-focus on MVP goals.',
+    description: 'Move fast from idea to shipping. Stay focused on MVP goals with lightweight project management.',
     icon: 'Rocket',
-    accent: '#A3E635',   // lime-400
-    highlights: ['Pre-built Agile Frameworks', 'Lightweight Setup', 'Zero Maintenance'],
+    accent: '#A3E635',
+    highlights: ['Quick setup', 'Agile templates', 'Zero maintenance'],
   },
   {
     id: 'agencies',
     title: 'Agencies & Consultancies',
-    description: 'Juggle multiple client portfolios, billable milestones, and client-facing status reports with granular guest access permissions.',
+    description: 'Manage multiple client projects, track billable milestones, and share status reports with granular access controls.',
     icon: 'Briefcase',
-    accent: '#F59E0B',   // amber-500 — allowed (not blue/purple)
-    highlights: ['Client Portal Views', 'Multi-tenant Workspaces', 'Budget Burn Tracking'],
+    accent: '#F59E0B',
+    highlights: ['Client views', 'Multi-project', 'Budget tracking'],
   },
   {
     id: 'remote-teams',
     title: 'Remote & Distributed Teams',
-    description: 'Stay asynchronous yet deeply aligned across all time zones with AI executive digests, daily standup bots, and live cursor presence.',
+    description: 'Stay aligned across time zones with async updates, daily summaries, and centralized project context.',
     icon: 'Globe',
-    accent: '#34D399',   // emerald-400
-    highlights: ['Asynchronous Standups', 'Cross-Timezone Hand-offs', 'Centralized Context Hub'],
+    accent: '#34D399',
+    highlights: ['Async updates', 'Timezone support', 'Centralized context'],
   },
 ];

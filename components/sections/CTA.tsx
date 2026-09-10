@@ -20,7 +20,7 @@ export const CTA: React.FC<CTAProps> = ({ onOpenDemo }) => {
       </div>
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="relative rounded-3xl p-8 sm:p-14 lg:p-16 bg-gradient-to-b from-[#0d1f12] to-[#0A0A0A] dark:from-[#0d1f12] dark:to-[#0A0A0A] light:from-emerald-50/30 light:to-white border border-emerald-500/20 dark:border-emerald-500/20 light:border-neutral-300 shadow-2xl shadow-emerald-900/20 text-center overflow-hidden">
+        <div className="relative rounded-3xl p-8 sm:p-14 lg:p-16 bg-gradient-to-b from-[#0d1f12] to-[var(--bg-secondary)] border border-[var(--border-color)] shadow-2xl shadow-emerald-900/20 text-center overflow-hidden">
           {/* Decorative top glow line */}
           <div
             aria-hidden="true"
@@ -38,16 +38,16 @@ export const CTA: React.FC<CTAProps> = ({ onOpenDemo }) => {
             viewport={{ once: true }}
             transition={{ duration: 0.4 }}
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-500/10 light:bg-emerald-50 border border-emerald-500/20 text-emerald-400 dark:text-emerald-400 light:text-emerald-700 text-xs font-semibold uppercase tracking-wider mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--accent-primary)]/10 border border-emerald-500/20 text-[var(--accent-primary)] text-xs font-semibold uppercase tracking-wider mb-6">
               <Sparkles className="w-3.5 h-3.5" />
               <span>Start In Seconds</span>
             </div>
 
-            <h2 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-white dark:text-white light:text-neutral-950 tracking-tight leading-tight mb-6">
+            <h2 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-[var(--text-primary)] tracking-tight leading-tight mb-6">
               Turn busywork into momentum.
             </h2>
 
-            <p className="text-base sm:text-xl text-neutral-400 dark:text-neutral-400 light:text-neutral-600 max-w-2xl mx-auto leading-relaxed mb-10">
+            <p className="text-base sm:text-xl text-[var(--text-secondary)] max-w-2xl mx-auto leading-relaxed mb-10">
               Give your team one intelligent workspace to plan, collaborate, and deliver better work.
             </p>
 
@@ -63,14 +63,14 @@ export const CTA: React.FC<CTAProps> = ({ onOpenDemo }) => {
               <button
                 type="button"
                 onClick={onOpenDemo}
-                className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 rounded-xl font-bold text-neutral-200 dark:text-neutral-200 light:text-neutral-800 bg-white/5 dark:bg-white/5 light:bg-neutral-100 hover:bg-white/10 dark:hover:bg-white/10 light:hover:bg-neutral-200 border border-white/10 dark:border-white/10 light:border-neutral-300 transition-all duration-200 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-emerald-400"
+                className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 rounded-xl font-bold text-[var(--text-primary)] bg-[var(--card-main)]/50 hover:bg-[var(--card-main)] border border-[var(--border-color)] transition-all duration-200 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-emerald-400"
               >
                 <MessageSquare className="w-4 h-4 mr-2 text-teal-400" />
                 <span>Talk to Sales</span>
               </button>
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-neutral-500 dark:text-neutral-500 light:text-neutral-500">
+            <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-[var(--text-muted)]">
               <span className="flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
                 SOC-2 Type II Certified

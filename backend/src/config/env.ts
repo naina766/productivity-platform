@@ -14,7 +14,7 @@ export const env = {
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET ?? '',
   jwtAccessTtl: process.env.JWT_ACCESS_TTL ?? '15m',
   jwtRefreshTtl: process.env.JWT_REFRESH_TTL ?? '7d',
-  frontendOrigin: process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173',
+  frontendOrigin: process.env.FRONTEND_ORIGIN ?? 'http://localhost:3000',
   isProd: (process.env.NODE_ENV ?? 'development') === 'production',
 } as const;
 

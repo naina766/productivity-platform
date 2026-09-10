@@ -4,31 +4,31 @@ export const faqData: FAQItem[] = [
   {
     id: 'what-is-nova',
     question: 'What is NOVA?',
-    answer: 'NOVA is an AI-powered team productivity platform that brings project management, automated workflows, asynchronous collaboration, and predictive analytics into a single unified workspace. It eliminates fragmentation by synthesizing tasks, roadmaps, and discussions automatically.',
+    answer: 'NOVA is an AI-powered team productivity platform that brings project management, automated workflows, and collaboration into a single unified workspace.',
   },
   {
     id: 'is-nova-free',
     question: 'Is NOVA free to use?',
-    answer: 'Yes! NOVA offers a 100% free Starter plan with up to 3 projects, essential task boards, and unlimited team collaboration. We also provide an unrestricted 14-day free trial on our Pro plan with zero credit card required up front.',
+    answer: 'Yes! NOVA offers a free Starter plan with up to 3 projects, essential task boards, and team collaboration. We also provide a free trial on our Pro plan.',
   },
   {
     id: 'invite-entire-team',
     question: 'Can I invite my entire team?',
-    answer: 'Absolutely. You can invite your entire organization, assign role-based permissions (Admin, Member, Guest, Observer), create department spaces, and share project views with clients without unexpected friction.',
+    answer: 'Absolutely. You can invite your organization, assign role-based permissions (Admin, Member, Guest), and create project views for different teams.',
   },
   {
     id: 'integrations',
     question: 'Does NOVA integrate with other tools?',
-    answer: 'Yes. NOVA provides seamless, bi-directional integrations with GitHub, GitLab, Slack, Linear, Figma, Google Workspace, Jira, and over 100+ platforms through Webhooks and our robust REST/GraphQL APIs.',
+    answer: 'Yes. NOVA integrates with GitHub, Slack, and more through our built-in connectors. We also provide webhooks and a REST API for custom integrations.',
   },
   {
     id: 'cancellation-policy',
     question: 'Can I cancel my subscription anytime?',
-    answer: 'Yes, there are zero contracts or lock-ins. You can upgrade, downgrade, or cancel your subscription at any time directly from your workspace billing dashboard with one click. If you cancel, your account remains active until the end of the billing period.',
+    answer: 'Yes, there are no contracts or lock-ins. You can upgrade, downgrade, or cancel your subscription at any time. Your account remains active until the end of the billing period.',
   },
   {
     id: 'data-security',
-    question: "Is my team's data secure?",
-    answer: 'Security is at the heart of NOVA. We are SOC 2 Type II compliant, GDPR ready, and enforce AES-256 bit encryption at rest and TLS 1.3 in transit. Your proprietary workspace data is never used to train generalized foundation models without explicit organizational consent.',
+    question: 'Is my team\'s data secure?',
+    answer: 'Security is a priority for NOVA. We encrypt data in transit and at rest, offer role-based access controls, and maintain audit logs for compliance needs.',
   },
 ];

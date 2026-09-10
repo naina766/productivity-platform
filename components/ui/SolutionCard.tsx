@@ -38,7 +38,7 @@ export const SolutionCard: React.FC<SolutionCardProps> = ({ solution, index }) =
       viewport={{ once: true, margin: '-50px' }}
       transition={{ duration: 0.4, delay: index * 0.08 }}
       whileHover={{ y: -4 }}
-      className="p-7 rounded-2xl bg-[#111111] dark:bg-[#111111] light:bg-white border border-white/8 dark:border-white/8 light:border-neutral-200 hover:border-emerald-500/30 dark:hover:border-emerald-500/30 light:hover:border-emerald-500/30 shadow-xl transition-all duration-300 flex flex-col justify-between group"
+      className="p-7 rounded-2xl bg-[var(--card-main)] border border-[var(--border-color)] hover:border-emerald-500/30 shadow-xl transition-all duration-300 flex flex-col justify-between group"
     >
       {/* Hover glow */}
       <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-emerald-500/3 to-transparent pointer-events-none" />
@@ -59,20 +59,20 @@ export const SolutionCard: React.FC<SolutionCardProps> = ({ solution, index }) =
           </span>
         </div>
 
-        <h3 className="text-xl font-bold text-white dark:text-white light:text-neutral-900 mb-2.5">
+        <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2.5">
           {solution.title}
         </h3>
 
-        <p className="text-sm text-neutral-400 dark:text-neutral-400 light:text-neutral-600 leading-relaxed mb-5">
+        <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-5">
           {solution.description}
         </p>
       </div>
 
-      <div className="relative pt-4 border-t border-white/5 dark:border-white/5 light:border-neutral-100 space-y-2">
+      <div className="relative pt-4 border-t border-[var(--border-color)]/50 space-y-2">
         {solution.highlights.map((highlight) => (
           <div
             key={highlight}
-            className="flex items-center gap-2 text-xs font-medium text-neutral-400 dark:text-neutral-400 light:text-neutral-600"
+            className="flex items-center gap-2 text-xs font-medium text-[var(--text-secondary)]"
           >
             <CheckCircle style={{ color: solution.accent }} className="w-3.5 h-3.5 flex-shrink-0" />
             <span>{highlight}</span>

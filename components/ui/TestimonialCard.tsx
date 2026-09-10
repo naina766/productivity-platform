@@ -8,7 +8,7 @@ interface TestimonialCardProps {
 
 export const TestimonialCard: React.FC<TestimonialCardProps> = ({ testimonial }) => {
   return (
-    <div className="h-full p-7 sm:p-8 rounded-2xl bg-[#111111] dark:bg-[#111111] light:bg-white border border-white/8 dark:border-white/8 light:border-neutral-200 shadow-xl flex flex-col justify-between relative group hover:border-emerald-500/30 dark:hover:border-emerald-500/30 light:hover:border-emerald-500/30 transition-all duration-300">
+    <div className="h-full p-7 sm:p-8 rounded-2xl bg-[var(--card-main)] border border-[var(--border-color)] shadow-xl flex flex-col justify-between relative group hover:border-emerald-500/30 transition-all duration-300">
       {/* Hover glow */}
       <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-emerald-500/3 to-transparent pointer-events-none" />
 
@@ -27,7 +27,7 @@ export const TestimonialCard: React.FC<TestimonialCardProps> = ({ testimonial })
         </div>
 
         {/* Quote text */}
-        <blockquote className="text-base sm:text-lg text-neutral-200 dark:text-neutral-200 light:text-neutral-800 leading-relaxed italic mb-6">
+        <blockquote className="text-base sm:text-lg text-[var(--text-primary)] leading-relaxed italic mb-6">
           &ldquo;{testimonial.quote}&rdquo;
         </blockquote>
       </div>
@@ -35,13 +35,13 @@ export const TestimonialCard: React.FC<TestimonialCardProps> = ({ testimonial })
       <div className="relative">
         {/* Metric badge */}
         {testimonial.metric && (
-          <div className="mb-4 inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 dark:text-emerald-400 light:text-emerald-700 text-xs font-semibold border border-emerald-500/20">
+          <div className="mb-4 inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-500/10 text-[var(--accent-primary)] text-xs font-semibold border border-emerald-500/20">
             ⚡ {testimonial.metric}
           </div>
         )}
 
         {/* Author details */}
-        <div className="flex items-center gap-3.5 pt-4 border-t border-white/5 dark:border-white/5 light:border-neutral-100">
+        <div className="flex items-center gap-3.5 pt-4 border-t border-[var(--border-color)]/50">
           {/* Avatar initials instead of external images */}
           <div
             className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold text-white border border-emerald-500/30 flex-shrink-0"
@@ -51,12 +51,12 @@ export const TestimonialCard: React.FC<TestimonialCardProps> = ({ testimonial })
             {testimonial.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
           </div>
           <div>
-            <div className="text-sm font-bold text-white dark:text-white light:text-neutral-900">
+            <div className="text-sm font-bold text-[var(--text-primary)]">
               {testimonial.name}
             </div>
-            <div className="text-xs text-neutral-500 dark:text-neutral-500 light:text-neutral-500">
+            <div className="text-xs text-[var(--text-muted)]">
               {testimonial.role},{' '}
-              <span className="text-neutral-300 dark:text-neutral-300 light:text-neutral-700 font-medium">
+              <span className="text-[var(--text-secondary)] font-medium">
                 {testimonial.company}
               </span>
             </div>

@@ -3,7 +3,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useCountUp } from '@/lib/hooks/useCountUp';
-import { Users, FolderCheck, Zap, Smile } from 'lucide-react';
+import { FolderCheck, Zap, Clock, BarChart3 } from 'lucide-react';
 
 interface StatItemProps {
   end: number;
@@ -34,22 +34,22 @@ const StatItem: React.FC<StatItemProps> = ({
   });
 
   return (
-    <div className="p-6 sm:p-8 rounded-2xl bg-[#111111] dark:bg-[#111111] light:bg-white border border-white/8 dark:border-white/8 light:border-neutral-200 hover:border-emerald-500/30 dark:hover:border-emerald-500/30 light:hover:border-emerald-500/30 shadow-xl transition-all duration-300 text-center flex flex-col items-center group">
-      <div className="w-12 h-12 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/10 light:bg-emerald-50 text-emerald-400 dark:text-emerald-400 light:text-emerald-600 flex items-center justify-center mb-4 border border-emerald-500/20 group-hover:scale-110 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300">
+    <div className="p-6 sm:p-8 rounded-2xl bg-[var(--card-main)] border border-[var(--border-color)] hover:border-emerald-500/30 dark:hover:border-emerald-500/30 shadow-xl transition-all duration-300 text-center flex flex-col items-center group">
+      <div className="w-12 h-12 rounded-xl bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] flex items-center justify-center mb-4 border border-emerald-500/20 group-hover:scale-110 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300">
         <Icon className="w-6 h-6" />
       </div>
 
-      <div className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white dark:text-white light:text-neutral-950 font-mono tracking-tight mb-2">
+      <div className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[var(--text-primary)] font-mono tracking-tight mb-2">
         {prefix}
         {animatedValue}
         {suffix}
       </div>
 
-      <div className="text-base font-bold text-neutral-200 dark:text-neutral-200 light:text-neutral-800 mb-1">
+      <div className="text-base font-bold text-[var(--text-primary)] mb-1">
         {label}
       </div>
 
-      <div className="text-xs text-neutral-500 dark:text-neutral-500 light:text-neutral-500">
+      <div className="text-xs text-[var(--text-muted)]">
         {sublabel}
       </div>
     </div>
@@ -79,7 +79,7 @@ export const Stats: React.FC = () => {
   }, []);
 
   return (
-    <section ref={ref} className="py-20 bg-[#0A0A0A] dark:bg-[#0A0A0A] light:bg-neutral-50/70 border-y border-white/6 dark:border-white/6 light:border-neutral-200">
+    <section ref={ref} className="py-20 bg-[var(--bg-secondary)] border-y border-[var(--border-color)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -88,47 +88,46 @@ export const Stats: React.FC = () => {
           transition={{ duration: 0.4 }}
           className="text-center max-w-2xl mx-auto mb-14"
         >
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white dark:text-white light:text-neutral-900 tracking-tight">
-            Proven velocity at enterprise scale.
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-[var(--text-primary)] tracking-tight">
+            Built for velocity.
           </h2>
-          <p className="mt-2 text-sm sm:text-base text-neutral-400 dark:text-neutral-400 light:text-neutral-600">
-            Real metrics from teams shipping every day with NOVA.
+          <p className="mt-2 text-sm sm:text-base text-[var(--text-secondary)]">
+            Designed to help teams ship faster with less overhead.
           </p>
         </motion.div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatItem
-            end={10}
-            suffix="K+"
-            label="Teams"
-            sublabel="Worldwide on NOVA"
+            end={3}
+            suffix=" sec"
+            label="Avg. page load"
+            sublabel="Under 3 seconds globally"
             startWhen={isInView}
-            icon={Users}
+            icon={Clock}
           />
           <StatItem
-            end={250}
-            suffix="K+"
-            label="Projects completed"
-            sublabel="Delivered on schedule"
+            end={100}
+            suffix="%"
+            label="Open source ready"
+            sublabel="Self-host or use our cloud"
             startWhen={isInView}
             icon={FolderCheck}
           />
           <StatItem
-            end={1.2}
-            decimals={1}
-            suffix="M+"
-            label="Tasks automated"
-            sublabel="Without manual intervention"
+            end={24}
+            suffix="/7"
+            label="Uptime target"
+            sublabel="Designed for reliability"
             startWhen={isInView}
             icon={Zap}
           />
           <StatItem
-            end={98}
-            suffix="%"
-            label="Customer satisfaction"
-            sublabel="CSAT across 24 countries"
+            end={50}
+            suffix="+"
+            label="Built-in actions"
+            sublabel="Automation building blocks"
             startWhen={isInView}
-            icon={Smile}
+            icon={BarChart3}
           />
         </div>
       </div>

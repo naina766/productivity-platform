@@ -46,23 +46,23 @@ export const ProductShowcase: React.FC = () => {
   ];
 
   return (
-    <section id="product" className="py-24 bg-[#0A0A0A] dark:bg-[#0A0A0A] light:bg-neutral-50/50 border-y border-white/6 dark:border-white/6 light:border-neutral-200">
+    <section id="product" className="py-24 bg-[var(--bg-secondary)] border-y border-[var(--border-color)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
           {/* Left Column */}
           <div className="lg:col-span-5 space-y-8">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 dark:bg-teal-500/10 light:bg-teal-50 border border-teal-500/20 text-teal-400 dark:text-teal-400 light:text-teal-700 text-xs font-semibold uppercase tracking-wider mb-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--accent-teal)]/10 border border-teal-500/20 text-[var(--accent-teal)] text-xs font-semibold uppercase tracking-wider mb-4">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Unified Operating Platform</span>
               </div>
 
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white dark:text-white light:text-neutral-950 tracking-tight leading-tight">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[var(--text-primary)] tracking-tight leading-tight">
                 Your team's entire workflow.{' '}
                 <span className="text-emerald-400">Reimagined.</span>
               </h2>
 
-              <p className="mt-4 text-base sm:text-lg text-neutral-400 dark:text-neutral-400 light:text-neutral-600 leading-relaxed">
+              <p className="mt-4 text-base sm:text-lg text-[var(--text-secondary)] leading-relaxed">
                 Traditional software stacks force teams to toggle between five isolated tools. NOVA brings together projects, tasks, collaboration, AI automation, and analytics into one intelligent workspace.
               </p>
             </div>
@@ -74,16 +74,16 @@ export const ProductShowcase: React.FC = () => {
                 return (
                   <div
                     key={pillar.title}
-                    className="flex items-start gap-3.5 p-3 rounded-xl bg-white/4 dark:bg-white/4 light:bg-white border border-white/6 dark:border-white/6 light:border-neutral-200 hover:border-emerald-500/25 transition-all duration-200"
+                    className="flex items-start gap-3.5 p-3 rounded-xl bg-[var(--card-main)] border border-[var(--border-color)] hover:border-emerald-500/25 transition-all duration-200"
                   >
-                    <div className="w-9 h-9 rounded-lg bg-emerald-500/10 text-emerald-400 dark:text-emerald-400 light:text-emerald-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <div className="w-9 h-9 rounded-lg bg-emerald-500/10 text-[var(--accent-primary)] flex items-center justify-center flex-shrink-0 mt-0.5">
                       <Icon className="w-4 h-4" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-white dark:text-white light:text-neutral-900">
+                      <h3 className="text-sm font-bold text-[var(--text-primary)]">
                         {pillar.title}
                       </h3>
-                      <p className="text-xs text-neutral-500 dark:text-neutral-500 light:text-neutral-600 mt-0.5">
+                      <p className="text-xs text-[var(--text-muted)] mt-0.5">
                         {pillar.desc}
                       </p>
                     </div>
@@ -106,14 +106,14 @@ export const ProductShowcase: React.FC = () => {
           {/* Right Column: Interactive Product Mockup */}
           <div className="lg:col-span-7">
             {/* View Switcher Tabs */}
-            <div className="flex items-center gap-2 mb-4 p-1.5 rounded-xl bg-neutral-900/80 dark:bg-neutral-900/80 light:bg-neutral-200/80 border border-white/8 dark:border-white/8 light:border-neutral-300 w-fit">
+            <div className="flex items-center gap-2 mb-4 p-1.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-color)] w-fit">
               <button
                 type="button"
                 onClick={() => setActiveTab('sprint')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   activeTab === 'sprint'
                     ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-500/20'
-                    : 'text-neutral-400 hover:text-white dark:hover:text-white light:hover:text-neutral-900'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                 }`}
               >
                 Sprint Board
@@ -124,7 +124,7 @@ export const ProductShowcase: React.FC = () => {
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
                   activeTab === 'ai'
                     ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-500/20'
-                    : 'text-neutral-400 hover:text-white dark:hover:text-white light:hover:text-neutral-900'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                 }`}
               >
                 <Sparkles className="w-3 h-3 text-lime-300" />
@@ -136,7 +136,7 @@ export const ProductShowcase: React.FC = () => {
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   activeTab === 'analytics'
                     ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-500/20'
-                    : 'text-neutral-400 hover:text-white dark:hover:text-white light:hover:text-neutral-900'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                 }`}
               >
                 DORA Metrics
@@ -145,12 +145,12 @@ export const ProductShowcase: React.FC = () => {
 
             {/* Mockup Frame */}
             <div className="rounded-2xl p-[1px] bg-gradient-to-b from-emerald-500/20 via-white/6 to-white/0 shadow-2xl shadow-emerald-900/10">
-              <div className="bg-[#111111] dark:bg-[#111111] light:bg-white rounded-[14px] border border-white/8 light:border-neutral-200 overflow-hidden text-left min-h-[440px] flex flex-col">
+              <div className="bg-[var(--card-main)] rounded-[14px] border border-[var(--border-color)] overflow-hidden text-left min-h-[440px] flex flex-col">
                 {/* Topbar */}
-                <div className="bg-[#0A0A0A] dark:bg-[#0A0A0A] light:bg-neutral-100 px-5 py-3 border-b border-white/8 light:border-neutral-200 flex items-center justify-between">
+                <div className="bg-[var(--bg-secondary)] px-5 py-3 border-b border-[var(--border-color)] flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="text-xs font-bold text-white dark:text-white light:text-neutral-900">
+                    <span className="text-xs font-bold text-[var(--text-primary)]">
                       NOVA Workspace — Production
                     </span>
                   </div>
@@ -173,7 +173,7 @@ export const ProductShowcase: React.FC = () => {
                       >
                         <div className="flex items-center justify-between">
                           <div>
-                            <h4 className="text-sm font-bold text-white dark:text-white light:text-neutral-900">
+                            <h4 className="text-sm font-bold text-[var(--text-primary)]">
                               Platform 3.0 Release
                             </h4>
                             <p className="text-xs text-neutral-500">18 done · 4 in progress · 2 in review</p>
@@ -210,7 +210,7 @@ export const ProductShowcase: React.FC = () => {
                           ].map((col) => (
                             <div
                               key={col.label}
-                              className="p-3 rounded-xl bg-white/4 light:bg-neutral-50 border border-white/6 light:border-neutral-200 space-y-2.5"
+                              className="p-3 rounded-xl bg-[var(--card-elevated)] border border-[var(--border-color)] space-y-2.5"
                             >
                               <div className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider flex items-center justify-between">
                                 <span>{col.label}</span>
@@ -219,9 +219,9 @@ export const ProductShowcase: React.FC = () => {
                               {col.tasks.map((task) => (
                                 <div
                                   key={task.name}
-                                  className="p-2.5 rounded-lg bg-[#0A0A0A] dark:bg-[#0A0A0A] light:bg-white border border-white/8 light:border-neutral-200 shadow-sm"
+                                  className="p-2.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-color)] shadow-sm"
                                 >
-                                  <div className={`text-xs font-semibold text-white dark:text-white light:text-neutral-900 mb-1 ${task.strike ? 'line-through text-neutral-500' : ''}`}>
+                                  <div className={`text-xs font-semibold text-[var(--text-primary)] mb-1 ${task.strike ? 'line-through text-[var(--text-muted)]' : ''}`}>
                                     {task.name}
                                   </div>
                                   <div className="flex items-center justify-between text-[10px] text-neutral-500">
@@ -245,13 +245,13 @@ export const ProductShowcase: React.FC = () => {
                         transition={{ duration: 0.2 }}
                         className="space-y-4"
                       >
-                        <div className="p-4 rounded-xl bg-emerald-950/40 dark:bg-emerald-950/40 light:bg-emerald-50 border border-emerald-500/25">
+                        <div className="p-4 rounded-xl bg-[var(--accent-primary)]/10 border border-emerald-500/25">
                           <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold mb-2">
                             <Sparkles className="w-4 h-4" />
                             <span>AI Sprint Synthesis (generated in 1.2s)</span>
                           </div>
-                          <p className="text-xs text-neutral-300 dark:text-neutral-300 light:text-neutral-700 leading-relaxed">
-                            Sprint 42 is pacing <strong className="text-white light:text-neutral-900">18% ahead</strong> of historic velocity. 4 frontend–backend dependency pairs were auto-linked, preventing an estimated 6 hours of blocker meetings.
+                          <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                            Sprint 42 is pacing <strong className="text-[var(--text-primary)]">18% ahead</strong> of historic velocity. 4 frontend–backend dependency pairs were auto-linked, preventing an estimated 6 hours of blocker meetings.
                           </p>
                         </div>
 
@@ -264,9 +264,9 @@ export const ProductShowcase: React.FC = () => {
                           ].map((action) => (
                             <div
                               key={action.label}
-                              className="p-2.5 rounded-lg bg-white/4 light:bg-neutral-50 border border-white/6 light:border-neutral-200 flex items-center justify-between text-xs"
+                              className="p-2.5 rounded-lg bg-[var(--card-elevated)] border border-[var(--border-color)] flex items-center justify-between text-xs"
                             >
-                              <span className="text-neutral-300 dark:text-neutral-300 light:text-neutral-800">
+                              <span className="text-[var(--text-secondary)]">
                                 {action.label}
                               </span>
                               <span className="text-emerald-400 font-medium flex items-center gap-1">
@@ -296,19 +296,19 @@ export const ProductShowcase: React.FC = () => {
                           ].map((stat) => (
                             <div
                               key={stat.label}
-                              className="p-3 rounded-xl bg-white/4 light:bg-neutral-50 border border-white/6 light:border-neutral-200"
+                              className="p-3 rounded-xl bg-[var(--card-elevated)] border border-[var(--border-color)]"
                             >
                               <div className="text-[11px] text-neutral-500">{stat.label}</div>
-                              <div className="text-lg font-bold text-white dark:text-white light:text-neutral-900">{stat.value}</div>
+                              <div className="text-lg font-bold text-[var(--text-primary)]">{stat.value}</div>
                               <div className="text-[10px] text-emerald-400">{stat.sub}</div>
                             </div>
                           ))}
                         </div>
 
                         {/* Bar chart */}
-                        <div className="p-4 rounded-xl bg-white/4 light:bg-neutral-50 border border-white/6 light:border-neutral-200">
+                        <div className="p-4 rounded-xl bg-[var(--card-elevated)] border border-[var(--border-color)]">
                           <div className="flex items-center justify-between text-xs text-neutral-500 mb-3">
-                            <span className="font-semibold text-white dark:text-white light:text-neutral-900 flex items-center gap-1.5">
+                            <span className="font-semibold text-[var(--text-primary)] flex items-center gap-1.5">
                               <Activity className="w-3.5 h-3.5 text-emerald-400" />
                               Sprint Velocity Trajectory
                             </span>
@@ -332,7 +332,7 @@ export const ProductShowcase: React.FC = () => {
                 </div>
 
                 {/* Footer status */}
-                <div className="bg-[#0A0A0A] dark:bg-[#0A0A0A] light:bg-neutral-100 px-5 py-2.5 border-t border-white/8 light:border-neutral-200 flex items-center justify-between text-[11px] text-neutral-500">
+                <div className="bg-[var(--bg-secondary)] px-5 py-2.5 border-t border-[var(--border-color)] flex items-center justify-between text-[11px] text-[var(--text-muted)]">
                   <span>⚡ NOVA Engine v4.2 · Connected to GitHub</span>
                   <span className="text-emerald-400 font-medium">Latency: 28ms</span>
                 </div>

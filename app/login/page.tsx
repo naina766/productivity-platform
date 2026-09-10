@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <main className="min-h-screen bg-[#050505] dark:bg-[#050505] light:bg-[#F7F7F5] text-[#F5F5F5] light:text-[#171717] flex flex-col items-center justify-center px-4 py-16 relative overflow-hidden">
+    <main className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] flex flex-col items-center justify-center px-4 py-16 relative overflow-hidden">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-emerald-600/8 blur-[120px] rounded-full"
@@ -18,11 +18,11 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-md text-center">
         <div className="inline-flex items-center gap-2.5 mb-8">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-lime-400 p-[1.5px] shadow-md shadow-emerald-500/20">
-            <div className="w-full h-full bg-[#050505] dark:bg-[#050505] light:bg-white rounded-[10px] flex items-center justify-center">
+            <div className="w-full h-full bg-[var(--card-main)] rounded-[10px] flex items-center justify-center">
               <Zap className="w-4 h-4 text-emerald-400" />
             </div>
           </div>
-          <span className="text-2xl font-bold tracking-tight text-white dark:text-white light:text-neutral-900">
+          <span className="text-2xl font-bold tracking-tight text-[var(--text-primary)]">
             NOVA
           </span>
         </div>
@@ -30,23 +30,51 @@ export default function LoginPage() {
         <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-3">
           Welcome back.
         </h1>
-        <p className="text-base text-neutral-400 dark:text-neutral-400 light:text-neutral-600 leading-relaxed mb-10">
-          Authentication is a separate phase. This page is reserved for the upcoming login experience.
+        <p className="text-base text-[var(--text-secondary)] leading-relaxed mb-10">
+          Sign in to access your NOVA workspace.
         </p>
 
-        <div className="rounded-2xl bg-[#111111] dark:bg-[#111111] light:bg-white border border-white/8 light:border-neutral-200 p-8">
-          <div className="text-5xl mb-4">🔒</div>
-          <h2 className="text-lg font-bold mb-2">Coming soon</h2>
-          <p className="text-sm text-neutral-400 dark:text-neutral-400 light:text-neutral-600 mb-6">
-            Sign-in with SSO, email, or magic links will land with the authentication phase.
+        <div className="rounded-2xl bg-[var(--card-main)] border border-[var(--border-color)] p-8">
+          <form className="space-y-4 text-left">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">
+                Email address
+              </label>
+              <input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                autoComplete="email"
+                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 transition-all"
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                autoComplete="current-password"
+                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 transition-all"
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-500 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500"
+            >
+              <span>Sign in</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </form>
+
+          <p className="mt-6 text-center text-sm text-[var(--text-muted)]">
+            Don&apos;t have an account?{' '}
+            <Link href="/register" className="text-[var(--accent-primary)] hover:text-[var(--accent-highlight)] font-medium">
+              Sign up
+            </Link>
           </p>
-          <Link
-            href="/"
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-500 transition-colors"
-          >
-            <span>Back to home</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
         </div>
       </div>
     </main>

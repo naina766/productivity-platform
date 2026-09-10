@@ -45,16 +45,16 @@ export const HowItWorks: React.FC = () => {
           transition={{ duration: 0.4 }}
           className="text-center max-w-3xl mx-auto mb-16"
         >
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-500/10 light:bg-emerald-50 border border-emerald-500/20 text-emerald-400 dark:text-emerald-400 light:text-emerald-700 text-xs font-semibold uppercase tracking-wider mb-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--accent-primary)]/10 border border-emerald-500/20 text-[var(--accent-primary)] text-xs font-semibold uppercase tracking-wider mb-3">
             <Sparkles className="w-3.5 h-3.5" />
             <span>Seamless Workflow</span>
           </div>
 
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white dark:text-white light:text-neutral-950 tracking-tight mb-4">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[var(--text-primary)] tracking-tight mb-4">
             From idea to impact in three steps.
           </h2>
 
-          <p className="text-base sm:text-lg text-neutral-400 dark:text-neutral-400 light:text-neutral-600 leading-relaxed">
+          <p className="text-base sm:text-lg text-[var(--text-secondary)] leading-relaxed">
             Eliminate chaotic onboarding and steep learning curves. NOVA is engineered to get your squad into deep execution flow within minutes.
           </p>
         </motion.div>
@@ -78,7 +78,7 @@ export const HowItWorks: React.FC = () => {
                   viewport={{ once: true, margin: '-40px' }}
                   transition={{ duration: 0.5, delay: index * 0.15 }}
                   whileHover={{ y: -4 }}
-                  className="relative p-7 rounded-2xl bg-[#111111] dark:bg-[#111111] light:bg-white border border-white/8 dark:border-white/8 light:border-neutral-200 hover:border-emerald-500/35 dark:hover:border-emerald-500/35 light:hover:border-emerald-500/35 shadow-xl transition-all duration-300 flex flex-col justify-between group"
+                  className="relative p-7 rounded-2xl bg-[var(--card-main)] border border-[var(--border-color)] hover:border-emerald-500/35 dark:hover:border-emerald-500/35 shadow-xl transition-all duration-300 flex flex-col justify-between group"
                 >
                   {/* Hover glow */}
                   <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-emerald-500/4 to-transparent pointer-events-none" />
@@ -89,25 +89,25 @@ export const HowItWorks: React.FC = () => {
                       <span className="text-3xl font-extrabold bg-gradient-to-r from-emerald-400 to-lime-400 bg-clip-text text-transparent font-mono">
                         {item.step}
                       </span>
-                      <div className="w-12 h-12 rounded-xl bg-white/5 dark:bg-white/5 light:bg-neutral-100 flex items-center justify-center text-emerald-400 dark:text-emerald-400 light:text-emerald-600 border border-white/8 dark:border-white/8 light:border-neutral-200 group-hover:scale-110 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300">
+                      <div className="w-12 h-12 rounded-xl bg-[var(--card-main)]/50 flex items-center justify-center text-[var(--accent-primary)] border border-[var(--border-color)] group-hover:scale-110 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300">
                         <Icon className="w-6 h-6" />
                       </div>
                     </div>
 
-                    <h3 className="text-xl font-bold text-white dark:text-white light:text-neutral-900 mb-2">
+                    <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">
                       {item.title}
                     </h3>
 
-                    <h4 className="text-sm font-semibold text-emerald-400 dark:text-emerald-400 light:text-emerald-600 mb-3">
+                    <h4 className="text-sm font-semibold text-[var(--accent-primary)] mb-3">
                       &ldquo;{item.tagline}&rdquo;
                     </h4>
 
-                    <p className="text-sm text-neutral-400 dark:text-neutral-400 light:text-neutral-600 leading-relaxed">
+                    <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
                       {item.description}
                     </p>
                   </div>
 
-                  <div className="relative pt-6 mt-6 border-t border-white/5 dark:border-white/5 light:border-neutral-100 flex items-center text-xs font-medium text-neutral-500 group-hover:text-emerald-400 transition-colors">
+                  <div className="relative pt-6 mt-6 border-t border-[var(--border-color)] flex items-center text-xs font-medium text-[var(--text-muted)] group-hover:text-[var(--accent-primary)] transition-colors">
                     <span>Explore Step {item.step} Guide</span>
                     <ArrowRight className="w-3.5 h-3.5 ml-1.5 group-hover:translate-x-1 transition-transform" />
                   </div>
