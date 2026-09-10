@@ -1,0 +1,61 @@
+import type { PricingPlan } from '../types';
+
+export const pricingPlans: PricingPlan[] = [
+  {
+    id: 'starter',
+    name: 'Starter',
+    monthlyPrice: 0,
+    yearlyPrice: 0,
+    description: 'Essential task management and collaboration for individuals and small teams getting started.',
+    features: [
+      'Up to 3 active projects',
+      'Basic task management & kanban',
+      'Team collaboration & comments',
+      'Basic velocity analytics',
+      'Community support',
+      '1 GB secure cloud storage',
+    ],
+    highlighted: false,
+    ctaText: 'Get Started Free',
+  },
+  {
+    id: 'pro',
+    name: 'Pro',
+    monthlyPrice: 18,
+    yearlyPrice: 15, // Save ~17-20%
+    description: 'Intelligent AI superpowers and automated workflows for fast-growing, ambitious teams.',
+    features: [
+      'Unlimited active projects',
+      'AI task assistant & smart synthesizer',
+      'Advanced predictive analytics',
+      'Multi-step workflow automation',
+      'Priority 24/7 email & chat support',
+      '100 GB team cloud storage',
+      'Custom dashboards & exports',
+      'GitHub, Slack & Figma integrations',
+    ],
+    highlighted: true,
+    badge: 'Most Popular',
+    ctaText: 'Start 14-Day Free Trial',
+  },
+  {
+    id: 'business',
+    name: 'Business',
+    monthlyPrice: 39,
+    yearlyPrice: 31,
+    description: 'Enterprise-grade governance, custom security controls, and tailored AI workflows for large organizations.',
+    features: [
+      'Everything in Pro plan included',
+      'Advanced role-based permissions (RBAC)',
+      'Custom multi-agent workflows',
+      'Team velocity & capacity analytics',
+      'Dedicated Customer Success Manager',
+      'Unlimited storage & SOC 2 audit logs',
+      'SSO (SAML, Okta, Google Workspace)',
+      '99.99% guaranteed uptime SLA',
+    ],
+    highlighted: false,
+    badge: 'Enterprise Ready',
+    ctaText: 'Contact Sales',
+  },
+];
