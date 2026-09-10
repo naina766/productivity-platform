@@ -8,9 +8,17 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+
 dist
 dist-ssr
 *.local
+
+# Next.js
+.next
+out
+
+# TypeScript incremental build info
+*.tsbuildinfo
 
 # Editor directories and files
 .vscode/*

@@ -1,0 +1,251 @@
+// NOVA productivity platform — Phase 1 Prisma schema (PostgreSQL)
+// Layered access: routes -> controllers -> services -> Prisma -> PostgreSQL
+// Conventions: UUID PKs, createdAt/updatedAt everywhere, intentional onDelete behavior.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  ARCHIVED
+}
+
+enum ProjectPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ActivityType {
+  PROJECT_CREATED
+  TASK_CREATED
+  TASK_ASSIGNED
+  TASK_STATUS_CHANGED
+  TASK_COMPLETED
+  COMMENT_ADDED
+  MEMBER_ADDED
+  MEMBER_REMOVED
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique @db.Citext
+  name         String
+  passwordHash String
+  avatarUrl    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  workspaces     WorkspaceMember[]
+  ownedWorkspaces Workspace[]      @relation("WorkspaceOwner")
+  projectMembers ProjectMember[]
+  assignedTasks  Task[]            @relation("TaskAssignee")
+  comments       TaskComment[]
+  activities     Activity[]        @relation("ActivityActor")
+  notifications  Notification[]
+
+  @@index([email])
+}
+
+model Workspace {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String   @unique
+  description String?
+  ownerId     String   @db.Uuid
+  owner       User     @relation("WorkspaceOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members  WorkspaceMember[]
+  projects Project[]
+  labels   Label[]
+
+  @@index([ownerId])
+}
+
+model WorkspaceMember {
+  id          String        @id @default(uuid()) @db.Uuid
+  workspaceId String        @db.Uuid
+  userId      String        @db.Uuid
+  role        WorkspaceRole @default(MEMBER)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@index([workspaceId])
+  @@index([userId])
+}
+
+model Project {
+  id          String          @id @default(uuid()) @db.Uuid
+  workspaceId String          @db.Uuid
+  name        String
+  description String?
+  status      ProjectStatus   @default(PLANNING)
+  priority    ProjectPriority @default(MEDIUM)
+  startDate   DateTime?
+  dueDate     DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  members    ProjectMember[]
+  tasks      Task[]
+  activities Activity[]
+
+  @@index([workspaceId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model ProjectMember {
+  id        String   @id @default(uuid()) @db.Uuid
+  projectId String   @db.Uuid
+  userId    String   @db.Uuid
+  role      WorkspaceRole @default(MEMBER)
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+}
+
+model Task {
+  id          String       @id @default(uuid()) @db.Uuid
+  projectId   String       @db.Uuid
+  title       String
+  description String?
+  status      TaskStatus   @default(TODO)
+  priority    TaskPriority @default(MEDIUM)
+  dueDate     DateTime?
+  assigneeId  String?      @db.Uuid
+  position    Int          @default(0) // ordering within a status column (Kanban)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee User?   @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+
+  comments TaskComment[]
+  labels   TaskLabel[]
+  activities Activity[]
+  notifications Notification[]
+
+  @@index([projectId])
+  @@index([projectId, status])
+  @@index([assigneeId])
+  @@index([dueDate])
+  @@index([status])
+}
+
+model TaskComment {
+  id        String   @id @default(uuid()) @db.Uuid
+  taskId    String   @db.Uuid
+  authorId  String   @db.Uuid
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  task   Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([authorId])
+}
+
+model Label {
+  id          String   @id @default(uuid()) @db.Uuid
+  workspaceId String   @db.Uuid
+  name        String
+  color       String   @default("#22C55E") // NOVA palette only (no blue/purple)
+  createdAt   DateTime @default(now())
+
+  workspace Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  tasks     TaskLabel[]
+
+  @@unique([workspaceId, name])
+  @@index([workspaceId])
+}
+
+model TaskLabel {
+  taskId  String @db.Uuid
+  labelId String @db.Uuid
+
+  task  Task  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  label Label @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, labelId])
+  @@index([labelId])
+}
+
+model Activity {
+  id          String       @id @default(uuid()) @db.Uuid
+  projectId   String       @db.Uuid
+  taskId      String?      @db.Uuid
+  actorId     String       @db.Uuid
+  type        ActivityType
+  message     String
+  metadata    Json?
+  createdAt   DateTime     @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  task    Task?   @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  actor   User    @relation("ActivityActor", fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt])
+  @@index([taskId])
+}
+
+model Notification {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  taskId    String?   @db.Uuid
+  title     String
+  body      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task Task? @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+}
