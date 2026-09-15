@@ -18,6 +18,7 @@ export class ApiError extends Error {
 // In-memory access token store — survives re-renders but clears on page reload.
 // The refresh cookie (HttpOnly) is used to re-issue a new one on reload.
 let _accessToken: string | null = null;
+let _refreshPromise: Promise<string> | null = null;
 
 export function setAccessToken(token: string | null): void {
   _accessToken = token;
@@ -29,6 +30,39 @@ export function getAccessToken(): string | null {
 
 interface FetchOptions extends RequestInit {
   skipAuth?: boolean;
+  _retryCount?: number;
+}
+
+async function requestRefresh(): Promise<string> {
+  if (!_refreshPromise) {
+    _refreshPromise = (async () => {
+      try {
+        const res = await fetch('/api/auth/refresh', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+        if (!res.ok || !body['accessToken'] || typeof body['accessToken'] !== 'string') {
+          setAccessToken(null);
+          const message =
+            typeof body['message'] === 'string'
+              ? body['message']
+              : 'Session refresh failed';
+          throw new ApiError(res.status || 401, message);
+        }
+        const newToken = body['accessToken'] as string;
+        setAccessToken(newToken);
+        return newToken;
+      } catch (err) {
+        setAccessToken(null);
+        throw err;
+      } finally {
+        _refreshPromise = null;
+      }
+    })();
+  }
+  return _refreshPromise;
 }
 
 async function apiFetch<T = unknown>(path: string, options: FetchOptions = {}): Promise<T> {
@@ -47,7 +81,29 @@ async function apiFetch<T = unknown>(path: string, options: FetchOptions = {}): 
     headers,
   });
 
-  const body = await res.json().catch(() => ({})) as Record<string, unknown>;
+  // Automatically refresh and retry once on 401 (preventing loops and auth route deadlocks)
+  if (
+    res.status === 401 &&
+    !options.skipAuth &&
+    !path.startsWith('/api/auth/') &&
+    (!options._retryCount || options._retryCount < 1)
+  ) {
+    try {
+      const newToken = await requestRefresh();
+      return await apiFetch<T>(path, {
+        ...options,
+        _retryCount: (options._retryCount ?? 0) + 1,
+        headers: {
+          ...options.headers,
+          Authorization: `Bearer ${newToken}`,
+        },
+      });
+    } catch {
+      // Refresh failed — fall through to standard error throw below
+    }
+  }
+
+  const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;
 
   if (!res.ok) {
     const message =
@@ -106,10 +162,8 @@ export async function apiRegister(name: string, email: string, password: string)
 }
 
 export async function apiRefresh(): Promise<{ accessToken: string }> {
-  return apiFetch<{ accessToken: string }>('/api/auth/refresh', {
-    method: 'POST',
-    skipAuth: true,
-  });
+  const accessToken = await requestRefresh();
+  return { accessToken };
 }
 
 export async function apiMe(accessToken: string): Promise<MeResponse> {

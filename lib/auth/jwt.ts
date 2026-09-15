@@ -1,4 +1,4 @@
-﻿import jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { randomUUID } from 'crypto';
 
 export interface AccessTokenPayload {
@@ -13,7 +13,7 @@ export interface RefreshTokenPayload {
 }
 
 function requireSecret(name: string): string {
-  const val = process.env[name];
+  const val = process.env[name] ?? (name === 'JWT_ACCESS_SECRET' ? process.env.JWT_SECRET : undefined);
   if (!val) throw new Error(`${name} is not configured. Set it in .env.`);
   return val;
 }

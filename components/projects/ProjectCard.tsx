@@ -61,13 +61,17 @@ interface ProjectCardProps {
   index?: number;
 }
 
+function isDueSoon(dueDate: string | null): boolean {
+  if (!dueDate) return false;
+  const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+  return new Date(dueDate).getTime() < Date.now() + SEVEN_DAYS_MS;
+}
+
 export function ProjectCard({ project, index = 0 }: ProjectCardProps) {
   const status = STATUS_CONFIG[project.status] ?? STATUS_CONFIG.ACTIVE;
   const priorityDot = PRIORITY_DOT[project.priority] ?? 'bg-neutral-400';
 
-  const dueSoon =
-    project.dueDate &&
-    new Date(project.dueDate) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const dueSoon = isDueSoon(project.dueDate);
 
   return (
     <motion.div

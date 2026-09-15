@@ -84,7 +84,7 @@ export default function DashboardPage() {
     } finally {
       setProjectsLoading(false);
     }
-  }, [workspace?.id, searchTerm]);
+  }, [workspace, searchTerm]);
 
   useEffect(() => {
     if (!loading && isAuthenticated && workspace?.id) {
