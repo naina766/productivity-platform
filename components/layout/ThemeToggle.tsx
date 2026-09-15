@@ -14,6 +14,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ theme, onThemeChange }
     <div
       role="radiogroup"
       aria-label="Theme selection"
+      suppressHydrationWarning
       className="inline-flex items-center p-1 rounded-full bg-neutral-900/60 dark:bg-neutral-900/80 border border-neutral-800 dark:border-white/8 backdrop-blur-md"
     >
       <button
@@ -21,6 +22,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ theme, onThemeChange }
         role="radio"
         aria-checked={theme === 'light'}
         aria-label="Light theme"
+        suppressHydrationWarning
         onClick={() => onThemeChange('light')}
         className={`p-1.5 rounded-full transition-all duration-200 text-xs flex items-center justify-center focus-visible:ring-2 focus-visible:ring-emerald-500 ${
           theme === 'light'
@@ -36,6 +38,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ theme, onThemeChange }
         role="radio"
         aria-checked={theme === 'dark'}
         aria-label="Dark theme"
+        suppressHydrationWarning
         onClick={() => onThemeChange('dark')}
         className={`p-1.5 rounded-full transition-all duration-200 text-xs flex items-center justify-center focus-visible:ring-2 focus-visible:ring-emerald-500 ${
           theme === 'dark'
@@ -51,6 +54,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ theme, onThemeChange }
         role="radio"
         aria-checked={theme === 'system'}
         aria-label="System theme"
+        suppressHydrationWarning
         onClick={() => onThemeChange('system')}
         className={`p-1.5 rounded-full transition-all duration-200 text-xs flex items-center justify-center focus-visible:ring-2 focus-visible:ring-emerald-500 ${
           theme === 'system'
