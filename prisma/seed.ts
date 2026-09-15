@@ -1,4 +1,4 @@
-﻿/**
+/**
  * NOVA Prisma seed — local development / demo data only.
  * Run: npm run db:seed  (requires DATABASE_URL + migrated DB)
  *
@@ -17,23 +17,23 @@ async function main() {
 
   const owner = await prisma.user.upsert({
     where: { email: 'owner@nova.demo' },
-    update: {},
+    update: { passwordHash, name: 'Nova Owner' },
     create: { email: 'owner@nova.demo', name: 'Nova Owner', passwordHash },
   });
   const admin = await prisma.user.upsert({
     where: { email: 'admin@nova.demo' },
-    update: {},
+    update: { passwordHash, name: 'Nova Admin' },
     create: { email: 'admin@nova.demo', name: 'Nova Admin', passwordHash },
   });
   const member = await prisma.user.upsert({
     where: { email: 'member@nova.demo' },
-    update: {},
+    update: { passwordHash, name: 'Nova Member' },
     create: { email: 'member@nova.demo', name: 'Nova Member', passwordHash },
   });
 
   const workspace = await prisma.workspace.upsert({
     where: { slug: 'nova-demo' },
-    update: {},
+    update: { name: 'NOVA Demo Workspace', description: 'Seeded demo workspace for local development.' },
     create: {
       name: 'NOVA Demo Workspace',
       slug: 'nova-demo',
@@ -56,7 +56,12 @@ async function main() {
 
   const project = await prisma.project.upsert({
     where: { id: '00000000-0000-4000-8000-000000000001' },
-    update: {},
+    update: {
+      name: 'Website relaunch',
+      description: 'Seeded demo project: plan, build, and ship the new site.',
+      status: 'ACTIVE',
+      priority: 'HIGH',
+    },
     create: {
       id: '00000000-0000-4000-8000-000000000001',
       workspaceId: workspace.id,
@@ -76,14 +81,16 @@ async function main() {
   }
 
   const seedTasks = [
-    { title: 'Draft sitemap', status: TaskStatus.TODO, assigneeId: member.id },
-    { title: 'Design landing page', status: TaskStatus.IN_PROGRESS, assigneeId: admin.id },
-    { title: 'Review copy', status: TaskStatus.IN_REVIEW, assigneeId: owner.id },
-    { title: 'Set up analytics', status: TaskStatus.DONE, assigneeId: member.id },
+    { id: '00000000-0000-4000-8000-000000000011', title: 'Draft sitemap', status: TaskStatus.TODO, assigneeId: member.id },
+    { id: '00000000-0000-4000-8000-000000000012', title: 'Design landing page', status: TaskStatus.IN_PROGRESS, assigneeId: admin.id },
+    { id: '00000000-0000-4000-8000-000000000013', title: 'Review copy', status: TaskStatus.IN_REVIEW, assigneeId: owner.id },
+    { id: '00000000-0000-4000-8000-000000000014', title: 'Set up analytics', status: TaskStatus.DONE, assigneeId: member.id },
   ];
   for (const [i, t] of seedTasks.entries()) {
-    await prisma.task.create({
-      data: { projectId: project.id, title: t.title, status: t.status, assigneeId: t.assigneeId, position: i },
+    await prisma.task.upsert({
+      where: { id: t.id },
+      update: { title: t.title, status: t.status, assigneeId: t.assigneeId, position: i },
+      create: { id: t.id, projectId: project.id, title: t.title, status: t.status, assigneeId: t.assigneeId, position: i },
     });
   }
 

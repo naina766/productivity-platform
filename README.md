@@ -2,7 +2,22 @@
 
 NOVA is a high-performance, full-stack collaborative project management platform built with Next.js 15, React 19, TypeScript, PostgreSQL, and Prisma.
 
+> **Live Demo:** Coming soon
+
 Designed for high-velocity teams, NOVA structures collaboration into **Workspaces → Projects → Tasks**, backed by enterprise-grade role-based access control (RBAC), atomic database transactions, secure JWT authentication with refresh token rotation, real-time activity timelines, in-app notifications, and a dark-first aesthetic.
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| **Framework** | Next.js 15 (App Router, Server Components & Route Handlers) |
+| **Frontend** | React 19, TypeScript, Tailwind CSS 3, Framer Motion, Lucide Icons |
+| **Database & ORM** | PostgreSQL, Prisma ORM |
+| **Authentication** | In-memory JWT access tokens, HttpOnly refresh cookies with rotation, bcrypt password hashing |
+| **Validation** | Zod |
+| **Code Quality** | Oxlint, TypeScript strict mode |
 
 ---
 
@@ -135,30 +150,30 @@ Open [http://localhost:3000](http://localhost:3000) to explore NOVA.
 
 ## Screenshots
 
-To showcase the platform in your portfolio, capture real screenshots and store them under `public/screenshots/`:
+Interface screenshots are maintained in `docs/screenshots/`:
 
 ### Landing Page
-<!-- ![Landing Page](/screenshots/landing.png) -->
+<!-- ![Landing Page](docs/screenshots/landing.png) -->
 *High-converting hero section with dynamic particle backgrounds, feature grids, and interactive previews.*
 
 ### Dashboard
-<!-- ![Dashboard](/screenshots/dashboard.png) -->
+<!-- ![Dashboard](docs/screenshots/dashboard.png) -->
 *Workspace overview showcasing active project cards, quick filters, team members, and health indicators.*
 
 ### Project Board
-<!-- ![Project Board](/screenshots/project-board.png) -->
+<!-- ![Project Board](docs/screenshots/project-board.png) -->
 *Interactive Kanban board with drag-and-drop columns, priority tags, and assignee avatars.*
 
 ### Task Details
-<!-- ![Task Details](/screenshots/task-details.png) -->
+<!-- ![Task Details](docs/screenshots/task-detail.png) -->
 *Modal inspector featuring full task editing, status workflow, and threaded discussion comments.*
 
 ### Workspace Members
-<!-- ![Workspace Members](/screenshots/workspace-members.png) -->
+<!-- ![Workspace Members](docs/screenshots/members.png) -->
 *RBAC management modal with member directory, role assignment dropdowns, and invite controls.*
 
 ### Notifications
-<!-- ![Notifications](/screenshots/notifications.png) -->
+<!-- ![Notifications](docs/screenshots/notifications.png) -->
 *In-app notification drawer showing assignments, mentions, and bulk mark-as-read controls.*
 
 ---
