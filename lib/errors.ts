@@ -1,4 +1,4 @@
-﻿/** Operational error with HTTP status + machine-readable code. */
+/** Operational error with HTTP status + machine-readable code. */
 export class AppError extends Error {
   readonly status: number;
   readonly code: string;
@@ -32,3 +32,6 @@ export function buildErrorResponse(err: unknown): { success: false; message: str
   }
   return { success: false, message: 'Something went wrong. Please try again.' };
 }
+
+export { getErrorMessage } from './errors/normalize';
+

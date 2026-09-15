@@ -1,3 +1,5 @@
+import { getErrorMessage } from '@/lib/errors';
+
 /**
  * Centralised API client for browser-side calls to /api/auth/*.
  * - Uses same-origin relative URLs (no localhost:4000, no hardcoded port)
@@ -12,6 +14,7 @@ export class ApiError extends Error {
     message: string,
   ) {
     super(message);
+    this.name = 'ApiError';
   }
 }
 
@@ -28,6 +31,27 @@ export function getAccessToken(): string | null {
   return _accessToken;
 }
 
+// ─── Auth failure listener ───────────────────────────────────────────────────
+type AuthFailureCallback = () => void;
+const _authFailureCallbacks = new Set<AuthFailureCallback>();
+
+export function onAuthFailure(callback: AuthFailureCallback): () => void {
+  _authFailureCallbacks.add(callback);
+  return () => {
+    _authFailureCallbacks.delete(callback);
+  };
+}
+
+export function notifyAuthFailure(): void {
+  for (const cb of _authFailureCallbacks) {
+    try {
+      cb();
+    } catch {
+      // Ignore callback errors
+    }
+  }
+}
+
 interface FetchOptions extends RequestInit {
   skipAuth?: boolean;
   _retryCount?: number;
@@ -37,14 +61,23 @@ async function requestRefresh(): Promise<string> {
   if (!_refreshPromise) {
     _refreshPromise = (async () => {
       try {
-        const res = await fetch('/api/auth/refresh', {
-          method: 'POST',
-          credentials: 'same-origin',
-          headers: { 'Content-Type': 'application/json' },
-        });
+        let res: Response;
+        try {
+          res = await fetch('/api/auth/refresh', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+          });
+        } catch (fetchErr: unknown) {
+          setAccessToken(null);
+          notifyAuthFailure();
+          throw new ApiError(0, getErrorMessage(fetchErr) || 'Network error during session refresh');
+        }
+
         const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;
         if (!res.ok || !body['accessToken'] || typeof body['accessToken'] !== 'string') {
           setAccessToken(null);
+          notifyAuthFailure();
           const message =
             typeof body['message'] === 'string'
               ? body['message']
@@ -56,7 +89,9 @@ async function requestRefresh(): Promise<string> {
         return newToken;
       } catch (err) {
         setAccessToken(null);
-        throw err;
+        notifyAuthFailure();
+        if (err instanceof ApiError) throw err;
+        throw new ApiError(0, getErrorMessage(err));
       } finally {
         _refreshPromise = null;
       }
@@ -75,11 +110,17 @@ async function apiFetch<T = unknown>(path: string, options: FetchOptions = {}): 
     headers['Authorization'] = `Bearer ${_accessToken}`;
   }
 
-  const res = await fetch(path, {
-    ...options,
-    credentials: 'same-origin',
-    headers,
-  });
+  let res: Response;
+  try {
+    res = await fetch(path, {
+      ...options,
+      credentials: 'same-origin',
+      headers,
+    });
+  } catch (fetchErr: unknown) {
+    const message = getErrorMessage(fetchErr);
+    throw new ApiError(0, message || 'Network connection failed. Please check your connection.');
+  }
 
   // Automatically refresh and retry once on 401 (preventing loops and auth route deadlocks)
   if (
@@ -99,13 +140,19 @@ async function apiFetch<T = unknown>(path: string, options: FetchOptions = {}): 
         },
       });
     } catch {
-      // Refresh failed — fall through to standard error throw below
+      // Refresh failed — cleanly notify auth reset and fall through
+      setAccessToken(null);
+      notifyAuthFailure();
     }
   }
 
   const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;
 
   if (!res.ok) {
+    if (res.status === 401 && !path.startsWith('/api/auth/')) {
+      setAccessToken(null);
+      notifyAuthFailure();
+    }
     const message =
       typeof body['message'] === 'string'
         ? body['message']
@@ -167,17 +214,18 @@ export async function apiRefresh(): Promise<{ accessToken: string }> {
 }
 
 export async function apiMe(accessToken: string): Promise<MeResponse> {
-  const res = await fetch('/api/auth/me', {
-    credentials: 'same-origin',
+  return apiFetch<MeResponse>('/api/auth/me', {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
-  if (!res.ok) throw new ApiError(res.status, 'Not authenticated');
-  return res.json() as Promise<MeResponse>;
 }
 
 export async function apiLogout(): Promise<void> {
-  await apiFetch('/api/auth/logout', { method: 'POST' });
-  setAccessToken(null);
+  try {
+    await apiFetch('/api/auth/logout', { method: 'POST' });
+  } finally {
+    setAccessToken(null);
+    notifyAuthFailure();
+  }
 }
 
 // ─── Workspace endpoints ──────────────────────────────────────────────────────
@@ -193,6 +241,7 @@ interface WorkspaceMembersResponse {
 }
 
 interface WorkspaceMemberResponse {
+
   success: true;
   data: WorkspaceMemberItem;
 }

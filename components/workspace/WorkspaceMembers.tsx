@@ -11,6 +11,8 @@ import {
 import type { WorkspaceMemberItem } from '@/types/workspace';
 import type { WorkspaceRole } from '@/types/project';
 import { AddMemberDialog } from '@/components/workspace/AddMemberDialog';
+import { getErrorMessage } from '@/lib/errors';
+
 
 interface WorkspaceMembersProps {
   workspaceId: string;
@@ -46,10 +48,11 @@ export function WorkspaceMembers({ workspaceId, currentRole }: WorkspaceMembersP
       const res = await apiGetWorkspaceMembers(workspaceId);
       setMembers(res.data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load workspace members.');
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
+
   }, [workspaceId]);
 
   useEffect(() => {
@@ -183,12 +186,13 @@ export function WorkspaceMembers({ workspaceId, currentRole }: WorkspaceMembersP
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-9 h-9 rounded-full bg-teal-500/10 border border-teal-500/20 flex items-center justify-center shrink-0">
                     <span className="text-sm font-bold text-teal-400">
-                      {member.user.name.charAt(0).toUpperCase()}
+                      {(member.user.name || member.user.email || '?').charAt(0).toUpperCase()}
                     </span>
                   </div>
                   <div className="min-w-0">
                     <div className="text-sm font-semibold text-[var(--text-primary)] truncate">
-                      {member.user.name}
+                      {member.user.name || member.user.email}
+
                       {isOwner && (
                         <span className="ml-2 inline-flex items-center gap-1 text-[11px] font-semibold px-1.5 py-0.5 rounded-md bg-teal-500/10 border border-teal-500/20 text-teal-400 align-middle">
                           <Shield className="w-3 h-3" />

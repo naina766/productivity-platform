@@ -16,7 +16,9 @@ import {
 import { motion } from 'framer-motion';
 import { useAuth } from '@/components/auth/AuthContext';
 import { apiLogout, apiGetProjects } from '@/lib/api/client';
+import { getErrorMessage } from '@/lib/errors';
 import { ProjectCard } from '@/components/projects/ProjectCard';
+
 import { ProjectEmptyState } from '@/components/projects/ProjectEmptyState';
 import { CreateProjectDialog } from '@/components/projects/CreateProjectDialog';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
@@ -80,7 +82,7 @@ export default function DashboardPage() {
       });
       setProjects(res.data);
     } catch (err) {
-      setProjectsError(err instanceof Error ? err.message : 'Failed to load projects.');
+      setProjectsError(getErrorMessage(err));
     } finally {
       setProjectsLoading(false);
     }
@@ -94,8 +96,16 @@ export default function DashboardPage() {
 
   // ── Logout ──────────────────────────────────────────────────────────────────
   async function handleLogout() {
-    await apiLogout();
-    await loadUser();
+    try {
+      await apiLogout();
+    } catch {
+      // Best-effort logout
+    }
+    try {
+      await loadUser();
+    } catch {
+      // Ignore
+    }
     router.replace('/login');
   }
 
@@ -119,7 +129,7 @@ export default function DashboardPage() {
   }
 
   // ── Loading state ───────────────────────────────────────────────────────────
-  if (loading) {
+  if (loading || !user) {
     return (
       <main className="min-h-screen bg-[var(--bg-main)] flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
@@ -127,7 +137,6 @@ export default function DashboardPage() {
     );
   }
 
-  if (!user) return null;
 
   const roleLabel = workspace ? (ROLE_LABELS[workspace.role] ?? workspace.role) : null;
 
@@ -160,7 +169,8 @@ export default function DashboardPage() {
             <NotificationBell />
             <button
               id="dashboard-logout-btn"
-              onClick={handleLogout}
+              type="button"
+              onClick={() => void handleLogout()}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-color)] hover:border-[var(--text-muted)] transition-all"
             >
               <LogOut className="w-4 h-4" />
@@ -180,10 +190,11 @@ export default function DashboardPage() {
             Dashboard
           </p>
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-1">
-            Welcome back, {user.name.split(' ')[0]}.
+            Welcome back, {user.name ? user.name.split(' ')[0] : 'there'}.
           </h1>
           <p className="text-[var(--text-secondary)] text-sm">{user.email}</p>
         </motion.div>
+
 
         {/* ── Workspace card ───────────────────────────────────────────────── */}
         {workspace && (
@@ -258,7 +269,7 @@ export default function DashboardPage() {
               </div>
               <button
                 type="button"
-                onClick={fetchProjects}
+                onClick={() => void fetchProjects()}
                 disabled={projectsLoading}
                 aria-label="Refresh projects"
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--card-main)] border border-transparent hover:border-[var(--border-color)] transition-all disabled:opacity-50"
@@ -287,11 +298,12 @@ export default function DashboardPage() {
               {projectsError}
               <button
                 type="button"
-                onClick={fetchProjects}
+                onClick={() => void fetchProjects()}
                 className="ml-auto text-xs underline hover:no-underline"
               >
                 Retry
               </button>
+
             </div>
           )}
 

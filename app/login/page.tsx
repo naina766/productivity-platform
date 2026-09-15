@@ -1,11 +1,11 @@
-﻿'use client';
+'use client';
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState, type FormEvent } from 'react';
 import { Zap, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthContext';
-import { ApiError } from '@/lib/api/client';
+import { getErrorMessage } from '@/lib/errors';
 
 // Inner component that uses useSearchParams — must be wrapped in Suspense.
 function LoginForm() {
@@ -33,18 +33,15 @@ function LoginForm() {
       await login(email, password);
       router.push(next);
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError('Something went wrong. Please try again.');
-      }
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <form className="space-y-4 text-left" onSubmit={handleSubmit} noValidate>
+    <form className="space-y-4 text-left" onSubmit={handleSubmit} method="POST" action="#" noValidate>
+
       {error && (
         <div
           role="alert"

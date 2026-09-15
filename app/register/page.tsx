@@ -1,11 +1,12 @@
-﻿'use client';
+'use client';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { Zap, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthContext';
-import { ApiError } from '@/lib/api/client';
+import { getErrorMessage } from '@/lib/errors';
+
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -44,11 +45,7 @@ export default function RegisterPage() {
       await register(name.trim(), email, password);
       router.push('/dashboard');
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError('Something went wrong. Please try again.');
-      }
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -80,7 +77,8 @@ export default function RegisterPage() {
         </p>
 
         <div className="rounded-2xl bg-[var(--card-main)] border border-[var(--border-color)] p-8">
-          <form className="space-y-4 text-left" onSubmit={handleSubmit} noValidate>
+          <form className="space-y-4 text-left" onSubmit={handleSubmit} method="POST" action="#" noValidate>
+
             {error && (
               <div
                 role="alert"

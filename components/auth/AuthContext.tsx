@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import {
   createContext,
@@ -17,9 +17,11 @@ import {
   apiRegister,
   getAccessToken,
   setAccessToken,
+  onAuthFailure,
   type SafeUser,
   ApiError,
 } from '@/lib/api/client';
+
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -120,6 +122,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initialised.current = true;
     void loadUser();
   }, [loadUser]);
+
+  // Subscribe to centralized auth failure (refresh failure / 401 unrecoverable)
+  useEffect(() => {
+    return onAuthFailure(() => {
+      setUser(null);
+      setWorkspace(null);
+      setAccessToken(null);
+      setLoading(false);
+    });
+  }, []);
+
 
   const login = useCallback(async (email: string, password: string) => {
     const res = await apiLogin(email, password);
