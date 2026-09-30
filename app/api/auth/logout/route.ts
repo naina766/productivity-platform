@@ -1,9 +1,6 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { logoutUser } from '@/lib/auth/auth.service';
-
-function clearRefreshCookie(): string {
-  return 'refresh_token=; HttpOnly; SameSite=Lax; Path=/api/auth; Max-Age=0';
-}
+import { clearRefreshCookies } from '@/lib/auth/cookies';
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const rawToken = req.cookies.get('refresh_token')?.value;
@@ -12,6 +9,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   await logoutUser(rawToken);
 
   const res = NextResponse.json({ success: true });
-  res.headers.append('Set-Cookie', clearRefreshCookie());
+  for (const cookie of clearRefreshCookies()) {
+    res.headers.append('Set-Cookie', cookie);
+  }
   return res;
 }

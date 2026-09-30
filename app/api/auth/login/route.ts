@@ -1,37 +1,9 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { loginSchema } from '@/lib/validations/auth';
 import { loginUser } from '@/lib/auth/auth.service';
 import { buildErrorResponse, AppError } from '@/lib/errors';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
-
-const REFRESH_TTL = process.env.JWT_REFRESH_TTL ?? '7d';
-
-function makeRefreshCookie(token: string): string {
-  const isProduction = process.env.NODE_ENV === 'production';
-  const maxAge = parseTtlToSeconds(REFRESH_TTL);
-  const parts = [
-    `refresh_token=${token}`,
-    `HttpOnly`,
-    `SameSite=Lax`,
-    `Path=/api/auth`,
-    `Max-Age=${maxAge}`,
-  ];
-  if (isProduction) parts.push('Secure');
-  return parts.join('; ');
-}
-
-function parseTtlToSeconds(ttl: string): number {
-  const match = /^(\d+)([smhd])$/.exec(ttl);
-  if (!match) return 7 * 24 * 60 * 60;
-  const n = parseInt(match[1], 10);
-  switch (match[2]) {
-    case 's': return n;
-    case 'm': return n * 60;
-    case 'h': return n * 3600;
-    case 'd': return n * 86400;
-    default:  return 7 * 24 * 3600;
-  }
-}
+import { makeRefreshCookie } from '@/lib/auth/cookies';
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   // Rate limit: 10 attempts per 15 min per IP
