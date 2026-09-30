@@ -35,3 +35,7 @@ out
 *.njsproj
 *.sln
 *.sw?
+
+# Agent and IDE directories
+.agent
+.kilo
