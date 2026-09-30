@@ -1,36 +1,18 @@
-/**
- * NOVA — Workspace member service layer.
- *
- * Manages workspace membership: list, add, change role, remove.
- * Only OWNER/ADMIN may mutate membership.
- */
-
 import { prisma } from '@/lib/db/prisma';
 import { Errors } from '@/lib/errors';
-import {
-  requireWorkspaceMember,
-  requireWorkspaceRole,
-} from '@/lib/projects/permissions';
+import { requireWorkspaceMember, requireWorkspaceRole } from '@/lib/workspaces/permissions';
+import { createNotification } from '@/lib/notifications/notification.service';
+import type { Prisma } from '@prisma/client';
 import type { WorkspaceMemberItem } from '@/types/workspace';
-import type {
-  AddWorkspaceMemberData,
-  UpdateWorkspaceMemberRoleData,
-} from '@/lib/validations/workspace';
+import type { AddWorkspaceMemberData, UpdateWorkspaceMemberRoleData } from '@/lib/validations/workspace';
 
-const safeUserSelect = {
-  id: true,
-  name: true,
-  email: true,
-  avatarUrl: true,
+const memberInclude = {
+  user: { select: { id: true, name: true, email: true, avatarUrl: true } },
 } as const;
 
-function serializeMember(m: {
-  id: string;
-  userId: string;
-  role: string;
-  createdAt: Date;
-  user: { id: string; name: string; email: string; avatarUrl: string | null };
-}): WorkspaceMemberItem {
+type MemberRow = Prisma.WorkspaceMemberGetPayload<{ include: typeof memberInclude }>;
+
+function serializeMember(m: MemberRow): WorkspaceMemberItem {
   return {
     id: m.id,
     userId: m.userId,
@@ -40,11 +22,6 @@ function serializeMember(m: {
   };
 }
 
-// ─── Read ─────────────────────────────────────────────────────────────────────
-
-/**
- * List all members of a workspace. Requires the caller to be a member.
- */
 export async function getWorkspaceMembers(
   workspaceId: string,
   userId: string,
@@ -53,18 +30,18 @@ export async function getWorkspaceMembers(
 
   const members = await prisma.workspaceMember.findMany({
     where: { workspaceId },
-    include: { user: { select: safeUserSelect } },
+    include: memberInclude,
     orderBy: { createdAt: 'asc' },
   });
 
   return members.map(serializeMember);
 }
 
-// ─── Write ────────────────────────────────────────────────────────────────────
-
 /**
- * Add an existing NOVA user to the workspace by email.
- * Only OWNER/ADMIN may add members.
+ * Add an existing account to the workspace by email.
+ *
+ * OWNER is rejected here: ownership is established when the workspace is
+ * created, so it can never be granted through an invite.
  */
 export async function addWorkspaceMember(
   workspaceId: string,
@@ -81,9 +58,8 @@ export async function addWorkspaceMember(
 
   const target = await prisma.user.findUnique({
     where: { email },
-    select: { id: true, name: true, email: true, avatarUrl: true },
+    select: { id: true },
   });
-
   if (!target) {
     throw Errors.notFound('No account found with that email address.');
   }
@@ -92,7 +68,6 @@ export async function addWorkspaceMember(
     where: { workspaceId_userId: { workspaceId, userId: target.id } },
     select: { id: true },
   });
-
   if (existing) {
     throw Errors.conflict('That user is already a member of this workspace.');
   }
@@ -101,22 +76,18 @@ export async function addWorkspaceMember(
     where: { id: workspaceId },
     select: { id: true, name: true },
   });
-
   if (!workspace) throw Errors.notFound('Workspace not found.');
 
   const member = await prisma.$transaction(async (tx) => {
     const created = await tx.workspaceMember.create({
       data: { workspaceId, userId: target.id, role },
-      include: { user: { select: safeUserSelect } },
+      include: memberInclude,
     });
 
-    await tx.notification.create({
-      data: {
-        userId: target.id,
-        taskId: null,
-        title: `You were added to ${workspace.name}`,
-        body: `You now have access to the "${workspace.name}" workspace.`,
-      },
+    await createNotification(tx, {
+      userId: target.id,
+      title: `You were added to ${workspace.name}`,
+      body: `You now have access to the "${workspace.name}" workspace.`,
     });
 
     return created;
@@ -125,10 +96,6 @@ export async function addWorkspaceMember(
   return serializeMember(member);
 }
 
-/**
- * Change a member's role. Only OWNER/ADMIN may change roles.
- * The workspace owner's role cannot be changed.
- */
 export async function updateWorkspaceMemberRole(
   workspaceId: string,
   actorId: string,
@@ -145,9 +112,8 @@ export async function updateWorkspaceMemberRole(
 
   const target = await prisma.workspaceMember.findUnique({
     where: { workspaceId_userId: { workspaceId, userId: targetUserId } },
-    include: { user: { select: safeUserSelect } },
+    include: memberInclude,
   });
-
   if (!target) throw Errors.notFound('Workspace member not found.');
 
   if (target.role === 'OWNER') {
@@ -157,16 +123,12 @@ export async function updateWorkspaceMemberRole(
   const updated = await prisma.workspaceMember.update({
     where: { id: target.id },
     data: { role },
-    include: { user: { select: safeUserSelect } },
+    include: memberInclude,
   });
 
   return serializeMember(updated);
 }
 
-/**
- * Remove a member from the workspace. Only OWNER/ADMIN may remove members.
- * The workspace owner cannot be removed.
- */
 export async function removeWorkspaceMember(
   workspaceId: string,
   actorId: string,
@@ -176,8 +138,8 @@ export async function removeWorkspaceMember(
 
   const target = await prisma.workspaceMember.findUnique({
     where: { workspaceId_userId: { workspaceId, userId: targetUserId } },
+    select: { id: true, role: true },
   });
-
   if (!target) throw Errors.notFound('Workspace member not found.');
 
   if (target.role === 'OWNER') {

@@ -14,8 +14,6 @@ import {
 } from 'lucide-react';
 import type { ProjectSummary, ProjectStatus, ProjectPriority } from '@/types/project';
 
-// ─── Status / priority display maps ──────────────────────────────────────────
-
 const STATUS_CONFIG: Record<
   ProjectStatus,
   { label: string; icon: React.ReactNode; className: string }
@@ -53,8 +51,6 @@ const PRIORITY_DOT: Record<ProjectPriority, string> = {
   HIGH: 'bg-amber-400',
   URGENT: 'bg-red-400',
 };
-
-// ─── Component ────────────────────────────────────────────────────────────────
 
 interface ProjectCardProps {
   project: ProjectSummary;

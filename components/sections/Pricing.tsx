@@ -32,7 +32,7 @@ export const Pricing: React.FC<PricingProps> = ({ onOpenDemo }) => {
           </h2>
 
           <p className="text-base sm:text-lg text-[var(--text-secondary)] leading-relaxed mb-2">
-            Start free and upgrade when your team is ready. No surprises.
+            Every feature shown here is available to every account.
           </p>
 
           <p className="text-xs text-[var(--text-muted)] mb-8">
@@ -64,7 +64,7 @@ export const Pricing: React.FC<PricingProps> = ({ onOpenDemo }) => {
             >
               <span>Yearly Billing</span>
               <span className="px-2 py-0.5 rounded-full bg-lime-400 text-[#050505] text-[10px] font-extrabold uppercase">
-                Save 20%
+                Concept only
               </span>
             </button>
           </div>

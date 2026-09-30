@@ -130,9 +130,9 @@ export const DemoModal: React.FC<DemoModalProps> = ({ isOpen, onClose }) => {
       icon: MessageSquare,
       headline: 'See every change in the activity feed and task comments',
       description:
-        'Follow what your team is working on without chasing status updates — task moves, new comments, and member changes all appear in one stream.',
+        'Review what your team has been working on without chasing status updates — task moves, new comments, and member changes are all recorded on the project timeline.',
       details: [
-        'Real-time activity feed',
+        'Activity feed per project',
         'Task-level comments',
         'No status meetings required',
       ],
@@ -335,7 +335,7 @@ export const DemoModal: React.FC<DemoModalProps> = ({ isOpen, onClose }) => {
                     onClick={onClose}
                     className="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 transition-colors flex items-center gap-1.5 focus-visible:ring-2 focus-visible:ring-emerald-400 shadow-md shadow-emerald-500/20"
                   >
-                    <span>Start Free</span>
+                    <span>Get Started</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 )}

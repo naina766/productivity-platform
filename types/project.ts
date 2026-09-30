@@ -1,16 +1,8 @@
-/**
- * NOVA — Phase 4 project types.
- * These are API-safe serialised shapes, not Prisma models.
- * Dates are ISO strings; no internal DB fields exposed.
- */
-
-// ─── Enums (mirror Prisma enums, safe to use on the client) ──────────────────
+/** API-safe serialised project shapes, not Prisma models. Dates are ISO strings. */
 
 export type ProjectStatus = 'PLANNING' | 'ACTIVE' | 'ON_HOLD' | 'COMPLETED' | 'ARCHIVED';
 export type ProjectPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
 export type WorkspaceRole = 'OWNER' | 'ADMIN' | 'MEMBER';
-
-// ─── Safe sub-types ───────────────────────────────────────────────────────────
 
 export interface SafeProjectUser {
   id: string;
@@ -26,8 +18,6 @@ export interface ProjectMemberItem {
   createdAt: string;
   user: SafeProjectUser;
 }
-
-// ─── Project shapes ───────────────────────────────────────────────────────────
 
 /** Lean summary used in list views (dashboard). */
 export interface ProjectSummary {
@@ -49,8 +39,6 @@ export interface ProjectDetail extends ProjectSummary {
   workspaceName: string;
   members: ProjectMemberItem[];
 }
-
-// ─── Input types (mirror Zod output) ─────────────────────────────────────────
 
 export interface CreateProjectInput {
   name: string;

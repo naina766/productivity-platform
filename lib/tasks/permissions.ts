@@ -1,19 +1,12 @@
-/**
- * NOVA — Task-level authorization helpers.
- *
- * Reuses the project/workspace permission architecture.
- * Every task operation verifies the full chain:
- *   user → workspace membership → project access → task belongs to project.
- */
-
 import { prisma } from '@/lib/db/prisma';
 import { Errors } from '@/lib/errors';
 import { requireProjectAccess } from '@/lib/projects/permissions';
 
 /**
- * Verify the task exists and belongs to a project the user can access.
- * Returns the task with project workspace info, or throws 404.
- * Never reveals the existence of tasks in other workspaces.
+ * Resolve a task and confirm the caller can reach it.
+ *
+ * Authorization walks the full chain — user → workspace membership → project →
+ * task — so a task id from another workspace resolves to 404, not 403.
  */
 export async function requireTaskAccess(taskId: string, userId: string) {
   const task = await prisma.task.findUnique({
@@ -30,32 +23,21 @@ export async function requireTaskAccess(taskId: string, userId: string) {
       position: true,
       createdAt: true,
       updatedAt: true,
-      project: {
-        select: { id: true, workspaceId: true, status: true },
-      },
+      project: { select: { id: true, workspaceId: true, status: true } },
     },
   });
-
   if (!task) throw Errors.notFound('Task not found.');
 
-  // Verify user has access to the task's project (which also verifies workspace membership).
   await requireProjectAccess(task.project.id, userId);
 
   return task;
 }
 
-/**
- * Verify the assignee is a member of the same project.
- * Target user must exist, belong to the workspace, and be a project member.
- */
-export async function requireValidAssignee(
-  projectId: string,
-  workspaceId: string,
-  assigneeId: string,
-): Promise<void> {
-  // Check project membership (which also implies workspace membership).
+/** An assignee must already be a ProjectMember of the target project. */
+export async function requireValidAssignee(projectId: string, assigneeId: string): Promise<void> {
   const projectMember = await prisma.projectMember.findUnique({
     where: { projectId_userId: { projectId, userId: assigneeId } },
+    select: { id: true },
   });
 
   if (!projectMember) {
@@ -64,25 +46,21 @@ export async function requireValidAssignee(
 }
 
 /**
- * Verify that all specified labels belong to the target workspace.
- * Prevents attaching another workspace's labels (IDOR / cross-workspace leak).
+ * Labels are workspace-scoped, so every id must belong to the task's workspace.
+ * A partial match is rejected rather than silently dropping the unknown ids.
  */
 export async function requireValidWorkspaceLabels(
   workspaceId: string,
   labelIds: string[],
 ): Promise<void> {
-  if (!labelIds || labelIds.length === 0) return;
-
   const uniqueLabelIds = Array.from(new Set(labelIds));
+  if (uniqueLabelIds.length === 0) return;
+
   const count = await prisma.label.count({
-    where: {
-      workspaceId,
-      id: { in: uniqueLabelIds },
-    },
+    where: { workspaceId, id: { in: uniqueLabelIds } },
   });
 
   if (count !== uniqueLabelIds.length) {
     throw Errors.badRequest('One or more labels are invalid or do not belong to this workspace.');
   }
 }
-

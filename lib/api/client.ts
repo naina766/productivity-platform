@@ -1,11 +1,39 @@
 import { getErrorMessage } from '@/lib/errors';
+import type { ApiUser, ApiWorkspace } from '@/types/auth';
+import type {
+  WorkspaceMemberItem,
+  AddWorkspaceMemberInput,
+  UpdateWorkspaceMemberRoleInput,
+} from '@/types/workspace';
+import type {
+  ProjectSummary,
+  ProjectDetail,
+  ProjectMemberItem,
+  CreateProjectInput,
+  UpdateProjectInput,
+  AddProjectMemberInput,
+  UpdateProjectMemberInput,
+} from '@/types/project';
+import type {
+  TaskSummary,
+  TaskDetail,
+  CreateTaskInput,
+  UpdateTaskInput,
+  TaskStatus,
+  TaskPriority,
+  TaskSort,
+} from '@/types/task';
+import type { CommentItem, CreateCommentInput, UpdateCommentInput } from '@/types/comment';
+import type { ActivityItem } from '@/types/activity';
+import type { NotificationItem } from '@/types/notification';
 
 /**
- * Centralised API client for browser-side calls to /api/auth/*.
- * - Uses same-origin relative URLs (no localhost:4000, no hardcoded port)
- * - Sends credentials (cookies) with every request
- * - Holds the access token in memory (never localStorage / sessionStorage)
- * - Automatically tries to refresh the token on 401 responses
+ * Browser-side API client.
+ *
+ * - Same-origin relative URLs, so there is no hardcoded host or port
+ * - Sends cookies with every request; the refresh cookie is HttpOnly
+ * - Holds the access token in memory only, never localStorage or sessionStorage
+ * - Refreshes once on a 401, then retries the original request
  */
 
 export class ApiError extends Error {
@@ -18,190 +46,183 @@ export class ApiError extends Error {
   }
 }
 
-// In-memory access token store — survives re-renders but clears on page reload.
-// The refresh cookie (HttpOnly) is used to re-issue a new one on reload.
-let _accessToken: string | null = null;
-let _refreshPromise: Promise<string> | null = null;
+/** Envelope shapes shared by every endpoint. */
+interface ItemResponse<T> {
+  success: true;
+  data: T;
+}
+
+interface ListResponse<T> {
+  success: true;
+  data: T[];
+}
+
+interface MessageResponse {
+  success: true;
+  message: string;
+}
+
+interface AuthResponse {
+  success: true;
+  user: ApiUser;
+  accessToken: string;
+  workspace?: ApiWorkspace;
+}
+
+interface MeResponse {
+  success: true;
+  user: ApiUser;
+  workspace?: ApiWorkspace;
+}
+
+// In-memory access token store. It survives re-renders but is lost on reload,
+// which is safe: the HttpOnly refresh cookie is used to mint a new one.
+let accessToken: string | null = null;
+let refreshPromise: Promise<string> | null = null;
 
 export function setAccessToken(token: string | null): void {
-  _accessToken = token;
+  accessToken = token;
 }
 
 export function getAccessToken(): string | null {
-  return _accessToken;
+  return accessToken;
 }
 
-// ─── Auth failure listener ───────────────────────────────────────────────────
 type AuthFailureCallback = () => void;
-const _authFailureCallbacks = new Set<AuthFailureCallback>();
+const authFailureCallbacks = new Set<AuthFailureCallback>();
 
+/** Subscribe to session loss. Returns an unsubscribe function. */
 export function onAuthFailure(callback: AuthFailureCallback): () => void {
-  _authFailureCallbacks.add(callback);
+  authFailureCallbacks.add(callback);
   return () => {
-    _authFailureCallbacks.delete(callback);
+    authFailureCallbacks.delete(callback);
   };
 }
 
 export function notifyAuthFailure(): void {
-  for (const cb of _authFailureCallbacks) {
+  for (const cb of authFailureCallbacks) {
     try {
       cb();
     } catch {
-      // Ignore callback errors
+      // A misbehaving listener must not block the others.
     }
   }
 }
 
-interface FetchOptions extends RequestInit {
-  skipAuth?: boolean;
-  _retryCount?: number;
+function buildQuery(params: Record<string, string | number | boolean | undefined>): string {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined) search.set(key, String(value));
+  }
+  const qs = search.toString();
+  return qs ? `?${qs}` : '';
 }
 
+function readMessage(body: Record<string, unknown>, fallback: string): string {
+  return typeof body.message === 'string' ? body.message : fallback;
+}
+
+interface FetchOptions extends RequestInit {
+  skipAuth?: boolean;
+  /** Guards against an infinite 401 → refresh → 401 loop. */
+  retried?: boolean;
+}
+
+/**
+ * Exchange the refresh cookie for a new access token.
+ *
+ * Concurrent callers share one in-flight promise, so a burst of parallel 401s
+ * triggers a single rotation rather than one per request.
+ */
 async function requestRefresh(): Promise<string> {
-  if (!_refreshPromise) {
-    _refreshPromise = (async () => {
+  if (!refreshPromise) {
+    refreshPromise = (async () => {
       try {
-        let res: Response;
-        try {
-          res = await fetch('/api/auth/refresh', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json' },
-          });
-        } catch (fetchErr: unknown) {
-          setAccessToken(null);
-          notifyAuthFailure();
-          throw new ApiError(0, getErrorMessage(fetchErr) || 'Network error during session refresh');
-        }
+        const res = await fetch('/api/auth/refresh', {
+          method: 'POST',
+          credentials: 'same-origin',
+        });
 
         const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-        if (!res.ok || !body['accessToken'] || typeof body['accessToken'] !== 'string') {
-          setAccessToken(null);
-          notifyAuthFailure();
-          const message =
-            typeof body['message'] === 'string'
-              ? body['message']
-              : 'Session refresh failed';
-          throw new ApiError(res.status || 401, message);
+        const token = body.accessToken;
+
+        if (!res.ok || typeof token !== 'string') {
+          throw new ApiError(res.status || 401, readMessage(body, 'Session refresh failed.'));
         }
-        const newToken = body['accessToken'] as string;
-        setAccessToken(newToken);
-        return newToken;
+
+        setAccessToken(token);
+        return token;
       } catch (err) {
         setAccessToken(null);
         notifyAuthFailure();
-        if (err instanceof ApiError) throw err;
-        throw new ApiError(0, getErrorMessage(err));
+        throw err instanceof ApiError ? err : new ApiError(0, getErrorMessage(err));
       } finally {
-        _refreshPromise = null;
+        refreshPromise = null;
       }
     })();
   }
-  return _refreshPromise;
+  return refreshPromise;
 }
 
-async function apiFetch<T = unknown>(path: string, options: FetchOptions = {}): Promise<T> {
+async function apiFetch<T>(path: string, options: FetchOptions = {}): Promise<T> {
+  const { skipAuth, retried, headers: callerHeaders, ...init } = options;
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(options.headers as Record<string, string> | undefined),
+    ...(callerHeaders as Record<string, string> | undefined),
   };
-
-  if (!options.skipAuth && _accessToken) {
-    headers['Authorization'] = `Bearer ${_accessToken}`;
+  if (!skipAuth && accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`;
   }
 
   let res: Response;
   try {
-    res = await fetch(path, {
-      ...options,
-      credentials: 'same-origin',
-      headers,
-    });
-  } catch (fetchErr: unknown) {
-    const message = getErrorMessage(fetchErr);
-    throw new ApiError(0, message || 'Network connection failed. Please check your connection.');
+    res = await fetch(path, { ...init, credentials: 'same-origin', headers });
+  } catch (err) {
+    // status 0 marks a transport failure, which no HTTP status can produce.
+    throw new ApiError(0, getErrorMessage(err));
   }
 
-  // Automatically refresh and retry once on 401 (preventing loops and auth route deadlocks)
-  if (
-    res.status === 401 &&
-    !options.skipAuth &&
-    !path.startsWith('/api/auth/') &&
-    (!options._retryCount || options._retryCount < 1)
-  ) {
+  // Never refresh in response to an auth route failing: that would recurse
+  // into the very endpoint that just failed.
+  const isAuthRoute = path.startsWith('/api/auth/');
+
+  if (res.status === 401 && !skipAuth && !isAuthRoute && !retried) {
     try {
       const newToken = await requestRefresh();
-      return await apiFetch<T>(path, {
-        ...options,
-        _retryCount: (options._retryCount ?? 0) + 1,
-        headers: {
-          ...options.headers,
-          Authorization: `Bearer ${newToken}`,
-        },
-      });
+      return await apiFetch<T>(path, { ...options, retried: true, headers: { ...callerHeaders, Authorization: `Bearer ${newToken}` } });
     } catch {
-      // Refresh failed — cleanly notify auth reset and fall through
-      setAccessToken(null);
-      notifyAuthFailure();
+      // Refresh failed; the access token is already cleared and listeners notified.
     }
   }
 
   const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;
 
   if (!res.ok) {
-    if (res.status === 401 && !path.startsWith('/api/auth/')) {
+    if (res.status === 401 && !isAuthRoute) {
       setAccessToken(null);
       notifyAuthFailure();
     }
-    const message =
-      typeof body['message'] === 'string'
-        ? body['message']
-        : 'An unexpected error occurred.';
-    throw new ApiError(res.status, message);
+    throw new ApiError(res.status, readMessage(body, 'An unexpected error occurred.'));
   }
 
   return body as T;
 }
 
-// ─── Auth endpoints ──────────────────────────────────────────────────────────
-
-export interface SafeUser {
-  id: string;
-  name: string;
-  email: string;
-  createdAt: string;
-}
-
-export interface LoginResponse {
-  success: true;
-  user: SafeUser;
-  accessToken: string;
-  workspace?: { id: string; name: string; role: string };
-}
-
-export interface RegisterResponse {
-  success: true;
-  user: SafeUser;
-  accessToken: string;
-  workspace?: { id: string; name: string; role: string };
-}
-
-export interface MeResponse {
-  success: true;
-  user: SafeUser;
-  workspace?: { id: string; name: string; role: string };
-}
-
-export async function apiLogin(email: string, password: string): Promise<LoginResponse> {
-  return apiFetch<LoginResponse>('/api/auth/login', {
+export async function apiLogin(email: string, password: string): Promise<AuthResponse> {
+  return apiFetch<AuthResponse>('/api/auth/login', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
     skipAuth: true,
   });
 }
 
-export async function apiRegister(name: string, email: string, password: string): Promise<RegisterResponse> {
-  return apiFetch<RegisterResponse>('/api/auth/register', {
+export async function apiRegister(
+  name: string,
+  email: string,
+  password: string,
+): Promise<AuthResponse> {
+  return apiFetch<AuthResponse>('/api/auth/register', {
     method: 'POST',
     body: JSON.stringify({ name, email, password }),
     skipAuth: true,
@@ -209,54 +230,34 @@ export async function apiRegister(name: string, email: string, password: string)
 }
 
 export async function apiRefresh(): Promise<{ accessToken: string }> {
-  const accessToken = await requestRefresh();
-  return { accessToken };
+  return { accessToken: await requestRefresh() };
 }
 
-export async function apiMe(accessToken: string): Promise<MeResponse> {
-  return apiFetch<MeResponse>('/api/auth/me', {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
+export async function apiMe(): Promise<MeResponse> {
+  return apiFetch<MeResponse>('/api/auth/me');
 }
 
 export async function apiLogout(): Promise<void> {
   try {
-    await apiFetch('/api/auth/logout', { method: 'POST' });
+    await apiFetch<MessageResponse>('/api/auth/logout', { method: 'POST' });
   } finally {
+    // The local session is dropped whether or not the server call succeeded.
     setAccessToken(null);
     notifyAuthFailure();
   }
 }
 
-// ─── Workspace endpoints ──────────────────────────────────────────────────────
-import type {
-  WorkspaceMemberItem,
-  AddWorkspaceMemberInput,
-  UpdateWorkspaceMemberRoleInput,
-} from '@/types/workspace';
-
-interface WorkspaceMembersResponse {
-  success: true;
-  data: WorkspaceMemberItem[];
-}
-
-interface WorkspaceMemberResponse {
-
-  success: true;
-  data: WorkspaceMemberItem;
-}
-
 export async function apiGetWorkspaceMembers(
   workspaceId: string,
-): Promise<WorkspaceMembersResponse> {
-  return apiFetch<WorkspaceMembersResponse>(`/api/workspaces/${workspaceId}/members`);
+): Promise<ListResponse<WorkspaceMemberItem>> {
+  return apiFetch(`/api/workspaces/${workspaceId}/members`);
 }
 
 export async function apiAddWorkspaceMember(
   workspaceId: string,
   data: AddWorkspaceMemberInput,
-): Promise<WorkspaceMemberResponse> {
-  return apiFetch<WorkspaceMemberResponse>(`/api/workspaces/${workspaceId}/members`, {
+): Promise<ItemResponse<WorkspaceMemberItem>> {
+  return apiFetch(`/api/workspaces/${workspaceId}/members`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -266,8 +267,8 @@ export async function apiUpdateWorkspaceMemberRole(
   workspaceId: string,
   userId: string,
   data: UpdateWorkspaceMemberRoleInput,
-): Promise<WorkspaceMemberResponse> {
-  return apiFetch<WorkspaceMemberResponse>(`/api/workspaces/${workspaceId}/members/${userId}`, {
+): Promise<ItemResponse<WorkspaceMemberItem>> {
+  return apiFetch(`/api/workspaces/${workspaceId}/members/${userId}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   });
@@ -276,73 +277,36 @@ export async function apiUpdateWorkspaceMemberRole(
 export async function apiRemoveWorkspaceMember(
   workspaceId: string,
   userId: string,
-): Promise<{ success: true; message: string }> {
+): Promise<MessageResponse> {
   return apiFetch(`/api/workspaces/${workspaceId}/members/${userId}`, { method: 'DELETE' });
-}
-
-// ─── Project endpoints ────────────────────────────────────────────────────────
-
-import type {
-  ProjectSummary,
-  ProjectDetail,
-  ProjectMemberItem,
-  CreateProjectInput,
-  UpdateProjectInput,
-  AddProjectMemberInput,
-  UpdateProjectMemberInput,
-} from '@/types/project';
-
-interface ProjectListResponse {
-  success: true;
-  data: ProjectSummary[];
-}
-
-interface ProjectDetailResponse {
-  success: true;
-  data: ProjectDetail;
-}
-
-interface ProjectMembersResponse {
-  success: true;
-  data: ProjectMemberItem[];
-}
-
-interface ProjectMemberResponse {
-  success: true;
-  data: ProjectMemberItem;
 }
 
 export async function apiGetProjects(
   workspaceId: string,
   filters?: { search?: string },
-): Promise<ProjectListResponse> {
-  const params = new URLSearchParams();
-  if (filters?.search) params.set('search', filters.search);
-  const qs = params.toString();
-  return apiFetch<ProjectListResponse>(
-    `/api/workspaces/${workspaceId}/projects${qs ? `?${qs}` : ''}`,
-  );
+): Promise<ListResponse<ProjectSummary>> {
+  return apiFetch(`/api/workspaces/${workspaceId}/projects${buildQuery({ search: filters?.search })}`);
 }
 
 export async function apiCreateProject(
   workspaceId: string,
   data: CreateProjectInput,
-): Promise<ProjectDetailResponse> {
-  return apiFetch<ProjectDetailResponse>(`/api/workspaces/${workspaceId}/projects`, {
+): Promise<ItemResponse<ProjectDetail>> {
+  return apiFetch(`/api/workspaces/${workspaceId}/projects`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
 }
 
-export async function apiGetProject(projectId: string): Promise<ProjectDetailResponse> {
-  return apiFetch<ProjectDetailResponse>(`/api/projects/${projectId}`);
+export async function apiGetProject(projectId: string): Promise<ItemResponse<ProjectDetail>> {
+  return apiFetch(`/api/projects/${projectId}`);
 }
 
 export async function apiUpdateProject(
   projectId: string,
   data: UpdateProjectInput,
-): Promise<ProjectDetailResponse> {
-  return apiFetch<ProjectDetailResponse>(`/api/projects/${projectId}`, {
+): Promise<ItemResponse<ProjectDetail>> {
+  return apiFetch(`/api/projects/${projectId}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   });
@@ -350,21 +314,21 @@ export async function apiUpdateProject(
 
 export async function apiArchiveProject(
   projectId: string,
-): Promise<{ success: true; data: { id: string; status: string } }> {
+): Promise<ItemResponse<{ id: string; status: string }>> {
   return apiFetch(`/api/projects/${projectId}`, { method: 'DELETE' });
 }
 
 export async function apiGetProjectMembers(
   projectId: string,
-): Promise<ProjectMembersResponse> {
-  return apiFetch<ProjectMembersResponse>(`/api/projects/${projectId}/members`);
+): Promise<ListResponse<ProjectMemberItem>> {
+  return apiFetch(`/api/projects/${projectId}/members`);
 }
 
 export async function apiAddProjectMember(
   projectId: string,
   data: AddProjectMemberInput,
-): Promise<ProjectMemberResponse> {
-  return apiFetch<ProjectMemberResponse>(`/api/projects/${projectId}/members`, {
+): Promise<ItemResponse<ProjectMemberItem>> {
+  return apiFetch(`/api/projects/${projectId}/members`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -374,8 +338,8 @@ export async function apiUpdateProjectMember(
   projectId: string,
   userId: string,
   data: UpdateProjectMemberInput,
-): Promise<ProjectMemberResponse> {
-  return apiFetch<ProjectMemberResponse>(`/api/projects/${projectId}/members/${userId}`, {
+): Promise<ItemResponse<ProjectMemberItem>> {
+  return apiFetch(`/api/projects/${projectId}/members/${userId}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   });
@@ -384,30 +348,8 @@ export async function apiUpdateProjectMember(
 export async function apiRemoveProjectMember(
   projectId: string,
   userId: string,
-): Promise<{ success: true; message: string }> {
+): Promise<MessageResponse> {
   return apiFetch(`/api/projects/${projectId}/members/${userId}`, { method: 'DELETE' });
-}
-
-// ─── Task endpoints ───────────────────────────────────────────────────────────
-
-import type {
-  TaskSummary,
-  TaskDetail,
-  CreateTaskInput,
-  UpdateTaskInput,
-  TaskStatus,
-  TaskPriority,
-  TaskSort,
-} from '@/types/task';
-
-interface TaskListResponse {
-  success: true;
-  data: TaskSummary[];
-}
-
-interface TaskDetailResponse {
-  success: true;
-  data: TaskDetail;
 }
 
 export async function apiGetTasks(
@@ -419,29 +361,19 @@ export async function apiGetTasks(
     search?: string;
     sort?: TaskSort;
   },
-): Promise<TaskListResponse> {
-  const params = new URLSearchParams();
-  if (filters?.status) params.set('status', filters.status);
-  if (filters?.priority) params.set('priority', filters.priority);
-  if (filters?.assigneeId) params.set('assigneeId', filters.assigneeId);
-  if (filters?.search) params.set('search', filters.search);
-  if (filters?.sort) params.set('sort', filters.sort);
-
-  const qs = params.toString();
-  return apiFetch<TaskListResponse>(
-    `/api/projects/${projectId}/tasks${qs ? `?${qs}` : ''}`,
-  );
+): Promise<ListResponse<TaskSummary>> {
+  return apiFetch(`/api/projects/${projectId}/tasks${buildQuery({ ...filters })}`);
 }
 
-export async function apiGetTask(taskId: string): Promise<TaskDetailResponse> {
-  return apiFetch<TaskDetailResponse>(`/api/tasks/${taskId}`);
+export async function apiGetTask(taskId: string): Promise<ItemResponse<TaskDetail>> {
+  return apiFetch(`/api/tasks/${taskId}`);
 }
 
 export async function apiCreateTask(
   projectId: string,
   data: CreateTaskInput,
-): Promise<TaskDetailResponse> {
-  return apiFetch<TaskDetailResponse>(`/api/projects/${projectId}/tasks`, {
+): Promise<ItemResponse<TaskDetail>> {
+  return apiFetch(`/api/projects/${projectId}/tasks`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -450,49 +382,29 @@ export async function apiCreateTask(
 export async function apiUpdateTask(
   taskId: string,
   data: UpdateTaskInput,
-): Promise<TaskDetailResponse> {
-  return apiFetch<TaskDetailResponse>(`/api/tasks/${taskId}`, {
+): Promise<ItemResponse<TaskDetail>> {
+  return apiFetch(`/api/tasks/${taskId}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   });
 }
 
-export async function apiDeleteTask(
-  taskId: string,
-): Promise<{ success: true; message: string }> {
+export async function apiDeleteTask(taskId: string): Promise<MessageResponse> {
   return apiFetch(`/api/tasks/${taskId}`, { method: 'DELETE' });
-}
-
-// ─── Comment endpoints ─────────────────────────────────────────────────────────
-
-import type {
-  CommentItem,
-  CreateCommentInput,
-  UpdateCommentInput,
-} from '@/types/comment';
-
-interface CommentListResponse {
-  success: true;
-  data: { comments: CommentItem[] };
-}
-
-interface CommentResponse {
-  success: true;
-  data: CommentItem;
 }
 
 export async function apiGetTaskComments(
   taskId: string,
   limit = 100,
-): Promise<CommentListResponse> {
-  return apiFetch<CommentListResponse>(`/api/tasks/${taskId}/comments?limit=${limit}`);
+): Promise<ItemResponse<{ comments: CommentItem[] }>> {
+  return apiFetch(`/api/tasks/${taskId}/comments${buildQuery({ limit })}`);
 }
 
 export async function apiCreateComment(
   taskId: string,
   data: CreateCommentInput,
-): Promise<CommentResponse> {
-  return apiFetch<CommentResponse>(`/api/tasks/${taskId}/comments`, {
+): Promise<ItemResponse<CommentItem>> {
+  return apiFetch(`/api/tasks/${taskId}/comments`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -501,69 +413,36 @@ export async function apiCreateComment(
 export async function apiUpdateComment(
   commentId: string,
   data: UpdateCommentInput,
-): Promise<CommentResponse> {
-  return apiFetch<CommentResponse>(`/api/comments/${commentId}`, {
+): Promise<ItemResponse<CommentItem>> {
+  return apiFetch(`/api/comments/${commentId}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   });
 }
 
-export async function apiDeleteComment(
-  commentId: string,
-): Promise<{ success: true; message: string }> {
+export async function apiDeleteComment(commentId: string): Promise<MessageResponse> {
   return apiFetch(`/api/comments/${commentId}`, { method: 'DELETE' });
-}
-
-// ─── Activity endpoints ────────────────────────────────────────────────────────
-
-import type { ActivityItem } from '@/types/activity';
-
-interface ActivityListResponse {
-  success: true;
-  data: { activities: ActivityItem[] };
 }
 
 export async function apiGetProjectActivity(
   projectId: string,
   options?: { taskId?: string; limit?: number },
-): Promise<ActivityListResponse> {
-  const params = new URLSearchParams();
-  if (options?.taskId) params.set('taskId', options.taskId);
-  if (options?.limit) params.set('limit', String(options.limit));
-  const qs = params.toString();
-  return apiFetch<ActivityListResponse>(
-    `/api/projects/${projectId}/activity${qs ? `?${qs}` : ''}`,
-  );
-}
-
-// ─── Notification endpoints ────────────────────────────────────────────────────
-
-import type { NotificationItem } from '@/types/notification';
-
-export interface NotificationListResponse {
-  success: true;
-  data: { notifications: NotificationItem[]; unreadCount: number };
+): Promise<ItemResponse<{ activities: ActivityItem[] }>> {
+  return apiFetch(`/api/projects/${projectId}/activity${buildQuery({ ...options })}`);
 }
 
 export async function apiGetNotifications(
   options?: { unread?: boolean; limit?: number },
-): Promise<NotificationListResponse> {
-  const params = new URLSearchParams();
-  if (options?.unread) params.set('unread', 'true');
-  if (options?.limit) params.set('limit', String(options.limit));
-  const qs = params.toString();
-  return apiFetch<NotificationListResponse>(`/api/notifications${qs ? `?${qs}` : ''}`);
+): Promise<ItemResponse<{ notifications: NotificationItem[]; unreadCount: number }>> {
+  return apiFetch(`/api/notifications${buildQuery({ ...options })}`);
 }
 
-export async function apiMarkNotificationRead(
-  notificationId: string,
-): Promise<{ success: true; message: string }> {
+export async function apiMarkNotificationRead(notificationId: string): Promise<MessageResponse> {
   return apiFetch(`/api/notifications/${notificationId}`, { method: 'PATCH' });
 }
 
-export async function apiMarkAllNotificationsRead(): Promise<{
-  success: true;
-  unreadCount: number;
-}> {
+export async function apiMarkAllNotificationsRead(): Promise<
+  ItemResponse<{ unreadCount: number }>
+> {
   return apiFetch('/api/notifications/read-all', { method: 'POST' });
 }

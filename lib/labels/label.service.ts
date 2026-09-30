@@ -1,15 +1,6 @@
-/**
- * NOVA — Workspace-scoped Label Service.
- *
- * All operations are scoped to a specific workspace and enforce RBAC:
- * - Read: requires workspace membership (MEMBER, ADMIN, OWNER)
- * - Create / Update / Delete: requires ADMIN or OWNER role
- * - Enforces unique label name per workspace
- */
-
 import { prisma } from '@/lib/db/prisma';
 import { Errors } from '@/lib/errors';
-import { requireWorkspaceMember, requireWorkspaceRole } from '@/lib/projects/permissions';
+import { requireWorkspaceMember, requireWorkspaceRole } from '@/lib/workspaces/permissions';
 import type { CreateLabelData, UpdateLabelData } from '@/lib/validations/label';
 
 export interface LabelItem {
@@ -36,9 +27,7 @@ function serializeLabel(label: {
   };
 }
 
-/**
- * List all labels defined in a workspace.
- */
+/** Reading labels needs workspace membership; changing them needs ADMIN or OWNER. */
 export async function listWorkspaceLabels(
   workspaceId: string,
   userId: string,
@@ -53,9 +42,6 @@ export async function listWorkspaceLabels(
   return labels.map(serializeLabel);
 }
 
-/**
- * Create a new label in a workspace. Requires ADMIN or OWNER.
- */
 export async function createWorkspaceLabel(
   workspaceId: string,
   userId: string,
@@ -64,30 +50,19 @@ export async function createWorkspaceLabel(
   await requireWorkspaceRole(workspaceId, userId, 'ADMIN');
 
   const existing = await prisma.label.findFirst({
-    where: {
-      workspaceId,
-      name: { equals: data.name, mode: 'insensitive' },
-    },
+    where: { workspaceId, name: { equals: data.name, mode: 'insensitive' } },
   });
-
   if (existing) {
     throw Errors.conflict('A label with this name already exists in this workspace.');
   }
 
   const created = await prisma.label.create({
-    data: {
-      workspaceId,
-      name: data.name,
-      color: data.color ?? '#22C55E',
-    },
+    data: { workspaceId, name: data.name, color: data.color ?? '#22C55E' },
   });
 
   return serializeLabel(created);
 }
 
-/**
- * Update an existing label. Requires ADMIN or OWNER.
- */
 export async function updateWorkspaceLabel(
   workspaceId: string,
   labelId: string,
@@ -96,14 +71,12 @@ export async function updateWorkspaceLabel(
 ): Promise<LabelItem> {
   await requireWorkspaceRole(workspaceId, userId, 'ADMIN');
 
-  const label = await prisma.label.findFirst({
-    where: { id: labelId, workspaceId },
-  });
-
+  const label = await prisma.label.findFirst({ where: { id: labelId, workspaceId } });
   if (!label) {
     throw Errors.notFound('Label not found in this workspace.');
   }
 
+  // Renaming into an existing name is a conflict, so re-check before writing.
   if (data.name && data.name.toLowerCase() !== label.name.toLowerCase()) {
     const existing = await prisma.label.findFirst({
       where: {
@@ -112,7 +85,6 @@ export async function updateWorkspaceLabel(
         name: { equals: data.name, mode: 'insensitive' },
       },
     });
-
     if (existing) {
       throw Errors.conflict('A label with this name already exists in this workspace.');
     }
@@ -129,10 +101,7 @@ export async function updateWorkspaceLabel(
   return serializeLabel(updated);
 }
 
-/**
- * Delete a label from a workspace. Requires ADMIN or OWNER.
- * Cascade relations clean up TaskLabel join records.
- */
+/** Deleting a label cascades its TaskLabel join rows. */
 export async function deleteWorkspaceLabel(
   workspaceId: string,
   labelId: string,
@@ -140,17 +109,12 @@ export async function deleteWorkspaceLabel(
 ): Promise<{ id: string; success: true }> {
   await requireWorkspaceRole(workspaceId, userId, 'ADMIN');
 
-  const label = await prisma.label.findFirst({
-    where: { id: labelId, workspaceId },
-  });
-
+  const label = await prisma.label.findFirst({ where: { id: labelId, workspaceId } });
   if (!label) {
     throw Errors.notFound('Label not found in this workspace.');
   }
 
-  await prisma.label.delete({
-    where: { id: labelId },
-  });
+  await prisma.label.delete({ where: { id: labelId } });
 
   return { id: labelId, success: true };
 }

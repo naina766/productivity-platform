@@ -44,8 +44,6 @@ const VALID_TASK_STATUSES = ['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE'] as cons
 const VALID_TASK_PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const;
 const VALID_TASK_SORTS = ['createdAt', 'updatedAt', 'dueDate', 'priority', 'position'] as const;
 
-// ─── Display maps ─────────────────────────────────────────────────────────────
-
 const STATUS_CONFIG: Record<ProjectStatus, { label: string; icon: React.ReactNode; className: string }> = {
   PLANNING: { label: 'Planning', icon: <Clock className="w-3.5 h-3.5" />, className: 'text-neutral-400 bg-neutral-400/10 border-neutral-400/20' },
   ACTIVE: { label: 'Active', icon: <Zap className="w-3.5 h-3.5" />, className: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20' },
@@ -61,8 +59,6 @@ const PRIORITY_CONFIG: Record<ProjectPriority, { label: string; dotClass: string
   URGENT: { label: 'Urgent', dotClass: 'bg-red-400' },
 };
 
-// ─── Detail field ─────────────────────────────────────────────────────────────
-
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
@@ -73,8 +69,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </div>
   );
 }
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ProjectPage({
   params,
@@ -91,7 +85,6 @@ export default function ProjectPage({
   const [editOpen, setEditOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
 
-  // ── Task state ──────────────────────────────────────────────────────────────
   const [tasks, setTasks] = useState<TaskSummary[]>([]);
   const [tasksLoading, setTasksLoading] = useState(true);
   const [tasksError, setTasksError] = useState<string | null>(null);
@@ -101,21 +94,18 @@ export default function ProjectPage({
   const [editTask, setEditTask] = useState<TaskDetail | null>(null);
   const [detailTask, setDetailTask] = useState<TaskDetail | null>(null);
 
-  // ── Filter state ────────────────────────────────────────────────────────────
   const [filterStatus, setFilterStatus] = useState<TaskStatus | undefined>();
   const [filterPriority, setFilterPriority] = useState<TaskPriority | undefined>();
   const [filterAssigneeId, setFilterAssigneeId] = useState('');
   const [filterSearch, setFilterSearch] = useState('');
   const [filterSort, setFilterSort] = useState<TaskSort>('position');
 
-  // ── Auth guard ──────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       router.replace('/login');
     }
   }, [loading, isAuthenticated, router]);
 
-  // ── Deep links & filter params (e.g. /projects/id?status=IN_PROGRESS&task=…) ──
   // Read bookmarked filter/task params once on mount and reflect filter changes
   // back into the URL so views are shareable without full page navigations.
   useEffect(() => {
@@ -166,7 +156,6 @@ export default function ProjectPage({
     }
   }, [filterStatus, filterPriority, filterAssigneeId, filterSearch, filterSort, isAuthenticated]);
 
-  // ── Load project ────────────────────────────────────────────────────────────
   const fetchProject = useCallback(async () => {
     if (!isAuthenticated) return;
     setPageLoading(true);
@@ -187,7 +176,6 @@ export default function ProjectPage({
     }
   }, [loading, isAuthenticated, fetchProject]);
 
-  // ── Load tasks ──────────────────────────────────────────────────────────────
   const fetchTasks = useCallback(async () => {
     if (!isAuthenticated) return;
     setTasksLoading(true);
@@ -214,7 +202,6 @@ export default function ProjectPage({
     }
   }, [fetchTasks, loading, isAuthenticated]);
 
-  // ── Task callbacks ──────────────────────────────────────────────────────────
   const handleTaskCreated = useCallback((task: TaskDetail) => {
     setTasks((prev) => [task, ...prev]);
   }, []);
@@ -255,12 +242,10 @@ export default function ProjectPage({
     setFilterSort('position');
   }, []);
 
-  // ── Compute permissions ─────────────────────────────────────────────────────
   const workspaceRole = workspace?.role as WorkspaceRole | undefined;
   const canManage =
     workspaceRole === 'OWNER' || workspaceRole === 'ADMIN';
 
-  // ── Auth loading ────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <main className="min-h-screen bg-[var(--bg-main)] flex items-center justify-center">
@@ -271,7 +256,6 @@ export default function ProjectPage({
 
   if (!user) return null;
 
-  // ── Project loading ─────────────────────────────────────────────────────────
   if (pageLoading) {
     return (
       <main className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)]">
@@ -288,7 +272,6 @@ export default function ProjectPage({
     );
   }
 
-  // ── Error ───────────────────────────────────────────────────────────────────
   if (pageError || !project) {
     return (
       <main className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] flex items-center justify-center p-4">
@@ -325,7 +308,6 @@ export default function ProjectPage({
       />
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
-        {/* ── Nav ───────────────────────────────────────────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
@@ -353,7 +335,6 @@ export default function ProjectPage({
           </div>
         </motion.div>
 
-        {/* ── Project header ─────────────────────────────────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -407,7 +388,6 @@ export default function ProjectPage({
           )}
         </motion.div>
 
-        {/* ── Details grid ───────────────────────────────────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -459,7 +439,6 @@ export default function ProjectPage({
           </div>
         </motion.div>
 
-        {/* ── Members ────────────────────────────────────────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -473,7 +452,6 @@ export default function ProjectPage({
           />
         </motion.div>
 
-        {/* ── Tasks ──────────────────────────────────────────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -627,7 +605,6 @@ export default function ProjectPage({
         </motion.div>
       </div>
 
-      {/* ── Dialogs ───────────────────────────────────────────────────────────── */}
       {project && (
         <>
           <EditProjectDialog

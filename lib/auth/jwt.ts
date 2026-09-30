@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import { randomUUID } from 'crypto';
 
 export interface AccessTokenPayload {
-  sub: string;   // user id
+  sub: string;
   email: string;
   type: 'access';
 }
@@ -12,32 +12,27 @@ export interface RefreshTokenPayload {
   type: 'refresh';
 }
 
+/** Access and refresh tokens are signed with different secrets, so one can never be replayed as the other. */
 function requireSecret(name: string): string {
-  const val = process.env[name] ?? (name === 'JWT_ACCESS_SECRET' ? process.env.JWT_SECRET : undefined);
-  if (!val) throw new Error(`${name} is not configured. Set it in .env.`);
-  return val;
+  const value = process.env[name];
+  if (!value) throw new Error(`${name} is not configured. Set it in your environment.`);
+  return value;
 }
 
 export function signAccessToken(userId: string, email: string): string {
-  return jwt.sign(
-    { sub: userId, email, type: 'access' } satisfies AccessTokenPayload,
-    requireSecret('JWT_ACCESS_SECRET'),
-    { expiresIn: (process.env.JWT_ACCESS_TTL ?? '15m') as jwt.SignOptions['expiresIn'] },
-  );
+  return jwt.sign({ sub: userId, email, type: 'access' } satisfies AccessTokenPayload, requireSecret('JWT_ACCESS_SECRET'), {
+    expiresIn: (process.env.JWT_ACCESS_TTL ?? '15m') as jwt.SignOptions['expiresIn'],
+  });
 }
 
 export function signRefreshToken(userId: string): string {
-  return jwt.sign(
-    { sub: userId, type: 'refresh' } satisfies RefreshTokenPayload,
-    requireSecret('JWT_REFRESH_SECRET'),
-    {
-      expiresIn: (process.env.JWT_REFRESH_TTL ?? '7d') as jwt.SignOptions['expiresIn'],
-      // Guarantee a unique token hash per rotation even when two calls land in
-      // the same `iat` second; otherwise refresh always fails after login in
-      // burst scenarios (unique constraint on `RefreshToken.tokenHash`).
-      jwtid: randomUUID(),
-    },
-  );
+  return jwt.sign({ sub: userId, type: 'refresh' } satisfies RefreshTokenPayload, requireSecret('JWT_REFRESH_SECRET'), {
+    expiresIn: (process.env.JWT_REFRESH_TTL ?? '7d') as jwt.SignOptions['expiresIn'],
+    // A unique jti per token guarantees a unique SHA-256 hash on every rotation.
+    // Without it, two tokens minted in the same `iat` second would collide on the
+    // RefreshToken.tokenHash unique constraint and the second rotation would fail.
+    jwtid: randomUUID(),
+  });
 }
 
 export function verifyAccessToken(token: string): AccessTokenPayload {

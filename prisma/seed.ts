@@ -159,13 +159,14 @@ async function main() {
     },
   });
 
-  // eslint-disable-next-line no-console
-  console.log('[seed] done: 3 users, 1 workspace, 1 project, 4 tasks, labels, comments, activity & notification seeded idempotently');
+  console.log(
+    '[seed] done: 3 users, 1 workspace, 1 project, 4 tasks, 2 labels, ' +
+      '1 comment, 1 activity entry, 1 notification',
+  );
 }
 
 await main()
   .catch((e) => {
-    // eslint-disable-next-line no-console
     console.error('[seed] failed', e);
     process.exit(1);
   })

@@ -13,7 +13,6 @@ import type { WorkspaceRole } from '@/types/project';
 import { AddMemberDialog } from '@/components/workspace/AddMemberDialog';
 import { getErrorMessage } from '@/lib/errors';
 
-
 interface WorkspaceMembersProps {
   workspaceId: string;
   currentRole: WorkspaceRole;

@@ -31,8 +31,6 @@ const ROLE_LABELS: Record<string, string> = {
   MEMBER: 'Member',
 };
 
-// ─── Skeleton loader ──────────────────────────────────────────────────────────
-
 function ProjectSkeleton() {
   return (
     <div className="rounded-2xl bg-[var(--card-main)] border border-[var(--border-color)] p-5 animate-pulse">
@@ -51,8 +49,6 @@ function ProjectSkeleton() {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
-
 export default function DashboardPage() {
   const router = useRouter();
   const { user, workspace, loading, isAuthenticated, loadUser } = useAuth();
@@ -64,14 +60,12 @@ export default function DashboardPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState('');
 
-  // ── Auth guard ──────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       router.replace('/login');
     }
   }, [loading, isAuthenticated, router]);
 
-  // ── Load projects once auth is ready ────────────────────────────────────────
   const fetchProjects = useCallback(async () => {
     if (!workspace?.id) return;
     setProjectsLoading(true);
@@ -94,7 +88,6 @@ export default function DashboardPage() {
     }
   }, [loading, isAuthenticated, workspace?.id, fetchProjects]);
 
-  // ── Logout ──────────────────────────────────────────────────────────────────
   async function handleLogout() {
     try {
       await apiLogout();
@@ -109,7 +102,6 @@ export default function DashboardPage() {
     router.replace('/login');
   }
 
-  // ── Project created callback ────────────────────────────────────────────────
   function handleProjectCreated(project: ProjectDetail) {
     setProjects((prev) => [
       {
@@ -128,7 +120,6 @@ export default function DashboardPage() {
     ]);
   }
 
-  // ── Loading state ───────────────────────────────────────────────────────────
   if (loading || !user) {
     return (
       <main className="min-h-screen bg-[var(--bg-main)] flex items-center justify-center">
@@ -136,7 +127,6 @@ export default function DashboardPage() {
       </main>
     );
   }
-
 
   const roleLabel = workspace ? (ROLE_LABELS[workspace.role] ?? workspace.role) : null;
 
@@ -149,7 +139,6 @@ export default function DashboardPage() {
       />
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
-        {/* ── Header ──────────────────────────────────────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -179,7 +168,6 @@ export default function DashboardPage() {
           </div>
         </motion.div>
 
-        {/* ── Welcome ─────────────────────────────────────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -195,8 +183,6 @@ export default function DashboardPage() {
           <p className="text-[var(--text-secondary)] text-sm">{user.email}</p>
         </motion.div>
 
-
-        {/* ── Workspace card ───────────────────────────────────────────────── */}
         {workspace && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
@@ -222,7 +208,6 @@ export default function DashboardPage() {
           </motion.div>
         )}
 
-        {/* ── Workspace members ───────────────────────────────────────────── */}
         {workspace && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
@@ -236,7 +221,6 @@ export default function DashboardPage() {
           </motion.div>
         )}
 
-        {/* ── Projects section ─────────────────────────────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -325,7 +309,6 @@ export default function DashboardPage() {
         </motion.div>
       </div>
 
-      {/* ── Create Project dialog ──────────────────────────────────────────── */}
       {workspace && (
         <CreateProjectDialog
           workspaceId={workspace.id}

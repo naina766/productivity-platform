@@ -29,12 +29,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       {
         success: true,
         user: result.user,
-        accessToken: result.tokens.accessToken,
+        accessToken: result.accessToken,
         workspace: result.workspace,
       },
       { status: 201 },
     );
-    res.headers.append('Set-Cookie', makeRefreshCookie(result.tokens.refreshToken));
+    res.headers.append('Set-Cookie', makeRefreshCookie(result.refreshToken));
     return res;
   } catch (err) {
     const body = buildErrorResponse(err);

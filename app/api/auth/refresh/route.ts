@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { refreshSession } from '@/lib/auth/auth.service';
 import { buildErrorResponse, AppError } from '@/lib/errors';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
-import { makeRefreshCookie, clearRefreshCookies } from '@/lib/auth/cookies';
+import { makeRefreshCookie, clearRefreshCookie } from '@/lib/auth/cookies';
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   // Rate limit: 30 refresh attempts per 15 min per IP
@@ -26,12 +26,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     res.headers.append('Set-Cookie', makeRefreshCookie(tokens.refreshToken));
     return res;
   } catch (err) {
+    // Any refresh failure invalidates the browser's session: the cookie is
+    // cleared so a dead token is not replayed on the next request.
     const res = NextResponse.json(buildErrorResponse(err), {
       status: err instanceof AppError ? err.status : 500,
     });
-    for (const cookie of clearRefreshCookies()) {
-      res.headers.append('Set-Cookie', cookie);
-    }
+    res.headers.append('Set-Cookie', clearRefreshCookie());
     return res;
   }
 }

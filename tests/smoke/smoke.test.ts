@@ -9,7 +9,6 @@
  * the most important code paths in the NOVA platform.
  */
 
-// ─── Environment setup ────────────────────────────────────────────────────────
 process.env.JWT_ACCESS_SECRET = 'smoke-test-jwt-access-secret-min-32-chars!!';
 process.env.JWT_REFRESH_SECRET = 'smoke-test-jwt-refresh-secret-min-32-chars!';
 process.env.JWT_ACCESS_TTL = '15m';
@@ -23,19 +22,12 @@ import {
   verifyRefreshToken,
 } from '../../lib/auth/jwt';
 import { hashToken } from '../../lib/auth/refresh-token';
-import {
-  canCreateProject,
-  canManageProject,
-  canOwnerAction,
-} from '../../lib/projects/permissions';
 import { registerSchema, loginSchema } from '../../lib/validations/auth';
 import { createProjectSchema, updateProjectSchema } from '../../lib/validations/project';
 import { createTaskSchema, updateTaskSchema } from '../../lib/validations/task';
 import { getErrorMessage } from '../../lib/errors/normalize';
 import { ApiError } from '../../lib/api/client';
 import { Errors } from '../../lib/errors';
-
-// ─── Authentication: Password security ───────────────────────────────────────
 
 describe('SMOKE: Authentication — Password Security', () => {
   it('bcrypt hash is not equal to the plain-text password', async () => {
@@ -57,8 +49,6 @@ describe('SMOKE: Authentication — Password Security', () => {
     expect(await verifyPassword('WrongPassword!', hash)).toBe(false);
   });
 });
-
-// ─── Authentication: JWT access tokens ───────────────────────────────────────
 
 describe('SMOKE: Authentication — JWT Access Tokens', () => {
   const userId = 'aaaaaaaa-0000-4000-8000-000000000001';
@@ -84,8 +74,6 @@ describe('SMOKE: Authentication — JWT Access Tokens', () => {
   });
 });
 
-// ─── Authentication: JWT refresh tokens ──────────────────────────────────────
-
 describe('SMOKE: Authentication — JWT Refresh Tokens', () => {
   const userId = 'aaaaaaaa-0000-4000-8000-000000000002';
 
@@ -107,8 +95,6 @@ describe('SMOKE: Authentication — JWT Refresh Tokens', () => {
     expect(() => verifyAccessToken(token)).toThrow(); // different secret
   });
 });
-
-// ─── Authentication: CAS (Compare-and-Swap) refresh claim ────────────────────
 
 describe('SMOKE: Authentication — Atomic Refresh Token CAS', () => {
   it('first claim returns userId; second concurrent claim returns null', async () => {
@@ -132,8 +118,6 @@ describe('SMOKE: Authentication — Atomic Refresh Token CAS', () => {
     expect(await claimRefreshToken('smoke-token', mockTx)).toBeNull(); // token already revoked
   });
 });
-
-// ─── Authentication: Input validation ────────────────────────────────────────
 
 describe('SMOKE: Authentication — Input Validation (Register)', () => {
   it('accepts valid registration data and normalises name/email', () => {
@@ -195,30 +179,6 @@ describe('SMOKE: Authentication — Input Validation (Login)', () => {
   });
 });
 
-// ─── Authorization: Role hierarchy ───────────────────────────────────────────
-
-describe('SMOKE: Authorization — Workspace Role Hierarchy', () => {
-  it('all roles (OWNER, ADMIN, MEMBER) can create projects', () => {
-    expect(canCreateProject('OWNER')).toBe(true);
-    expect(canCreateProject('ADMIN')).toBe(true);
-    expect(canCreateProject('MEMBER')).toBe(true);
-  });
-
-  it('only OWNER and ADMIN can manage projects; MEMBER cannot', () => {
-    expect(canManageProject('OWNER')).toBe(true);
-    expect(canManageProject('ADMIN')).toBe(true);
-    expect(canManageProject('MEMBER')).toBe(false);
-  });
-
-  it('only OWNER can perform ownership-level actions', () => {
-    expect(canOwnerAction('OWNER')).toBe(true);
-    expect(canOwnerAction('ADMIN')).toBe(false);
-    expect(canOwnerAction('MEMBER')).toBe(false);
-  });
-});
-
-// ─── Project validation ───────────────────────────────────────────────────────
-
 describe('SMOKE: Project Validation', () => {
   it('rejects a blank project name', () => {
     expect(createProjectSchema.safeParse({ name: '   ' }).success).toBe(false);
@@ -243,8 +203,6 @@ describe('SMOKE: Project Validation', () => {
     expect(updateProjectSchema.safeParse({ status: 'ARCHIVED' }).success).toBe(true);
   });
 });
-
-// ─── Task validation ──────────────────────────────────────────────────────────
 
 describe('SMOKE: Task Validation', () => {
   it('rejects a task with a blank title', () => {
@@ -273,8 +231,6 @@ describe('SMOKE: Task Validation', () => {
     expect(updateTaskSchema.safeParse({ status: 'DONE' }).success).toBe(true);
   });
 });
-
-// ─── Error handling ───────────────────────────────────────────────────────────
 
 describe('SMOKE: Error Handling — AppError factory and normalization', () => {
   it('AppError factories produce correct status codes and codes', () => {

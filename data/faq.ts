@@ -9,7 +9,7 @@ export const faqData: FAQItem[] = [
   {
     id: 'is-nova-free',
     question: 'Is NOVA free to use?',
-    answer: 'Yes. The Free plan includes up to 3 active projects, task management with statuses, team comments, and an activity feed. The Pro plan unlocks unlimited projects and members for growing teams.',
+    answer: 'NOVA is a portfolio project and there is no billing or subscription flow. Every feature in the app is available to any account.',
   },
   {
     id: 'who-is-nova-for',
@@ -19,7 +19,7 @@ export const faqData: FAQItem[] = [
   {
     id: 'multiple-projects',
     question: 'Can I manage multiple projects?',
-    answer: 'Yes. Workspaces can contain unlimited projects, each with its own task board, members, and labels. The Free plan supports up to 3 active projects.',
+    answer: 'Yes. Workspaces can contain multiple projects, each with its own task board, members, and labels. Projects are archived rather than deleted, so their history stays available.',
   },
   {
     id: 'dark-mode',

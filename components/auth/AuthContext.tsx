@@ -18,22 +18,13 @@ import {
   getAccessToken,
   setAccessToken,
   onAuthFailure,
-  type SafeUser,
   ApiError,
 } from '@/lib/api/client';
-
-
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-interface WorkspaceInfo {
-  id: string;
-  name: string;
-  role: string;
-}
+import type { ApiUser, ApiWorkspace } from '@/types/auth';
 
 interface AuthContextValue {
-  user: SafeUser | null;
-  workspace: WorkspaceInfo | null;
+  user: ApiUser | null;
+  workspace: ApiWorkspace | null;
   loading: boolean;
   isAuthenticated: boolean;
   login(email: string, password: string): Promise<void>;
@@ -41,8 +32,6 @@ interface AuthContextValue {
   logout(): Promise<void>;
   loadUser(): Promise<void>;
 }
-
-// ─── Context ─────────────────────────────────────────────────────────────────
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -52,65 +41,53 @@ export function useAuth(): AuthContextValue {
   return ctx;
 }
 
-// ─── Provider ────────────────────────────────────────────────────────────────
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<SafeUser | null>(null);
-  const [workspace, setWorkspace] = useState<WorkspaceInfo | null>(null);
+  const [user, setUser] = useState<ApiUser | null>(null);
+  const [workspace, setWorkspace] = useState<ApiWorkspace | null>(null);
   const [loading, setLoading] = useState(true);
   const initialised = useRef(false);
 
   /**
-   * Try to restore the session on mount:
-   * 1. If an access token is already in memory, call /api/auth/me.
-   * 2. If that fails (401), try /api/auth/refresh to get a new access token.
-   * 3. Retry /api/auth/me with the new token.
-   * 4. If refresh also fails, clear state and treat as unauthenticated.
+   * Restore the session on mount.
+   *
+   * The access token lives in memory only, so a page load starts without one
+   * and relies on the HttpOnly refresh cookie. A 401 from /api/auth/me triggers
+   * exactly one extra refresh before giving up.
    */
   const loadUser = useCallback(async () => {
     setLoading(true);
-    try {
-      let token = getAccessToken();
 
-      // No in-memory token — try to refresh via the HttpOnly cookie.
-      if (!token) {
-        try {
-          const refreshRes = await apiRefresh();
-          setAccessToken(refreshRes.accessToken);
-          token = refreshRes.accessToken;
-        } catch {
-          // Refresh failed — no valid session.
-          setUser(null);
-          setWorkspace(null);
-          return;
-        }
+    const clearSession = () => {
+      setUser(null);
+      setWorkspace(null);
+      setAccessToken(null);
+    };
+
+    const refresh = async () => {
+      const { accessToken: token } = await apiRefresh();
+      setAccessToken(token);
+    };
+
+    const fetchMe = async () => {
+      const me = await apiMe();
+      setUser(me.user);
+      setWorkspace(me.workspace ?? null);
+    };
+
+    try {
+      if (!getAccessToken()) {
+        await refresh();
       }
 
       try {
-        const meRes = await apiMe(token);
-        setUser(meRes.user);
-        setWorkspace(meRes.workspace ?? null);
+        await fetchMe();
       } catch (err) {
-        if (err instanceof ApiError && err.status === 401) {
-          // Access token expired — try one more refresh.
-          try {
-            const refreshRes = await apiRefresh();
-            setAccessToken(refreshRes.accessToken);
-            const meRes = await apiMe(refreshRes.accessToken);
-            setUser(meRes.user);
-            setWorkspace(meRes.workspace ?? null);
-          } catch {
-            setUser(null);
-            setWorkspace(null);
-            setAccessToken(null);
-          }
-        } else {
-          throw err;
-        }
+        if (!(err instanceof ApiError) || err.status !== 401) throw err;
+        await refresh();
+        await fetchMe();
       }
     } catch {
-      setUser(null);
-      setWorkspace(null);
+      clearSession();
     } finally {
       setLoading(false);
     }
@@ -132,7 +109,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
   }, []);
-
 
   const login = useCallback(async (email: string, password: string) => {
     const res = await apiLogin(email, password);

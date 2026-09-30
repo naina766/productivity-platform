@@ -7,7 +7,6 @@ import { Zap, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthContext';
 import { getErrorMessage } from '@/lib/errors';
 
-
 export default function RegisterPage() {
   const router = useRouter();
   const { register } = useAuth();

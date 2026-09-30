@@ -19,8 +19,6 @@ import {
 } from '@/lib/api/client';
 import type { ProjectMemberItem, WorkspaceRole } from '@/types/project';
 
-// ─── Role display map ─────────────────────────────────────────────────────────
-
 const ROLE_CONFIG: Record<WorkspaceRole, { label: string; className: string; icon?: React.ReactNode }> = {
   OWNER: {
     label: 'Owner',
@@ -40,8 +38,6 @@ const ROLE_CONFIG: Record<WorkspaceRole, { label: string; className: string; ico
 
 const ASSIGNABLE_ROLES: WorkspaceRole[] = ['ADMIN', 'MEMBER'];
 
-// ─── Avatar initials ──────────────────────────────────────────────────────────
-
 function Initials({ name }: { name: string }) {
   const parts = name.split(' ');
   const initials = (parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '');
@@ -51,8 +47,6 @@ function Initials({ name }: { name: string }) {
     </div>
   );
 }
-
-// ─── Member row ───────────────────────────────────────────────────────────────
 
 interface MemberRowProps {
   member: ProjectMemberItem;
@@ -155,8 +149,6 @@ function MemberRow({ member, canManage, projectId, onRoleChange, onRemove }: Mem
     </motion.div>
   );
 }
-
-// ─── Add member form ──────────────────────────────────────────────────────────
 
 interface AddMemberFormProps {
   projectId: string;
@@ -266,8 +258,6 @@ function AddMemberForm({ projectId, onAdded }: AddMemberFormProps) {
     </motion.form>
   );
 }
-
-// ─── Main component ───────────────────────────────────────────────────────────
 
 interface ProjectMembersProps {
   projectId: string;

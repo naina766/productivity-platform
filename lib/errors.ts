@@ -1,33 +1,31 @@
-/** Operational error with HTTP status + machine-readable code. */
+/** An expected failure with an HTTP status and a machine-readable code. */
 export class AppError extends Error {
   readonly status: number;
   readonly code: string;
-  readonly details?: unknown;
 
-  constructor(status: number, code: string, message: string, details?: unknown) {
+  constructor(status: number, code: string, message: string) {
     super(message);
+    this.name = 'AppError';
     this.status = status;
     this.code = code;
-    this.details = details;
   }
 }
 
 export const Errors = {
-  badRequest: (msg = 'Invalid request') =>
-    new AppError(400, 'BAD_REQUEST', msg),
-  unauthorized: (msg = 'Authentication required') =>
-    new AppError(401, 'UNAUTHORIZED', msg),
-  forbidden: (msg = 'You do not have permission for this resource') =>
-    new AppError(403, 'FORBIDDEN', msg),
-  notFound: (msg = 'Resource not found') =>
-    new AppError(404, 'NOT_FOUND', msg),
-  conflict: (msg = 'Resource already exists') =>
-    new AppError(409, 'CONFLICT', msg),
-  validation: (msg = 'Invalid request', details?: unknown) =>
-    new AppError(422, 'VALIDATION_ERROR', msg, details),
+  badRequest: (message = 'Invalid request') => new AppError(400, 'BAD_REQUEST', message),
+  unauthorized: (message = 'Authentication required') => new AppError(401, 'UNAUTHORIZED', message),
+  forbidden: (message = 'You do not have permission for this resource') =>
+    new AppError(403, 'FORBIDDEN', message),
+  notFound: (message = 'Resource not found') => new AppError(404, 'NOT_FOUND', message),
+  conflict: (message = 'Resource already exists') => new AppError(409, 'CONFLICT', message),
+  validation: (message = 'Invalid request') => new AppError(422, 'VALIDATION_ERROR', message),
 } as const;
 
-/** Build a JSON-serialisable error body (never leaks internals). */
+/**
+ * Build a client-safe error body. Only AppError messages are surfaced; anything
+ * unexpected becomes a generic message so stack traces and driver internals
+ * never reach the browser.
+ */
 export function buildErrorResponse(err: unknown): { success: false; message: string } {
   if (err instanceof AppError) {
     return { success: false, message: err.message };
@@ -36,4 +34,3 @@ export function buildErrorResponse(err: unknown): { success: false; message: str
 }
 
 export { getErrorMessage } from './errors/normalize';
-

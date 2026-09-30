@@ -1,8 +1,4 @@
-/**
- * NOVA — Phase 5 task types.
- * API-safe serialised shapes, not Prisma models.
- * Dates are ISO strings; no internal DB fields exposed.
- */
+/** API-safe serialised task shapes, not Prisma models. Dates are ISO strings. */
 
 export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'IN_REVIEW' | 'DONE';
 export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
@@ -36,9 +32,12 @@ export interface TaskSummary {
   updatedAt: string;
 }
 
-export interface TaskDetail extends TaskSummary {
-  createdById?: string;
-}
+/**
+ * The task shape the API returns. Identical to the summary: the endpoints never
+ * expose a separate detail view, so a distinct type would imply fields the
+ * server does not send.
+ */
+export type TaskDetail = TaskSummary;
 
 export interface CreateTaskInput {
   title: string;
@@ -69,6 +68,15 @@ export interface TaskFilters {
 }
 
 export type TaskSort = 'createdAt' | 'updatedAt' | 'dueDate' | 'priority' | 'position';
+
+/** Runtime lists mirroring the union types, for validating untrusted input. */
+export const ALL_TASK_SORTS: TaskSort[] = [
+  'createdAt',
+  'updatedAt',
+  'dueDate',
+  'priority',
+  'position',
+];
 
 export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
   TODO: 'To Do',

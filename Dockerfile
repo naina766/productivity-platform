@@ -1,20 +1,13 @@
-# Multi-stage production Dockerfile for NOVA Productivity Platform
-# Base image: Node.js 20 on Alpine Linux
-
-# --------------------------------------------------
-# Stage 1: Dependencies (deps)
-# --------------------------------------------------
-FROM node:20-alpine AS deps
+# Dependencies: installed once and reused by every later stage.
+FROM node:24-alpine AS deps
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
 COPY package.json package-lock.json ./
 RUN npm ci
 
-# --------------------------------------------------
-# Stage 2: Application Builder (builder)
-# --------------------------------------------------
-FROM node:20-alpine AS builder
+# Build: produces the standalone server bundle the runner stage executes.
+FROM node:24-alpine AS builder
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
@@ -28,10 +21,8 @@ ENV NODE_ENV=production
 RUN npx prisma generate
 RUN npm run build
 
-# --------------------------------------------------
-# Stage 3: Database Migrator (migrator)
-# --------------------------------------------------
-FROM node:20-alpine AS migrator
+# Migrator: runs `prisma migrate deploy` once, then exits.
+FROM node:24-alpine AS migrator
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
@@ -43,10 +34,8 @@ RUN npx prisma generate
 
 CMD ["npx", "prisma", "migrate", "deploy"]
 
-# --------------------------------------------------
-# Stage 4: Production Runtime (runner)
-# --------------------------------------------------
-FROM node:20-alpine AS runner
+# Runner: minimal image containing only the standalone output, as a non-root user.
+FROM node:24-alpine AS runner
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
@@ -57,7 +46,6 @@ ENV HOSTNAME="0.0.0.0"
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Copy static assets and standalone build
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static

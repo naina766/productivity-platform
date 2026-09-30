@@ -15,7 +15,7 @@ export const testimonialsData: Testimonial[] = [
     name: 'Example Workflow',
     role: 'Engineering Team Persona',
     company: 'Demo Workspace',
-    quote: 'The responsive task board and status transitions keep deliverables clear. Real-time clarity helps remote engineers prioritize their sprints.',
+    quote: 'The task board and status transitions keep deliverables clear. Filtering by assignee helps remote engineers prioritize their sprints.',
     rating: 5,
     avatar: '',
   },

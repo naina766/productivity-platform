@@ -1,23 +1,7 @@
-/**
- * NOVA — Activity service layer.
- *
- * Records structured project activity (task created, status changes,
- * assignments, comments, project events) and lists it for a project.
- * The `logActivity` helper is transaction-aware so mutations and their
- * activity entries commit atomically.
- */
-
 import { prisma } from '@/lib/db/prisma';
 import { requireProjectAccess } from '@/lib/projects/permissions';
+import type { Prisma } from '@prisma/client';
 import type { ActivityItem, ActivityType } from '@/types/activity';
-import type { ActivityType as PrismaActivityType, Prisma } from '@prisma/client';
-
-const safeActorSelect = {
-  id: true,
-  name: true,
-  email: true,
-  avatarUrl: true,
-} as const;
 
 export interface LogActivityInput {
   projectId: string;
@@ -28,9 +12,14 @@ export interface LogActivityInput {
   metadata?: Record<string, unknown> | null;
 }
 
+const activityInclude = {
+  actor: { select: { id: true, name: true, email: true, avatarUrl: true } },
+  task: { select: { id: true, title: true } },
+} as const;
+
 /**
- * Persist an activity entry. Accepts a transaction client so it can be
- * composed with the mutation that triggered the event.
+ * Append an activity entry. Takes a transaction client so the entry commits
+ * atomically with the change it describes.
  */
 export async function logActivity(
   tx: Prisma.TransactionClient,
@@ -41,17 +30,13 @@ export async function logActivity(
       projectId: input.projectId,
       taskId: input.taskId ?? null,
       actorId: input.actorId,
-      type: input.type as PrismaActivityType,
+      type: input.type,
       message: input.message,
-      metadata: input.metadata ? (input.metadata as Prisma.InputJsonValue) : undefined,
+      ...(input.metadata ? { metadata: input.metadata as Prisma.InputJsonValue } : {}),
     },
   });
 }
 
-/**
- * List activity for a project (newest first).
- * Optionally filtered to a single task. Verifies the user has project access.
- */
 export async function getProjectActivity(
   projectId: string,
   userId: string,
@@ -62,10 +47,7 @@ export async function getProjectActivity(
 
   const activities = await prisma.activity.findMany({
     where: { projectId, ...(taskId ? { taskId } : {}) },
-    include: {
-      actor: { select: safeActorSelect },
-      task: { select: { id: true, title: true } },
-    },
+    include: activityInclude,
     orderBy: { createdAt: 'desc' },
     take: Math.min(Math.max(limit, 1), 200),
   });
@@ -75,15 +57,8 @@ export async function getProjectActivity(
     type: a.type as ActivityType,
     message: a.message,
     metadata: a.metadata as Record<string, unknown> | null,
-    actor: a.actor
-      ? {
-          id: a.actor.id,
-          name: a.actor.name,
-          email: a.actor.email,
-          avatarUrl: a.actor.avatarUrl,
-        }
-      : null,
-    taskId: a.task?.id,
+    actor: a.actor,
+    taskId: a.task?.id ?? null,
     taskTitle: a.task?.title ?? null,
     createdAt: a.createdAt.toISOString(),
   }));

@@ -21,9 +21,10 @@ const config: Config = {
     '^@/(.*)$': '<rootDir>/$1',
   },
 
-  // Exclude .kilo worktrees to prevent haste-map package.json collision
-  modulePathIgnorePatterns: ['<rootDir>/.kilo/'],
-  watchPathIgnorePatterns: ['<rootDir>/.kilo/'],
+  // Ignore root-level dot directories (build output, editor state) so they are
+  // never scanned for tests or pulled into the module map.
+  modulePathIgnorePatterns: ['<rootDir>/\\.[^/]+/'],
+  watchPathIgnorePatterns: ['<rootDir>/\\.[^/]+/'],
 
   // Don't transform node_modules
   transformIgnorePatterns: ['/node_modules/'],

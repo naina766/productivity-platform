@@ -1,19 +1,13 @@
-/**
- * NOVA — Project service layer.
- *
- * All business logic lives here. Route handlers are kept thin.
- * Authorization is enforced before any DB write.
- */
-
 import { prisma } from '@/lib/db/prisma';
 import { Errors } from '@/lib/errors';
+import { requireWorkspaceMember } from '@/lib/workspaces/permissions';
 import {
-  requireWorkspaceMember,
   requireProjectAccess,
   requireProjectManageAccess,
-  canCreateProject,
+  canOwnerAction,
 } from '@/lib/projects/permissions';
 import { logActivity } from '@/lib/activity/activity.service';
+import type { Prisma } from '@prisma/client';
 import type { CreateProjectData, UpdateProjectData } from '@/lib/validations/project';
 import type {
   ProjectSummary,
@@ -22,36 +16,26 @@ import type {
   WorkspaceRole,
 } from '@/types/project';
 
-// ─── Safe field selects (never expose passwordHash etc.) ──────────────────────
-
-const safeUserSelect = {
-  id: true,
-  name: true,
-  email: true,
-  avatarUrl: true,
-} as const;
-
 const memberSelect = {
   id: true,
   userId: true,
   role: true,
   createdAt: true,
-  user: { select: safeUserSelect },
+  user: { select: { id: true, name: true, email: true, avatarUrl: true } },
 } as const;
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+type ProjectMemberRow = Prisma.ProjectMemberGetPayload<{ select: typeof memberSelect }>;
 
-function serializeDate(d: Date | null | undefined): string | null {
-  return d ? d.toISOString() : null;
+function serializeMember(m: ProjectMemberRow): ProjectMemberItem {
+  return {
+    id: m.id,
+    userId: m.userId,
+    role: m.role as WorkspaceRole,
+    createdAt: m.createdAt.toISOString(),
+    user: m.user,
+  };
 }
 
-// ─── Read operations ──────────────────────────────────────────────────────────
-
-/**
- * List all non-archived projects for a workspace.
- * Optional `search` matches the project name or description (insensitive).
- * Verifies the requesting user is a workspace member.
- */
 export async function getWorkspaceProjects(
   workspaceId: string,
   userId: string,
@@ -93,22 +77,15 @@ export async function getWorkspaceProjects(
     description: p.description,
     status: p.status as ProjectSummary['status'],
     priority: p.priority as ProjectSummary['priority'],
-    startDate: serializeDate(p.startDate),
-    dueDate: serializeDate(p.dueDate),
+    startDate: p.startDate?.toISOString() ?? null,
+    dueDate: p.dueDate?.toISOString() ?? null,
     memberCount: p._count.members,
     createdAt: p.createdAt.toISOString(),
     updatedAt: p.updatedAt.toISOString(),
   }));
 }
 
-/**
- * Get full project detail including members.
- * Verifies workspace membership (returns 404 for IDOR protection).
- */
-export async function getProjectById(
-  projectId: string,
-  userId: string,
-): Promise<ProjectDetail> {
+export async function getProjectById(projectId: string, userId: string): Promise<ProjectDetail> {
   await requireProjectAccess(projectId, userId);
 
   const project = await prisma.project.findUnique({
@@ -129,7 +106,6 @@ export async function getProjectById(
       _count: { select: { members: true } },
     },
   });
-
   if (!project) throw Errors.notFound('Project not found.');
 
   return {
@@ -138,45 +114,28 @@ export async function getProjectById(
     description: project.description,
     status: project.status as ProjectDetail['status'],
     priority: project.priority as ProjectDetail['priority'],
-    startDate: serializeDate(project.startDate),
-    dueDate: serializeDate(project.dueDate),
+    startDate: project.startDate?.toISOString() ?? null,
+    dueDate: project.dueDate?.toISOString() ?? null,
     memberCount: project._count.members,
     createdAt: project.createdAt.toISOString(),
     updatedAt: project.updatedAt.toISOString(),
     workspaceId: project.workspaceId,
     workspaceName: project.workspace.name,
-    members: project.members.map((m) => ({
-      id: m.id,
-      userId: m.userId,
-      role: m.role as WorkspaceRole,
-      createdAt: m.createdAt.toISOString(),
-      user: {
-        id: m.user.id,
-        name: m.user.name,
-        email: m.user.email,
-        avatarUrl: m.user.avatarUrl,
-      },
-    })),
+    members: project.members.map(serializeMember),
   };
 }
 
-// ─── Write operations ─────────────────────────────────────────────────────────
-
 /**
- * Create a project atomically.
- * Verifies workspace membership, then creates Project + owner ProjectMember
- * in a single transaction.
+ * Every workspace member may create a project. The creator is added as its
+ * OWNER ProjectMember and a PROJECT_CREATED entry is logged, all in one
+ * transaction.
  */
 export async function createProject(
   workspaceId: string,
   userId: string,
   data: CreateProjectData,
 ): Promise<ProjectDetail> {
-  const membership = await requireWorkspaceMember(workspaceId, userId);
-
-  if (!canCreateProject(membership.role as WorkspaceRole)) {
-    throw Errors.forbidden('You do not have permission to create projects.');
-  }
+  await requireWorkspaceMember(workspaceId, userId);
 
   const project = await prisma.$transaction(async (tx) => {
     const created = await tx.project.create({
@@ -187,14 +146,11 @@ export async function createProject(
         status: 'ACTIVE',
         priority: 'MEDIUM',
       },
+      select: { id: true },
     });
 
     await tx.projectMember.create({
-      data: {
-        projectId: created.id,
-        userId,
-        role: 'OWNER',
-      },
+      data: { projectId: created.id, userId, role: 'OWNER' },
     });
 
     await logActivity(tx, {
@@ -211,10 +167,6 @@ export async function createProject(
   return getProjectById(project.id, userId);
 }
 
-/**
- * Update allowed project fields.
- * Requires at least ADMIN workspace role.
- */
 export async function updateProject(
   projectId: string,
   userId: string,
@@ -222,26 +174,24 @@ export async function updateProject(
 ): Promise<ProjectDetail> {
   await requireProjectManageAccess(projectId, userId);
 
-  const updateData: Record<string, unknown> = {};
+  const updateData: Prisma.ProjectUpdateInput = {};
   if (data.name !== undefined) updateData.name = data.name;
   if (data.description !== undefined) updateData.description = data.description;
   if (data.status !== undefined) updateData.status = data.status;
   if (data.priority !== undefined) updateData.priority = data.priority;
-  if ('startDate' in data) updateData.startDate = data.startDate ? new Date(data.startDate) : null;
-  if ('dueDate' in data) updateData.dueDate = data.dueDate ? new Date(data.dueDate) : null;
+  if (data.startDate !== undefined) {
+    updateData.startDate = data.startDate ? new Date(data.startDate) : null;
+  }
+  if (data.dueDate !== undefined) {
+    updateData.dueDate = data.dueDate ? new Date(data.dueDate) : null;
+  }
 
-  await prisma.project.update({
-    where: { id: projectId },
-    data: updateData,
-  });
+  await prisma.project.update({ where: { id: projectId }, data: updateData });
 
   return getProjectById(projectId, userId);
 }
 
-/**
- * Soft-archive a project (sets status = ARCHIVED).
- * Requires at least ADMIN workspace role.
- */
+/** Projects are archived, never deleted, so task history stays recoverable. */
 export async function archiveProject(
   projectId: string,
   userId: string,
@@ -257,11 +207,6 @@ export async function archiveProject(
   return { id: updated.id, status: updated.status };
 }
 
-// ─── Member operations ────────────────────────────────────────────────────────
-
-/**
- * List project members (verifies caller has workspace access).
- */
 export async function getProjectMembers(
   projectId: string,
   userId: string,
@@ -274,25 +219,9 @@ export async function getProjectMembers(
     orderBy: { createdAt: 'asc' },
   });
 
-  return members.map((m) => ({
-    id: m.id,
-    userId: m.userId,
-    role: m.role as WorkspaceRole,
-    createdAt: m.createdAt.toISOString(),
-    user: {
-      id: m.user.id,
-      name: m.user.name,
-      email: m.user.email,
-      avatarUrl: m.user.avatarUrl,
-    },
-  }));
+  return members.map(serializeMember);
 }
 
-/**
- * Add a user to a project.
- * Requires the requesting user to have ADMIN+ workspace role.
- * Target user must already be a member of the same workspace.
- */
 export async function addProjectMember(
   projectId: string,
   requesterId: string,
@@ -301,29 +230,30 @@ export async function addProjectMember(
 ): Promise<ProjectMemberItem> {
   const { project, membership } = await requireProjectManageAccess(projectId, requesterId);
 
-  // Prevent a non-OWNER from assigning OWNER role.
-  if (role === 'OWNER' && membership.role !== 'OWNER') {
+  if (role === 'OWNER' && !canOwnerAction(membership.role)) {
     throw Errors.forbidden('Only an OWNER can assign the OWNER role.');
   }
 
-  // Verify target user belongs to the same workspace.
-  const targetMembership = await prisma.workspaceMember.findUnique({
+  // The target must already belong to this workspace; project membership is
+  // always a subset of workspace membership.
+  const target = await prisma.workspaceMember.findUnique({
     where: { workspaceId_userId: { workspaceId: project.workspaceId, userId: targetUserId } },
+    select: { userId: true },
   });
-  if (!targetMembership) {
+  if (!target) {
     throw Errors.forbidden('Target user is not a member of this workspace.');
   }
 
-  // Prevent duplicate membership.
   const existing = await prisma.projectMember.findUnique({
     where: { projectId_userId: { projectId, userId: targetUserId } },
+    select: { id: true },
   });
   if (existing) {
     throw Errors.conflict('User is already a member of this project.');
   }
 
-  const created = await prisma.$transaction(async (tx) => {
-    const member = await tx.projectMember.create({
+  const member = await prisma.$transaction(async (tx) => {
+    const created = await tx.projectMember.create({
       data: { projectId, userId: targetUserId, role },
       select: memberSelect,
     });
@@ -332,32 +262,16 @@ export async function addProjectMember(
       projectId,
       actorId: requesterId,
       type: 'MEMBER_ADDED',
-      message: `Added ${member.user.name} to the project`,
-      metadata: { userId: targetUserId, name: member.user.name, role },
+      message: `Added ${created.user.name} to the project`,
+      metadata: { userId: targetUserId, name: created.user.name, role },
     });
 
-    return member;
+    return created;
   });
 
-  return {
-    id: created.id,
-    userId: created.userId,
-    role: created.role as WorkspaceRole,
-    createdAt: created.createdAt.toISOString(),
-    user: {
-      id: created.user.id,
-      name: created.user.name,
-      email: created.user.email,
-      avatarUrl: created.user.avatarUrl,
-    },
-  };
+  return serializeMember(member);
 }
 
-/**
- * Change a project member's role.
- * Requires the requesting user to have ADMIN+ workspace role.
- * Only OWNER can assign or demote OWNER.
- */
 export async function updateProjectMember(
   projectId: string,
   requesterId: string,
@@ -366,18 +280,17 @@ export async function updateProjectMember(
 ): Promise<ProjectMemberItem> {
   const { membership } = await requireProjectManageAccess(projectId, requesterId);
 
-  // Only OWNER may assign or change OWNER role.
-  if (role === 'OWNER' && membership.role !== 'OWNER') {
+  if (role === 'OWNER' && !canOwnerAction(membership.role)) {
     throw Errors.forbidden('Only an OWNER can assign the OWNER role.');
   }
 
   const target = await prisma.projectMember.findUnique({
     where: { projectId_userId: { projectId, userId: targetUserId } },
+    select: { role: true },
   });
   if (!target) throw Errors.notFound('Project member not found.');
 
-  // Prevent non-OWNER from demoting an OWNER.
-  if (target.role === 'OWNER' && membership.role !== 'OWNER') {
+  if (target.role === 'OWNER' && !canOwnerAction(membership.role)) {
     throw Errors.forbidden('Only an OWNER can change the role of another OWNER.');
   }
 
@@ -387,25 +300,9 @@ export async function updateProjectMember(
     select: memberSelect,
   });
 
-  return {
-    id: updated.id,
-    userId: updated.userId,
-    role: updated.role as WorkspaceRole,
-    createdAt: updated.createdAt.toISOString(),
-    user: {
-      id: updated.user.id,
-      name: updated.user.name,
-      email: updated.user.email,
-      avatarUrl: updated.user.avatarUrl,
-    },
-  };
+  return serializeMember(updated);
 }
 
-/**
- * Remove a project member.
- * Requires the requesting user to have ADMIN+ workspace role.
- * Prevents removing the last OWNER.
- */
 export async function removeProjectMember(
   projectId: string,
   requesterId: string,
@@ -415,19 +312,15 @@ export async function removeProjectMember(
 
   const target = await prisma.projectMember.findUnique({
     where: { projectId_userId: { projectId, userId: targetUserId } },
-    select: {
-      role: true,
-      user: { select: { name: true } },
-    },
+    select: { role: true, user: { select: { name: true } } },
   });
   if (!target) throw Errors.notFound('Project member not found.');
 
-  // Prevent non-OWNER from removing an OWNER.
-  if (target.role === 'OWNER' && membership.role !== 'OWNER') {
+  if (target.role === 'OWNER' && !canOwnerAction(membership.role)) {
     throw Errors.forbidden('Only an OWNER can remove another OWNER.');
   }
 
-  // Protect last owner.
+  // A project must always keep at least one owner.
   if (target.role === 'OWNER') {
     const ownerCount = await prisma.projectMember.count({
       where: { projectId, role: 'OWNER' },

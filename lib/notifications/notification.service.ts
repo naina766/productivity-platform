@@ -1,15 +1,7 @@
-/**
- * NOVA — Notifications service layer.
- *
- * In-app notifications keyed to a task. Kept deliberately small:
- * notifications are only created for genuinely useful events (task
- * assignment and new comments), never for every status change.
- */
-
 import { prisma } from '@/lib/db/prisma';
 import { Errors } from '@/lib/errors';
-import type { NotificationItem } from '@/types/notification';
 import type { Prisma } from '@prisma/client';
+import type { NotificationItem } from '@/types/notification';
 
 export interface CreateNotificationInput {
   userId: string;
@@ -18,33 +10,31 @@ export interface CreateNotificationInput {
   body?: string | null;
 }
 
+const notificationInclude = {
+  task: { select: { id: true, title: true, projectId: true } },
+} as const;
+
+type NotificationRow = Prisma.NotificationGetPayload<{ include: typeof notificationInclude }>;
+
 /**
- * Persist a notification. Accepts a transaction client so it can be
- * composed with the mutation that triggered it.
+ * Persist a notification. Takes a transaction client so it commits together
+ * with the mutation that triggered it.
  */
 export async function createNotification(
   tx: Prisma.TransactionClient,
   input: CreateNotificationInput,
 ): Promise<void> {
   await tx.notification.create({
-      data: {
-        userId: input.userId,
-        taskId: input.taskId ?? null,
-        title: input.title,
-        body: input.body ?? null,
-      },
+    data: {
+      userId: input.userId,
+      taskId: input.taskId ?? null,
+      title: input.title,
+      body: input.body ?? null,
+    },
   });
 }
 
-function serializeNotification(n: {
-  id: string;
-  taskId: string | null;
-  title: string;
-  body: string | null;
-  readAt: Date | null;
-  createdAt: Date;
-  task: { title: string; projectId: string } | null;
-}): NotificationItem {
+function serializeNotification(n: NotificationRow): NotificationItem {
   return {
     id: n.id,
     title: n.title,
@@ -57,17 +47,10 @@ function serializeNotification(n: {
   };
 }
 
-/**
- * List the current user's notifications (newest first) plus an unread count.
- * Optional `unread` filter and `limit` cap (defaults to 50).
- */
 export async function getUserNotifications(
   userId: string,
   options?: { unread?: boolean; limit?: number },
-): Promise<{
-  notifications: NotificationItem[];
-  unreadCount: number;
-}> {
+): Promise<{ notifications: NotificationItem[]; unreadCount: number }> {
   const limit = Math.min(Math.max(Math.floor(options?.limit ?? 50), 1), 200);
 
   const [notifications, unreadCount] = await Promise.all([
@@ -75,40 +58,22 @@ export async function getUserNotifications(
       where: { userId, ...(options?.unread ? { readAt: null } : {}) },
       orderBy: { createdAt: 'desc' },
       take: limit,
-      include: {
-        task: { select: { id: true, title: true, projectId: true } },
-      },
+      include: notificationInclude,
     }),
     prisma.notification.count({ where: { userId, readAt: null } }),
   ]);
 
-  return {
-    notifications: notifications.map(serializeNotification),
-    unreadCount,
-  };
+  return { notifications: notifications.map(serializeNotification), unreadCount };
 }
 
-/**
- * Lightweight unread count for the navbar bell (one indexed query).
- */
-export async function getUnreadNotificationCount(userId: string): Promise<number> {
-  return prisma.notification.count({ where: { userId, readAt: null } });
-}
-
-/**
- * Mark a single notification as read. Only the owner can read their own.
- * IDOR-safe: returns 404 when the notification is not found or not owned.
- */
-export async function markNotificationRead(
-  notificationId: string,
-  userId: string,
-): Promise<void> {
-  const notification = await prisma.notification.findFirst({
+export async function markNotificationRead(notificationId: string, userId: string): Promise<void> {
+  // Scoping the lookup by userId makes this a 404 for anyone else's
+  // notification instead of an update that silently succeeds.
+  const owned = await prisma.notification.findFirst({
     where: { id: notificationId, userId },
     select: { id: true },
   });
-
-  if (!notification) throw Errors.notFound('Notification not found.');
+  if (!owned) throw Errors.notFound('Notification not found.');
 
   await prisma.notification.update({
     where: { id: notificationId },
@@ -116,9 +81,6 @@ export async function markNotificationRead(
   });
 }
 
-/**
- * Mark every notification for the user as read.
- */
 export async function markAllNotificationsRead(userId: string): Promise<void> {
   await prisma.notification.updateMany({
     where: { userId, readAt: null },

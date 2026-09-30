@@ -28,13 +28,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     const result = await loginUser(parsed.data);
 
+    // The refresh token travels only in the HttpOnly cookie; the body carries
+    // the short-lived access token that the in-memory client holds.
     const res = NextResponse.json({
       success: true,
       user: result.user,
-      accessToken: result.tokens.accessToken,
+      accessToken: result.accessToken,
       workspace: result.workspace,
     });
-    res.headers.append('Set-Cookie', makeRefreshCookie(result.tokens.refreshToken));
+    res.headers.append('Set-Cookie', makeRefreshCookie(result.refreshToken));
     return res;
   } catch (err) {
     const body = buildErrorResponse(err);

@@ -1,17 +1,11 @@
-import { canCreateProject, canManageProject, canOwnerAction } from '../lib/projects/permissions';
+import { canManageProject, canOwnerAction } from '../lib/projects/permissions';
+import { roleRank } from '../lib/workspaces/permissions';
 
 describe('Permissions — Workspace Role Capabilities', () => {
-  describe('canCreateProject()', () => {
-    it('allows MEMBER to create projects', () => {
-      expect(canCreateProject('MEMBER')).toBe(true);
-    });
-
-    it('allows ADMIN to create projects', () => {
-      expect(canCreateProject('ADMIN')).toBe(true);
-    });
-
-    it('allows OWNER to create projects', () => {
-      expect(canCreateProject('OWNER')).toBe(true);
+  describe('roleRank()', () => {
+    it('orders roles OWNER > ADMIN > MEMBER', () => {
+      expect(roleRank('OWNER')).toBeGreaterThan(roleRank('ADMIN'));
+      expect(roleRank('ADMIN')).toBeGreaterThan(roleRank('MEMBER'));
     });
   });
 

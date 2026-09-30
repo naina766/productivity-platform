@@ -1,71 +1,32 @@
-/**
- * NOVA — Comment service layer.
- *
- * Comments belong to a task, which belongs to a project, which belongs to a
- * workspace. Every operation verifies the full access chain via
- * `requireTaskAccess` before reading or writing, so ID manipulation never
- * leaks another workspace's data.
- *
- * Ownership rules:
- *  - Any project member may comment on a task.
- *  - Only the author may edit a comment.
- *  - The author OR a workspace ADMIN/OWNER (moderator) may delete a comment.
- */
-
 import { prisma } from '@/lib/db/prisma';
 import { Errors } from '@/lib/errors';
 import { requireTaskAccess } from '@/lib/tasks/permissions';
 import { requireProjectManageAccess } from '@/lib/projects/permissions';
 import { logActivity } from '@/lib/activity/activity.service';
 import { createNotification } from '@/lib/notifications/notification.service';
+import type { Prisma } from '@prisma/client';
 import type { CommentItem } from '@/types/comment';
 
-// ─── Safe author select (never expose passwordHash / tokens) ─────────────────
-
-const safeAuthorSelect = {
-  id: true,
-  name: true,
-  email: true,
-  avatarUrl: true,
+const commentInclude = {
+  author: { select: { id: true, name: true, email: true, avatarUrl: true } },
 } as const;
 
-type CommentWithAuthor = {
-  id: string;
-  body: string;
-  taskId: string;
-  authorId: string;
-  createdAt: Date;
-  updatedAt: Date;
-  author: {
-    id: string;
-    name: string;
-    email: string;
-    avatarUrl: string | null;
-  };
-};
+type CommentRow = Prisma.TaskCommentGetPayload<{ include: typeof commentInclude }>;
 
-function serializeComment(c: CommentWithAuthor): CommentItem {
+function serializeComment(c: CommentRow): CommentItem {
   return {
     id: c.id,
     body: c.body,
     taskId: c.taskId,
-    author: {
-      id: c.author.id,
-      name: c.author.name,
-      email: c.author.email,
-      avatarUrl: c.author.avatarUrl,
-    },
+    author: c.author,
     createdAt: c.createdAt.toISOString(),
     updatedAt: c.updatedAt.toISOString(),
   };
 }
 
-// ─── Read operations ──────────────────────────────────────────────────────────
+/** Max recipients per comment, so a busy thread cannot fan out unbounded. */
+const MAX_COMMENT_RECIPIENTS = 20;
 
-/**
- * List comments for a task (oldest first, natural conversation order).
- * Verifies the user can access the task.
- */
 export async function getTaskComments(
   taskId: string,
   userId: string,
@@ -75,7 +36,7 @@ export async function getTaskComments(
 
   const comments = await prisma.taskComment.findMany({
     where: { taskId },
-    include: { author: { select: safeAuthorSelect } },
+    include: commentInclude,
     orderBy: { createdAt: 'asc' },
     take: Math.min(Math.max(limit, 1), 500),
   });
@@ -83,12 +44,11 @@ export async function getTaskComments(
   return comments.map(serializeComment);
 }
 
-// ─── Write operations ─────────────────────────────────────────────────────────
-
 /**
- * Create a comment on a task.
- * Persists the comment + COMMENT_ADDED activity atomically, and notifies the
- * task assignee and other people who have commented (excluding the author).
+ * Post a comment and notify the people already involved in the task.
+ *
+ * The assignee and previous commenters are notified (never the author), and
+ * the comment plus its notifications commit together with the activity entry.
  */
 export async function createComment(
   taskId: string,
@@ -103,27 +63,25 @@ export async function createComment(
   });
   const authorName = author?.name ?? 'Someone';
 
-  // Who should hear about this comment? The assignee plus everyone else who
-  // has already commented, never the author themselves.
   const recipients = new Set<string>();
   if (task.assigneeId && task.assigneeId !== userId) {
     recipients.add(task.assigneeId);
   }
-  if (recipients.size < 20) {
+  if (recipients.size < MAX_COMMENT_RECIPIENTS) {
     const previousAuthors = await prisma.taskComment.findMany({
       where: { taskId, authorId: { not: userId } },
       select: { authorId: true },
       distinct: ['authorId'],
     });
-    for (const p of previousAuthors) recipients.add(p.authorId);
+    for (const previous of previousAuthors) recipients.add(previous.authorId);
   }
 
-  const shortContent = content.length > 160 ? `${content.slice(0, 160)}…` : content;
+  const excerpt = content.length > 160 ? `${content.slice(0, 160)}…` : content;
 
   const comment = await prisma.$transaction(async (tx) => {
     const created = await tx.taskComment.create({
       data: { taskId, authorId: userId, body: content },
-      include: { author: { select: safeAuthorSelect } },
+      include: commentInclude,
     });
 
     await logActivity(tx, {
@@ -140,7 +98,7 @@ export async function createComment(
         userId: recipientId,
         taskId,
         title: task.assigneeId === recipientId ? 'New comment on your task' : 'New comment',
-        body: `${authorName}: "${shortContent}"`,
+        body: `${authorName}: "${excerpt}"`,
       });
     }
 
@@ -151,9 +109,8 @@ export async function createComment(
 }
 
 /**
- * Find a comment and verify the caller can reach its task through
- * workspace → project → task. Shared by update/delete (avoids leaking the
- * existence of comments in workspaces the caller cannot access).
+ * Resolve a comment through its task so edit and delete apply the same
+ * workspace → project → task access chain as every other comment operation.
  */
 async function requireCommentAccess(commentId: string, userId: string) {
   const comment = await prisma.taskComment.findUnique({
@@ -166,7 +123,6 @@ async function requireCommentAccess(commentId: string, userId: string) {
       task: { select: { projectId: true, title: true } },
     },
   });
-
   if (!comment) throw Errors.notFound('Comment not found.');
 
   await requireTaskAccess(comment.taskId, userId);
@@ -174,9 +130,6 @@ async function requireCommentAccess(commentId: string, userId: string) {
   return comment;
 }
 
-/**
- * Update a comment. Only the author may edit it.
- */
 export async function updateComment(
   commentId: string,
   userId: string,
@@ -191,25 +144,17 @@ export async function updateComment(
   const updated = await prisma.taskComment.update({
     where: { id: commentId },
     data: { body: content },
-    include: { author: { select: safeAuthorSelect } },
+    include: commentInclude,
   });
 
   return serializeComment(updated);
 }
 
-/**
- * Delete a comment.
- *  - The author may always delete their own comment.
- *  - Workspace ADMIN/OWNER may delete any comment in the project (moderation),
- *    mirroring the existing project-management permission convention.
- */
+/** The author may delete their own comment; workspace ADMIN+ may moderate any comment. */
 export async function deleteComment(commentId: string, userId: string): Promise<void> {
   const comment = await requireCommentAccess(commentId, userId);
 
-  const isAuthor = comment.authorId === userId;
-  if (!isAuthor) {
-    // Moderation: check ADMIN+ privileges on the project's workspace
-    // (comments without a resolvable task cannot be moderated this way).
+  if (comment.authorId !== userId) {
     await requireProjectManageAccess(comment.task.projectId, userId);
   }
 

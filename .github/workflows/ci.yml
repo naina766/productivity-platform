@@ -38,11 +38,8 @@ jobs:
       - name: Validate Prisma schema
         run: npm run prisma:validate
 
-      - name: Run unit & integration tests
+      - name: Run test suite
         run: npm test
-
-      - name: Run smoke tests
-        run: npm run test:smoke
 
       - name: Typecheck
         run: npm run typecheck

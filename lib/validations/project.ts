@@ -1,8 +1,6 @@
 import { z } from 'zod';
 import { ProjectStatus, ProjectPriority, WorkspaceRole } from '@/types/project';
 
-// ─── Status / priority literals (from Prisma enums) ──────────────────────────
-
 const projectStatuses: [ProjectStatus, ...ProjectStatus[]] = [
   'PLANNING',
   'ACTIVE',
@@ -23,8 +21,6 @@ const workspaceRoles: [WorkspaceRole, ...WorkspaceRole[]] = [
   'ADMIN',
   'MEMBER',
 ];
-
-// ─── Schemas ──────────────────────────────────────────────────────────────────
 
 export const createProjectSchema = z.object({
   name: z
@@ -73,8 +69,6 @@ export const addProjectMemberSchema = z.object({
 export const updateProjectMemberSchema = z.object({
   role: z.enum(workspaceRoles),
 });
-
-// ─── Inferred types ───────────────────────────────────────────────────────────
 
 export type CreateProjectData = z.infer<typeof createProjectSchema>;
 export type UpdateProjectData = z.infer<typeof updateProjectSchema>;

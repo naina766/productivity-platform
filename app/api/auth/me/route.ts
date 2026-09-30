@@ -1,6 +1,5 @@
 ﻿import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth/session';
-import { getUserWorkspace } from '@/lib/auth/auth.service';
+import { getCurrentUser, getUserWorkspace } from '@/lib/auth/session';
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUser(req);
