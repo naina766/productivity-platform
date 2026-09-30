@@ -46,9 +46,3 @@ export interface SolutionItem {
   accent: string;
   highlights: string[];
 }
-
-export interface Company {
-  name: string;
-  symbol: string;
-  subtitle: string;
-}
