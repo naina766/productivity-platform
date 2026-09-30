@@ -195,7 +195,7 @@ cp .env.example .env.local
 
 | Variable | Description | Example / Default |
 |----------|-------------|-------------------|
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql://postgres:postgres@localhost:5432/nova?schema=public` |
+| `DATABASE_URL` | PostgreSQL connection string (Docker on port 5433) | `postgresql://nova:changeme@localhost:5433/nova?schema=public` |
 | `JWT_ACCESS_SECRET` | Secret key for access token signing (≥ 32 chars) | Random 48-byte hex string |
 | `JWT_REFRESH_SECRET` | Secret key for refresh token signing (≥ 32 chars) | Random 48-byte hex string |
 | `JWT_ACCESS_TTL` | Lifespan of access token | `15m` |
@@ -214,20 +214,36 @@ node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 
 ### Prerequisites
 - **Node.js**: v20 or v24
-- **PostgreSQL**: 14+ running locally or on a managed provider (e.g. Neon, Supabase)
+- **Docker & Docker Desktop**: Installed and running
+
+### Port Mapping & Architecture
+- **Host Port**: `5433` (accessible on Windows host via `localhost:5433`)
+- **Container Port**: `5432` (internal PostgreSQL daemon port)
+- **Named Volume**: `nova_postgres_data` (ensures database persistence across restarts)
 
 ### 1. Install Dependencies
 ```bash
 npm install
 ```
 
-### 2. Generate Prisma Client & Run Migrations
+### 2. Start PostgreSQL via Docker Compose
 ```bash
-npm run prisma:generate
-npm run prisma:migrate
+docker compose up -d postgres
 ```
 
-### 3. Run Idempotent Database Seed
+Verify the container is healthy:
+```bash
+docker compose ps
+```
+*(Optionally test readiness: `docker exec nova-postgres pg_isready -U nova -d nova`)*
+
+### 3. Generate Prisma Client & Apply Migrations
+```bash
+npx prisma generate
+npx prisma migrate deploy
+```
+
+### 4. Run Idempotent Database Seed
 ```bash
 npm run db:seed
 ```
@@ -241,9 +257,9 @@ npm run db:seed
 | **Admin** | `admin@nova.demo` | `NovaDemo123!` |
 | **Member** | `member@nova.demo` | `NovaDemo123!` |
 
-*(These demo credentials are strictly for local development and portfolio demonstration).*
+*(These demo credentials are for local development and portfolio demonstration).*
 
-### 4. Start Development Server
+### 5. Start Development Server
 ```bash
 npm run dev
 ```
