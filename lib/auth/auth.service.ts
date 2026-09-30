@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/db/prisma';
 import { hashPassword, verifyPassword } from '@/lib/auth/password';
 import { signAccessToken, signRefreshToken } from '@/lib/auth/jwt';
-import { storeRefreshToken, findValidRefreshToken, revokeRefreshToken } from '@/lib/auth/refresh-token';
+import { storeRefreshToken, revokeRefreshToken, claimRefreshToken } from '@/lib/auth/refresh-token';
 import { Errors } from '@/lib/errors';
 import type { RegisterInput, LoginInput } from '@/lib/validations/auth';
 
@@ -109,21 +109,18 @@ export async function loginUser(input: LoginInput): Promise<AuthResult> {
 
 /**
  * Rotate the refresh token.
- * Revokes the old token and issues new access + refresh tokens.
+ * Uses atomic CAS (claimRefreshToken) inside a transaction so concurrent
+ * requests with the same refresh token cannot both rotate it.
  */
 export async function refreshSession(rawRefreshToken: string): Promise<{ accessToken: string; refreshToken: string }> {
-  const storedToken = await findValidRefreshToken(rawRefreshToken);
-  if (!storedToken) throw Errors.unauthorized('Invalid or expired refresh token.');
-
-// Revoke old token + issue new in a single transaction so rotation is atomic.
   const [newRefreshToken, user] = await prisma.$transaction(async (tx) => {
-    await tx.refreshToken.update({
-      where: { id: storedToken.id },
-      data: { revokedAt: new Date() },
-    });
+    const userId = await claimRefreshToken(rawRefreshToken, tx);
+    if (!userId) {
+      throw Errors.unauthorized('Invalid, expired, or already-used refresh token.');
+    }
 
     const user = await tx.user.findUnique({
-      where: { id: storedToken.userId },
+      where: { id: userId },
       select: { id: true, email: true },
     });
 

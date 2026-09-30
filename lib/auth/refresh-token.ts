@@ -1,4 +1,4 @@
-﻿import { createHash } from 'crypto';
+import { createHash } from 'crypto';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db/prisma';
 
@@ -41,6 +41,40 @@ export async function revokeRefreshToken(rawToken: string): Promise<void> {
     where: { tokenHash, revokedAt: null },
     data: { revokedAt: new Date() },
   });
+}
+
+/**
+ * Atomically claim and revoke an unrevoked, non-expired refresh token.
+ * Uses conditional update (CAS) inside a transaction so concurrent requests
+ * with the same token cannot both rotate it.
+ * Returns the userId if successfully claimed, or null if already used/expired/not found.
+ */
+export async function claimRefreshToken(
+  rawToken: string,
+  tx: Omit<Prisma.TransactionClient, '$transaction'>,
+): Promise<string | null> {
+  const tokenHash = hashToken(rawToken);
+  const now = new Date();
+
+  const updateResult = await tx.refreshToken.updateMany({
+    where: {
+      tokenHash,
+      revokedAt: null,
+      expiresAt: { gt: now },
+    },
+    data: { revokedAt: now },
+  });
+
+  if (updateResult.count === 0) {
+    return null;
+  }
+
+  const record = await tx.refreshToken.findUnique({
+    where: { tokenHash },
+    select: { userId: true },
+  });
+
+  return record?.userId ?? null;
 }
 
 /** Convert a JWT-style duration string (e.g. "7d", "15m") to milliseconds. */

@@ -110,3 +110,31 @@ test('Auth — Login Input Validation Schema', () => {
   });
   assert.equal(emptyPass.success, false, 'Empty password must be rejected');
 });
+
+test('Auth — Atomic Conditional Refresh Token Claim (CAS)', async () => {
+  const { claimRefreshToken } = await import('../lib/auth/refresh-token');
+  const rawToken = 'test-token-cas';
+  let isRevoked = false;
+
+  const mockTx = {
+    refreshToken: {
+      updateMany: async ({ where }: any) => {
+        if (!isRevoked && where.revokedAt === null) {
+          isRevoked = true;
+          return { count: 1 };
+        }
+        return { count: 0 };
+      },
+      findUnique: async () => ({ userId: 'user-123' }),
+    },
+  } as any;
+
+  // First request should successfully claim the token
+  const firstClaim = await claimRefreshToken(rawToken, mockTx);
+  assert.equal(firstClaim, 'user-123', 'First claim must succeed and return userId');
+
+  // Second concurrent request with the same token must fail (0 updated records)
+  const secondClaim = await claimRefreshToken(rawToken, mockTx);
+  assert.equal(secondClaim, null, 'Second claim must fail and return null due to CAS constraint');
+});
+
