@@ -94,8 +94,73 @@ async function main() {
     });
   }
 
+  // Seed deterministic labels
+  const designLabel = await prisma.label.upsert({
+    where: { workspaceId_name: { workspaceId: workspace.id, name: 'Design' } },
+    update: { color: '#22C55E' },
+    create: { workspaceId: workspace.id, name: 'Design', color: '#22C55E' },
+  });
+
+  const frontendLabel = await prisma.label.upsert({
+    where: { workspaceId_name: { workspaceId: workspace.id, name: 'Frontend' } },
+    update: { color: '#14B8A6' },
+    create: { workspaceId: workspace.id, name: 'Frontend', color: '#14B8A6' },
+  });
+
+  // Attach label to task
+  await prisma.taskLabel.upsert({
+    where: { taskId_labelId: { taskId: seedTasks[1].id, labelId: designLabel.id } },
+    update: {},
+    create: { taskId: seedTasks[1].id, labelId: designLabel.id },
+  });
+
+  await prisma.taskLabel.upsert({
+    where: { taskId_labelId: { taskId: seedTasks[1].id, labelId: frontendLabel.id } },
+    update: {},
+    create: { taskId: seedTasks[1].id, labelId: frontendLabel.id },
+  });
+
+  // Seed deterministic comment
+  await prisma.taskComment.upsert({
+    where: { id: '00000000-0000-4000-8000-000000000021' },
+    update: { body: 'Hero section mockups are approved. Moving to prototyping.' },
+    create: {
+      id: '00000000-0000-4000-8000-000000000021',
+      taskId: seedTasks[1].id,
+      authorId: owner.id,
+      body: 'Hero section mockups are approved. Moving to prototyping.',
+    },
+  });
+
+  // Seed deterministic activity
+  await prisma.activity.upsert({
+    where: { id: '00000000-0000-4000-8000-000000000031' },
+    update: { message: 'Nova Owner assigned task "Design landing page" to Nova Admin' },
+    create: {
+      id: '00000000-0000-4000-8000-000000000031',
+      projectId: project.id,
+      taskId: seedTasks[1].id,
+      actorId: owner.id,
+      type: 'TASK_ASSIGNED',
+      message: 'Nova Owner assigned task "Design landing page" to Nova Admin',
+    },
+  });
+
+  // Seed deterministic notification
+  await prisma.notification.upsert({
+    where: { id: '00000000-0000-4000-8000-000000000041' },
+    update: { title: 'You were assigned to "Design landing page"' },
+    create: {
+      id: '00000000-0000-4000-8000-000000000041',
+      userId: admin.id,
+      taskId: seedTasks[1].id,
+      title: 'You were assigned to "Design landing page"',
+      body: 'Nova Owner assigned this task to you in Website relaunch.',
+    },
+  });
+
   // eslint-disable-next-line no-console
-  console.log('[seed] done: 3 users, 1 workspace, 1 project, 4 tasks');
+  console.log('[seed] done: 3 users, 1 workspace, 1 project, 4 tasks, labels, comments, activity & notification seeded idempotently');
 }
 
 await main()
