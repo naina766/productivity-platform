@@ -61,7 +61,7 @@ NOVA delivers a focused, distraction-free productivity platform that mirrors the
 | **Database & ORM** | PostgreSQL 14+, Prisma ORM | Relational integrity, Citext case-insensitive indexing, cascade deletions |
 | **Authentication** | In-memory JWT, HttpOnly Cookies, bcryptjs | Maximum XSS protection with CSRF-safe SameSite cookies |
 | **Validation** | Zod | Runtime type validation for every API request body and form |
-| **Testing & Quality** | `tsx --test` (Node test runner), Oxlint, TypeScript strict | Fast automated test execution and strict type safety |
+| **Testing & Quality** | Jest, ts-jest, Oxlint, TypeScript strict | Unit and integration-style tests, strict type safety |
 
 ---
 
@@ -364,8 +364,10 @@ Navigate to [http://localhost:3000](http://localhost:3000).
 | `npm run dev` | Launches Next.js development server at `localhost:3000` |
 | `npm run build` | Produces an optimized production build |
 | `npm run start` | Starts Next.js in production mode |
-| `npm test` | Runs unit & validation tests via `tsx --test tests/**/*.test.ts` |
-| `npm run test:e2e` | Runs Playwright automated browser E2E smoke suite (`playwright test`) |
+| `npm test` | Runs all unit & integration tests via Jest |
+| `npm run test:watch` | Runs Jest in interactive watch mode |
+| `npm run test:coverage` | Runs Jest with coverage report |
+| `npm run test:smoke` | Runs the critical-logic smoke test suite |
 | `npm run typecheck` | Validates TypeScript with strict mode (`tsc --noEmit`) |
 | `npm run lint` | Runs code quality linter (`oxlint`) |
 | `npm run prisma:generate` | Generates the Prisma Client |
@@ -380,19 +382,34 @@ Navigate to [http://localhost:3000](http://localhost:3000).
 
 ## Automated Testing
 
-Automated testing is built with the native Node.js test runner via `tsx --test`, ensuring rapid execution without heavy runtime dependencies.
+Jest is used for unit and integration-style application tests. The smoke suite covers critical application logic. Browser E2E testing is intentionally not included.
 
-Run all tests:
+### Run all tests
 ```bash
 npm test
 ```
 
-### Test Coverage Highlights
-- **Authentication Lifecycle**: Bcrypt password hashing, verification, access token signing and verification, refresh token unique JTI rotation, SHA-256 hash determinism.
+### Watch mode
+```bash
+npm run test:watch
+```
+
+### Coverage
+```bash
+npm run test:coverage
+```
+
+### Smoke tests
+```bash
+npm run test:smoke
+```
+
+### Test Coverage
+- **Authentication Lifecycle**: Bcrypt password hashing, access token signing/verification, refresh token unique JTI rotation, SHA-256 hash determinism, atomic CAS refresh claim.
 - **Authorization & RBAC**: Hierarchy ranks, permission functions (`canCreateProject`, `canManageProject`, `canOwnerAction`).
-- **Validation Schemas**: Zod validation rules across projects, tasks, comments, and workspace invitations (enforcing string trimming and bounds).
-- **Error Normalization**: Verification that `getErrorMessage` safely unwraps complex error objects, AppErrors, and browser events without ever emitting raw `[object Event]` or `[object Object]` strings.
-- **API Client Contracts**: In-memory token management and auth failure listener subscriptions.
+- **Validation Schemas**: Zod validation rules across projects, tasks, comments, labels, and workspace invitations (enforcing string trimming and bounds).
+- **Error Normalization**: `getErrorMessage` safely unwraps AppErrors, ApiErrors, plain objects, and browser events without emitting `[object Event]` or `[object Object]`.
+- **API Client Contracts**: In-memory token management and auth failure listener pub/sub.
 
 ---
 

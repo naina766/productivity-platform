@@ -41,7 +41,5 @@ out
 .agent
 .kilo
 
-# Playwright
-test-results/
-playwright-report/
-
+# Jest coverage output
+coverage/
