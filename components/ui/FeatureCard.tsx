@@ -34,9 +34,6 @@ interface FeatureCardProps {
 export const FeatureCard: React.FC<FeatureCardProps> = ({ feature, index }) => {
   const IconComponent = iconMap[feature.icon] || Zap;
 
-  // First two cards span 2 cols on lg for bento variation
-  const isWide = index === 0 || index === 3;
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -44,9 +41,7 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({ feature, index }) => {
       viewport={{ once: true, margin: '-50px' }}
       transition={{ duration: 0.4, delay: index * 0.05 }}
       whileHover={{ y: -4 }}
-      className={`group relative p-6 rounded-2xl bg-[var(--card-main)] border border-[var(--border-color)] hover:border-emerald-500/35 transition-all duration-300 shadow-md hover:shadow-xl hover:shadow-emerald-500/5 flex flex-col justify-between ${
-        isWide ? 'lg:col-span-2' : ''
-      }`}
+      className="group relative p-6 rounded-2xl bg-[var(--card-main)] border border-[var(--border-color)] hover:border-emerald-500/35 transition-all duration-300 shadow-md hover:shadow-xl hover:shadow-emerald-500/5 flex flex-col justify-between"
     >
       {/* Subtle glow on hover */}
       <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-emerald-500/4 to-transparent pointer-events-none" />

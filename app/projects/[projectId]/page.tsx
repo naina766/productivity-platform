@@ -522,6 +522,7 @@ export default function ProjectPage({
 
               {!isArchived && (
                 <button
+                  id="new-task-btn"
                   type="button"
                   onClick={() => handleNewTask()}
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-semibold transition-all duration-150 shadow-md shadow-emerald-500/20 active:scale-95"

@@ -1,20 +1,45 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
 import { canCreateProject, canManageProject, canOwnerAction } from '../lib/projects/permissions';
 
-test('Permissions — Workspace Role Capabilities', () => {
-  // canCreateProject: all workspace roles (OWNER, ADMIN, MEMBER) may create projects
-  assert.equal(canCreateProject('MEMBER'), true, 'MEMBER should be able to create projects');
-  assert.equal(canCreateProject('ADMIN'), true, 'ADMIN should be able to create projects');
-  assert.equal(canCreateProject('OWNER'), true, 'OWNER should be able to create projects');
+describe('Permissions — Workspace Role Capabilities', () => {
+  describe('canCreateProject()', () => {
+    it('allows MEMBER to create projects', () => {
+      expect(canCreateProject('MEMBER')).toBe(true);
+    });
 
-  // canManageProject: only ADMIN or OWNER may manage project settings and membership
-  assert.equal(canManageProject('MEMBER'), false, 'MEMBER should not be able to manage project settings');
-  assert.equal(canManageProject('ADMIN'), true, 'ADMIN should be able to manage project settings');
-  assert.equal(canManageProject('OWNER'), true, 'OWNER should be able to manage project settings');
+    it('allows ADMIN to create projects', () => {
+      expect(canCreateProject('ADMIN')).toBe(true);
+    });
 
-  // canOwnerAction: strictly OWNER only
-  assert.equal(canOwnerAction('MEMBER'), false, 'MEMBER cannot perform ownership-level actions');
-  assert.equal(canOwnerAction('ADMIN'), false, 'ADMIN cannot perform ownership-level actions');
-  assert.equal(canOwnerAction('OWNER'), true, 'OWNER should be able to perform ownership-level actions');
+    it('allows OWNER to create projects', () => {
+      expect(canCreateProject('OWNER')).toBe(true);
+    });
+  });
+
+  describe('canManageProject()', () => {
+    it('denies MEMBER from managing project settings', () => {
+      expect(canManageProject('MEMBER')).toBe(false);
+    });
+
+    it('allows ADMIN to manage project settings', () => {
+      expect(canManageProject('ADMIN')).toBe(true);
+    });
+
+    it('allows OWNER to manage project settings', () => {
+      expect(canManageProject('OWNER')).toBe(true);
+    });
+  });
+
+  describe('canOwnerAction()', () => {
+    it('denies MEMBER from performing ownership-level actions', () => {
+      expect(canOwnerAction('MEMBER')).toBe(false);
+    });
+
+    it('denies ADMIN from performing ownership-level actions', () => {
+      expect(canOwnerAction('ADMIN')).toBe(false);
+    });
+
+    it('allows OWNER to perform ownership-level actions', () => {
+      expect(canOwnerAction('OWNER')).toBe(true);
+    });
+  });
 });

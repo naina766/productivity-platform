@@ -21,8 +21,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
-    { label: 'Product', href: '#product' },
     { label: 'Features', href: '#features' },
+    { label: 'Product', href: '#product' },
     { label: 'Solutions', href: '#solutions' },
     { label: 'Pricing', href: '#pricing' },
     { label: 'FAQ', href: '#faq' },

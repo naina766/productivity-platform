@@ -1,116 +1,127 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
 import { createProjectSchema, updateProjectSchema } from '../lib/validations/project';
 import { createTaskSchema, updateTaskSchema } from '../lib/validations/task';
 import { createCommentSchema } from '../lib/validations/comment';
 import { addWorkspaceMemberSchema } from '../lib/validations/workspace';
 
-test('Validations — Project Schema', () => {
-  // Valid project
-  const valid = createProjectSchema.safeParse({
-    name: '  Infrastructure Migration  ',
-    description: '  Upgrade databases to PostgreSQL 16  ',
+describe('Validations — Project Schema', () => {
+  it('accepts valid input and trims whitespace from name and description', () => {
+    const result = createProjectSchema.safeParse({
+      name: '  Infrastructure Migration  ',
+      description: '  Upgrade databases to PostgreSQL 16  ',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.name).toBe('Infrastructure Migration');
+      expect(result.data.description).toBe('Upgrade databases to PostgreSQL 16');
+    }
   });
-  assert.equal(valid.success, true);
-  if (valid.success) {
-    assert.equal(valid.data.name, 'Infrastructure Migration');
-    assert.equal(valid.data.description, 'Upgrade databases to PostgreSQL 16');
-  }
 
-  // Empty name rejection
-  const emptyName = createProjectSchema.safeParse({
-    name: '   ',
+  it('rejects a blank project name', () => {
+    const result = createProjectSchema.safeParse({ name: '   ' });
+    expect(result.success).toBe(false);
   });
-  assert.equal(emptyName.success, false, 'Blank project name must be rejected');
 
-  // Short name rejection
-  const shortName = createProjectSchema.safeParse({
-    name: 'A',
+  it('rejects a project name shorter than 2 characters', () => {
+    const result = createProjectSchema.safeParse({ name: 'A' });
+    expect(result.success).toBe(false);
   });
-  assert.equal(shortName.success, false, 'Project name shorter than 2 chars must be rejected');
 
-  // Update status and priority
-  const updateValid = updateProjectSchema.safeParse({
-    status: 'ACTIVE',
-    priority: 'HIGH',
+  it('accepts a valid status and priority update', () => {
+    const result = updateProjectSchema.safeParse({ status: 'ACTIVE', priority: 'HIGH' });
+    expect(result.success).toBe(true);
   });
-  assert.equal(updateValid.success, true);
 
-  const invalidStatus = updateProjectSchema.safeParse({
-    status: 'NONEXISTENT_STATUS',
+  it('rejects an invalid status value', () => {
+    const result = updateProjectSchema.safeParse({ status: 'NONEXISTENT_STATUS' });
+    expect(result.success).toBe(false);
   });
-  assert.equal(invalidStatus.success, false);
 });
 
-test('Validations — Task Schema', () => {
-  // Valid task
-  const valid = createTaskSchema.safeParse({
-    title: '  Implement auth retry logic  ',
-    description: 'Ensure 401 triggers token refresh and single retry',
-    status: 'IN_PROGRESS',
-    priority: 'URGENT',
-    dueDate: '2026-10-15T00:00:00.000Z',
-    assigneeId: '00000000-0000-4000-8000-000000000001',
+describe('Validations — Task Schema', () => {
+  it('accepts valid task input and trims the title', () => {
+    const result = createTaskSchema.safeParse({
+      title: '  Implement auth retry logic  ',
+      description: 'Ensure 401 triggers token refresh and single retry',
+      status: 'IN_PROGRESS',
+      priority: 'URGENT',
+      dueDate: '2026-10-15T00:00:00.000Z',
+      assigneeId: '00000000-0000-4000-8000-000000000001',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.title).toBe('Implement auth retry logic');
+      expect(result.data.status).toBe('IN_PROGRESS');
+      expect(result.data.priority).toBe('URGENT');
+    }
   });
-  assert.equal(valid.success, true);
-  if (valid.success) {
-    assert.equal(valid.data.title, 'Implement auth retry logic');
-    assert.equal(valid.data.status, 'IN_PROGRESS');
-    assert.equal(valid.data.priority, 'URGENT');
-  }
 
-  // Empty title rejection
-  const emptyTitle = createTaskSchema.safeParse({
-    title: '   ',
+  it('rejects a whitespace-only task title', () => {
+    const result = createTaskSchema.safeParse({ title: '   ' });
+    expect(result.success).toBe(false);
   });
-  assert.equal(emptyTitle.success, false, 'Empty task title must be rejected');
 
-  // Invalid UUID assigneeId rejection
-  const invalidUUID = createTaskSchema.safeParse({
-    title: 'Valid Title',
-    assigneeId: 'not-a-uuid',
+  it('rejects a non-UUID assigneeId', () => {
+    const result = createTaskSchema.safeParse({
+      title: 'Valid Title',
+      assigneeId: 'not-a-uuid',
+    });
+    expect(result.success).toBe(false);
   });
-  assert.equal(invalidUUID.success, false, 'Non-UUID assigneeId must be rejected');
 
-  // Invalid date format
-  const invalidDate = createTaskSchema.safeParse({
-    title: 'Valid Title',
-    dueDate: 'invalid-date-string',
+  it('rejects an invalid dueDate string', () => {
+    const result = createTaskSchema.safeParse({
+      title: 'Valid Title',
+      dueDate: 'invalid-date-string',
+    });
+    expect(result.success).toBe(false);
   });
-  assert.equal(invalidDate.success, false, 'Invalid datetime string must be rejected');
+
+  it('accepts a valid task update', () => {
+    const result = updateTaskSchema.safeParse({ status: 'DONE', title: 'Updated title' });
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects an empty task update payload', () => {
+    const result = updateTaskSchema.safeParse({});
+    expect(result.success).toBe(false);
+  });
 });
 
-test('Validations — Comment Schema', () => {
-  // Valid comment
-  const valid = createCommentSchema.safeParse({
-    content: '  This is a constructive feedback comment.  ',
+describe('Validations — Comment Schema', () => {
+  it('accepts a valid comment and trims whitespace', () => {
+    const result = createCommentSchema.safeParse({
+      content: '  This is a constructive feedback comment.  ',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.content).toBe('This is a constructive feedback comment.');
+    }
   });
-  assert.equal(valid.success, true);
-  if (valid.success) {
-    assert.equal(valid.data.content, 'This is a constructive feedback comment.');
-  }
 
-  // Empty comment rejection
-  const emptyComment = createCommentSchema.safeParse({
-    content: '   ',
+  it('rejects a whitespace-only comment', () => {
+    const result = createCommentSchema.safeParse({ content: '   ' });
+    expect(result.success).toBe(false);
   });
-  assert.equal(emptyComment.success, false, 'Empty comment content must be rejected');
 });
 
-test('Validations — Workspace Member Schema', () => {
-  const valid = addWorkspaceMemberSchema.safeParse({
-    email: ' teammate@nova.demo ',
-    role: 'ADMIN',
+describe('Validations — Workspace Member Schema', () => {
+  it('accepts valid email and role, trimming email whitespace', () => {
+    const result = addWorkspaceMemberSchema.safeParse({
+      email: ' teammate@nova.demo ',
+      role: 'ADMIN',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.email).toBe('teammate@nova.demo');
+      expect(result.data.role).toBe('ADMIN');
+    }
   });
-  assert.equal(valid.success, true);
-  if (valid.success) {
-    assert.equal(valid.data.email, 'teammate@nova.demo');
-    assert.equal(valid.data.role, 'ADMIN');
-  }
 
-  const invalidRole = addWorkspaceMemberSchema.safeParse({
-    email: 'teammate@nova.demo',
-    role: 'SUPERADMIN',
+  it('rejects a non-permitted role', () => {
+    const result = addWorkspaceMemberSchema.safeParse({
+      email: 'teammate@nova.demo',
+      role: 'SUPERADMIN',
+    });
+    expect(result.success).toBe(false);
   });
-  assert.equal(invalidRole.success, false, 'Non-permitted role must be rejected');
 });

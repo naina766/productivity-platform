@@ -15,7 +15,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ theme, onThemeChange }
       role="radiogroup"
       aria-label="Theme selection"
       suppressHydrationWarning
-      className="inline-flex items-center p-1 rounded-full bg-neutral-900/60 dark:bg-neutral-900/80 border border-neutral-800 dark:border-white/8 backdrop-blur-md"
+      className="inline-flex items-center gap-0.5 p-1 rounded-full bg-neutral-800/60 dark:bg-neutral-800/70 border border-neutral-700/60 dark:border-white/12 backdrop-blur-md shadow-sm"
     >
       <button
         type="button"
@@ -24,10 +24,10 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ theme, onThemeChange }
         aria-label="Light theme"
         suppressHydrationWarning
         onClick={() => onThemeChange('light')}
-        className={`p-1.5 rounded-full transition-all duration-200 text-xs flex items-center justify-center focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+        className={`w-7 h-7 rounded-full transition-all duration-200 text-xs flex items-center justify-center focus-visible:ring-2 focus-visible:ring-emerald-500 ${
           theme === 'light'
-            ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-500/20'
-            : 'text-neutral-400 hover:text-neutral-200'
+            ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-500/25'
+            : 'text-neutral-400 hover:text-neutral-100 hover:bg-white/8 dark:hover:bg-white/8'
         }`}
       >
         <Sun className="w-3.5 h-3.5" />
@@ -40,10 +40,10 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ theme, onThemeChange }
         aria-label="Dark theme"
         suppressHydrationWarning
         onClick={() => onThemeChange('dark')}
-        className={`p-1.5 rounded-full transition-all duration-200 text-xs flex items-center justify-center focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+        className={`w-7 h-7 rounded-full transition-all duration-200 text-xs flex items-center justify-center focus-visible:ring-2 focus-visible:ring-emerald-500 ${
           theme === 'dark'
-            ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-500/20'
-            : 'text-neutral-400 hover:text-neutral-200'
+            ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-500/25'
+            : 'text-neutral-400 hover:text-neutral-100 hover:bg-white/8 dark:hover:bg-white/8'
         }`}
       >
         <Moon className="w-3.5 h-3.5" />
@@ -56,10 +56,10 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ theme, onThemeChange }
         aria-label="System theme"
         suppressHydrationWarning
         onClick={() => onThemeChange('system')}
-        className={`p-1.5 rounded-full transition-all duration-200 text-xs flex items-center justify-center focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+        className={`w-7 h-7 rounded-full transition-all duration-200 text-xs flex items-center justify-center focus-visible:ring-2 focus-visible:ring-emerald-500 ${
           theme === 'system'
-            ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-500/20'
-            : 'text-neutral-400 hover:text-neutral-200'
+            ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-500/25'
+            : 'text-neutral-400 hover:text-neutral-100 hover:bg-white/8 dark:hover:bg-white/8'
         }`}
       >
         <Monitor className="w-3.5 h-3.5" />

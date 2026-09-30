@@ -5,17 +5,56 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: nova
-      POSTGRES_PASSWORD: changeme
+      POSTGRES_PASSWORD: nova_dev_password
       POSTGRES_DB: nova
     ports:
       - "5433:5432"
     volumes:
       - nova_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U nova -d nova"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U nova -d nova"
+        ]
       interval: 5s
       timeout: 5s
       retries: 10
+
+  migrate:
+    build:
+      context: .
+      target: migrator
+    env_file:
+      - .env.docker
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command:
+      [
+        "npx",
+        "prisma",
+        "migrate",
+        "deploy"
+      ]
+
+  web:
+    build:
+      context: .
+      target: runner
+    container_name: nova-web
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV: production
 
 volumes:
   nova_postgres_data:

@@ -1,5 +1,3 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
 import {
   setAccessToken,
   getAccessToken,
@@ -7,32 +5,48 @@ import {
   notifyAuthFailure,
 } from '../lib/api/client';
 
-test('API Client — In-memory Access Token & Auth Failure Listener', () => {
-  // Test memory token setter/getter
-  setAccessToken(null);
-  assert.equal(getAccessToken(), null);
-
-  const mockToken = 'mock-jwt-token-12345';
-  setAccessToken(mockToken);
-  assert.equal(getAccessToken(), mockToken);
-
-  // Test onAuthFailure subscription
-  let calls = 0;
-  const unsubscribe = onAuthFailure(() => {
-    calls++;
+describe('API Client — In-memory Access Token Management', () => {
+  afterEach(() => {
+    // Reset token state after each test
+    setAccessToken(null);
   });
 
-  notifyAuthFailure();
-  assert.equal(calls, 1, 'Callback should be called once on notification');
+  it('stores null initially and after being reset', () => {
+    setAccessToken(null);
+    expect(getAccessToken()).toBeNull();
+  });
 
-  notifyAuthFailure();
-  assert.equal(calls, 2, 'Callback should be called twice');
+  it('stores and retrieves a mock JWT token', () => {
+    const mockToken = 'mock-jwt-token-12345';
+    setAccessToken(mockToken);
+    expect(getAccessToken()).toBe(mockToken);
+  });
+});
 
-  // Test unsubscribe
-  unsubscribe();
-  notifyAuthFailure();
-  assert.equal(calls, 2, 'Unsubscribed callback should not receive subsequent notifications');
+describe('API Client — Auth Failure Listener (pub/sub)', () => {
+  it('calls subscriber once when notifyAuthFailure is triggered', () => {
+    let calls = 0;
+    const unsubscribe = onAuthFailure(() => { calls++; });
+    notifyAuthFailure();
+    expect(calls).toBe(1);
+    unsubscribe();
+  });
 
-  // Clean up
-  setAccessToken(null);
+  it('calls subscriber multiple times for multiple notifications', () => {
+    let calls = 0;
+    const unsubscribe = onAuthFailure(() => { calls++; });
+    notifyAuthFailure();
+    notifyAuthFailure();
+    expect(calls).toBe(2);
+    unsubscribe();
+  });
+
+  it('stops calling subscriber after unsubscribe()', () => {
+    let calls = 0;
+    const unsubscribe = onAuthFailure(() => { calls++; });
+    notifyAuthFailure();
+    unsubscribe();
+    notifyAuthFailure();
+    expect(calls).toBe(1);
+  });
 });

@@ -1,65 +1,87 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
 import { getErrorMessage } from '../lib/errors/normalize';
 import { ApiError } from '../lib/api/client';
-import { Errors, AppError } from '../lib/errors';
+import { Errors } from '../lib/errors';
 
-test('Errors — getErrorMessage normalizes unknown error values safely', () => {
-  // String error
-  assert.equal(getErrorMessage('Project not found'), 'Project not found');
-  assert.equal(getErrorMessage('   '), 'An unexpected error occurred.');
+describe('Errors — getErrorMessage normalises unknown error values safely', () => {
+  it('returns a plain string message unchanged', () => {
+    expect(getErrorMessage('Project not found')).toBe('Project not found');
+  });
 
-  // Error instance
-  assert.equal(getErrorMessage(new Error('Network timeout')), 'Network timeout');
+  it('returns the fallback for a whitespace-only string', () => {
+    expect(getErrorMessage('   ')).toBe('An unexpected error occurred.');
+  });
 
-  // AppError / ApiError
-  const appErr = Errors.forbidden('Access denied to workspace');
-  assert.equal(getErrorMessage(appErr), 'Access denied to workspace');
-  assert.equal(appErr.status, 403);
+  it('extracts the message from an Error instance', () => {
+    expect(getErrorMessage(new Error('Network timeout'))).toBe('Network timeout');
+  });
 
-  const apiErr = new ApiError(404, 'Task not found');
-  assert.equal(getErrorMessage(apiErr), 'Task not found');
-  assert.equal(apiErr.status, 404);
+  it('extracts the message from an AppError', () => {
+    const appErr = Errors.forbidden('Access denied to workspace');
+    expect(getErrorMessage(appErr)).toBe('Access denied to workspace');
+    expect(appErr.status).toBe(403);
+  });
 
-  // Object with message or error field
-  assert.equal(getErrorMessage({ message: 'Invalid credentials' }), 'Invalid credentials');
-  assert.equal(getErrorMessage({ error: 'Rate limit exceeded' }), 'Rate limit exceeded');
+  it('extracts the message from an ApiError', () => {
+    const apiErr = new ApiError(404, 'Task not found');
+    expect(getErrorMessage(apiErr)).toBe('Task not found');
+    expect(apiErr.status).toBe(404);
+  });
 
-  // Null, undefined, empty
-  assert.equal(getErrorMessage(null), 'An unexpected error occurred.');
-  assert.equal(getErrorMessage(undefined), 'An unexpected error occurred.');
+  it('extracts message from a plain object with a "message" field', () => {
+    expect(getErrorMessage({ message: 'Invalid credentials' })).toBe('Invalid credentials');
+  });
 
-  // Browser Event simulation: must NEVER return "[object Event]" or "[object Object]"
-  const fakeEvent = {
-    type: 'error',
-    toString() {
-      return '[object Event]';
-    },
-  };
-  const msg = getErrorMessage(fakeEvent);
-  assert.notEqual(msg, '[object Event]');
-  assert.notEqual(msg, '[object Object]');
-  assert.equal(msg, 'An unexpected error occurred.');
+  it('extracts message from a plain object with an "error" field', () => {
+    expect(getErrorMessage({ error: 'Rate limit exceeded' })).toBe('Rate limit exceeded');
+  });
+
+  it('returns fallback for null and undefined', () => {
+    expect(getErrorMessage(null)).toBe('An unexpected error occurred.');
+    expect(getErrorMessage(undefined)).toBe('An unexpected error occurred.');
+  });
+
+  it('never returns "[object Event]" or "[object Object]" for browser Events', () => {
+    const fakeEvent = {
+      type: 'error',
+      toString() {
+        return '[object Event]';
+      },
+    };
+    const msg = getErrorMessage(fakeEvent);
+    expect(msg).not.toBe('[object Event]');
+    expect(msg).not.toBe('[object Object]');
+    expect(msg).toBe('An unexpected error occurred.');
+  });
 });
 
-test('Errors — AppError factory methods generate proper status codes', () => {
-  const badReq = Errors.badRequest('Invalid payload');
-  assert.equal(badReq.status, 400);
-  assert.equal(badReq.code, 'BAD_REQUEST');
+describe('Errors — AppError factory methods generate correct status codes', () => {
+  it('badRequest() → 400 BAD_REQUEST', () => {
+    const err = Errors.badRequest('Invalid payload');
+    expect(err.status).toBe(400);
+    expect(err.code).toBe('BAD_REQUEST');
+  });
 
-  const unauthorized = Errors.unauthorized('Session expired');
-  assert.equal(unauthorized.status, 401);
-  assert.equal(unauthorized.code, 'UNAUTHORIZED');
+  it('unauthorized() → 401 UNAUTHORIZED', () => {
+    const err = Errors.unauthorized('Session expired');
+    expect(err.status).toBe(401);
+    expect(err.code).toBe('UNAUTHORIZED');
+  });
 
-  const forbidden = Errors.forbidden('Action not allowed');
-  assert.equal(forbidden.status, 403);
-  assert.equal(forbidden.code, 'FORBIDDEN');
+  it('forbidden() → 403 FORBIDDEN', () => {
+    const err = Errors.forbidden('Action not allowed');
+    expect(err.status).toBe(403);
+    expect(err.code).toBe('FORBIDDEN');
+  });
 
-  const notFound = Errors.notFound('Resource missing');
-  assert.equal(notFound.status, 404);
-  assert.equal(notFound.code, 'NOT_FOUND');
+  it('notFound() → 404 NOT_FOUND', () => {
+    const err = Errors.notFound('Resource missing');
+    expect(err.status).toBe(404);
+    expect(err.code).toBe('NOT_FOUND');
+  });
 
-  const validation = Errors.validation('Invalid input');
-  assert.equal(validation.status, 422);
-  assert.equal(validation.code, 'VALIDATION_ERROR');
+  it('validation() → 422 VALIDATION_ERROR', () => {
+    const err = Errors.validation('Invalid input');
+    expect(err.status).toBe(422);
+    expect(err.code).toBe('VALIDATION_ERROR');
+  });
 });

@@ -17,6 +17,7 @@ Designed for high-velocity teams, NOVA structures collaboration into **Workspace
 - [Authorization & RBAC](#authorization--rbac)
 - [Project Structure](#project-structure)
 - [Environment Variables](#environment-variables)
+- [Docker Setup](#docker-setup)
 - [Local Setup & Seed](#local-setup--seed)
 - [Available Scripts](#available-scripts)
 - [Automated Testing](#automated-testing)
@@ -210,6 +211,95 @@ node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 
 ---
 
+## Docker Setup
+
+NOVA is fully containerized with Docker Compose. You can run the entire stack — including PostgreSQL, Prisma database migrations, and the Next.js 15 production server — using a single command without needing PostgreSQL or Node.js installed locally on your Windows machine.
+
+### Architecture
+
+```text
+Browser Client
+   │ (http://localhost:3000)
+   ▼
+[web container: Next.js 15 Standalone] (Port 3000)
+   │
+   │ (Internal Docker Network: postgres:5432)
+   ▼
+[postgres container: PostgreSQL 16] (Host Port: 5433 -> Container: 5432)
+   ▲
+   │ (Pre-start migration execution)
+[migrate container: Prisma Migrator] (npx prisma migrate deploy)
+```
+
+- **`web`**: Production Next.js 15 application runtime running in standalone mode (`node server.js`).
+- **`migrate`**: Transient migrator container that executes `npx prisma migrate deploy` once PostgreSQL becomes healthy, ensuring all database tables are up to date before `web` launches.
+- **`postgres`**: Official PostgreSQL 16 image with healthchecks and persistent data storage.
+
+### Port Mappings
+- **`localhost:3000`** -> Next.js 15 Web Application
+- **`localhost:5433`** -> PostgreSQL 16 (mapped to host for database inspection with tools like TablePlus or psql; PostgreSQL does not need to be installed directly on Windows)
+
+### 1. Prerequisites
+- Install and launch [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+
+### 2. Configure Environment Variables
+Copy `.env.docker.example` to `.env.docker`:
+```bash
+cp .env.docker.example .env.docker
+```
+
+Generate secure random JWT secrets for `.env.docker`:
+```bash
+node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+```
+Place the generated secrets in `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET` inside `.env.docker`.
+
+### 3. Start the Complete Application
+Build and launch all services in detached mode:
+```bash
+docker compose up -d --build
+```
+*(Or use npm shorthand: `npm run docker:up`)*
+
+This command automatically:
+1. Provisions PostgreSQL and waits for the health check to pass.
+2. Runs Prisma migrations (`npx prisma migrate deploy`) in the `migrate` container.
+3. Starts the production Next.js application in the `web` container.
+
+### 4. Access NOVA
+Open [http://localhost:3000](http://localhost:3000) in your web browser.
+
+### 5. Check Container Status
+Verify that all services are healthy and running:
+```bash
+docker compose ps
+```
+
+### 6. View Application Logs
+Inspect real-time logs from the Next.js web application:
+```bash
+docker compose logs -f web
+```
+*(Or inspect migrations / database: `docker compose logs migrate` or `docker compose logs postgres`)*
+
+### 7. (Optional) Seed Demo Data
+To populate the database with demo users, workspaces, and projects:
+```bash
+docker compose run --rm migrate npx prisma db seed
+```
+
+### 8. Stop Containers
+To stop the services while preserving all database data:
+```bash
+docker compose down
+```
+*(Or use npm shorthand: `npm run docker:down`)*
+
+> [!IMPORTANT]
+> **Database Persistence**: The database volume `nova_postgres_data` persists across container stops and restarts. Running `docker compose down` will safely preserve all project and task data. Do NOT use `docker compose down -v` during standard shutdowns, as `-v` permanently removes the named volume and erases all database data.
+
+---
+
 ## Local Setup & Seed
 
 ### Prerequisites
@@ -274,13 +364,17 @@ Navigate to [http://localhost:3000](http://localhost:3000).
 | `npm run dev` | Launches Next.js development server at `localhost:3000` |
 | `npm run build` | Produces an optimized production build |
 | `npm run start` | Starts Next.js in production mode |
-| `npm test` | Runs the automated test suite via `tsx --test tests/**/*.test.ts` |
+| `npm test` | Runs unit & validation tests via `tsx --test tests/**/*.test.ts` |
+| `npm run test:e2e` | Runs Playwright automated browser E2E smoke suite (`playwright test`) |
 | `npm run typecheck` | Validates TypeScript with strict mode (`tsc --noEmit`) |
 | `npm run lint` | Runs code quality linter (`oxlint`) |
 | `npm run prisma:generate` | Generates the Prisma Client |
 | `npm run prisma:validate` | Validates `schema.prisma` syntax |
 | `npm run prisma:migrate` | Applies development migrations (`prisma migrate dev`) |
 | `npm run db:seed` | Populates database with idempotent demo data |
+| `npm run docker:up` | Builds and starts full stack via `docker compose up -d --build` |
+| `npm run docker:down` | Gracefully stops containers via `docker compose down` |
+| `npm run docker:logs` | Streams live logs from Next.js web container |
 
 ---
 

@@ -22,7 +22,16 @@ export function TaskCard({ task, onClick, isDragging }: TaskCardProps) {
 
   return (
     <div
+      role="button"
+      tabIndex={0}
+      aria-label={`View task ${task.title}`}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      }}
       onDragStart={(e) => {
         e.dataTransfer.setData('text/plain', task.id);
         e.dataTransfer.effectAllowed = 'move';

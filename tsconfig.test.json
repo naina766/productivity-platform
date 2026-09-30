@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "ignoreDeprecations": "5.0",
+    "resolveJsonModule": true,
+    "isolatedModules": false,
+    "rootDir": ".",
+    "types": ["jest", "node"],
+    "paths": { "@/*": ["./*"] }
+  },
+  "include": [
+    "globals.d.ts",
+    "types/**/*.ts",
+    "lib/**/*.ts",
+    "tests/**/*.ts"
+  ]
+}

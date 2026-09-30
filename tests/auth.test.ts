@@ -1,140 +1,160 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
 import { hashPassword, verifyPassword } from '../lib/auth/password';
 import { signAccessToken, verifyAccessToken, signRefreshToken, verifyRefreshToken } from '../lib/auth/jwt';
 import { hashToken } from '../lib/auth/refresh-token';
 import { registerSchema, loginSchema } from '../lib/validations/auth';
 
-// Set test environment secrets
+// Set test environment secrets before any test runs
 process.env.JWT_ACCESS_SECRET = 'test-jwt-access-secret-minimum-32-characters-long!';
 process.env.JWT_REFRESH_SECRET = 'test-jwt-refresh-secret-minimum-32-characters-long!';
 process.env.JWT_ACCESS_TTL = '15m';
 process.env.JWT_REFRESH_TTL = '7d';
 
-test('Auth — Password Hashing & Verification', async () => {
-  const password = 'SuperSecretPassword123!';
-  const hash = await hashPassword(password);
+describe('Auth — Password Hashing & Verification', () => {
+  it('hashes a password to a valid bcrypt string', async () => {
+    const password = 'SuperSecretPassword123!';
+    const hash = await hashPassword(password);
 
-  assert.ok(hash.startsWith('$2'), 'Hash should be a valid bcrypt hash');
-  assert.notEqual(hash, password, 'Hash should not be equal to plain text');
+    expect(hash).toMatch(/^\$2/);
+    expect(hash).not.toBe(password);
+  });
 
-  const isValid = await verifyPassword(password, hash);
-  assert.equal(isValid, true, 'Correct password should verify successfully');
+  it('verifies the correct password against its hash', async () => {
+    const password = 'SuperSecretPassword123!';
+    const hash = await hashPassword(password);
+    expect(await verifyPassword(password, hash)).toBe(true);
+  });
 
-  const isInvalid = await verifyPassword('WrongPassword123!', hash);
-  assert.equal(isInvalid, false, 'Incorrect password should fail verification');
+  it('rejects an incorrect password', async () => {
+    const password = 'SuperSecretPassword123!';
+    const hash = await hashPassword(password);
+    expect(await verifyPassword('WrongPassword123!', hash)).toBe(false);
+  });
 });
 
-test('Auth — Access Token Signing & Verification', () => {
+describe('Auth — Access Token Signing & Verification', () => {
   const userId = '00000000-0000-4000-8000-000000000001';
   const email = 'user@nova.demo';
 
-  const token = signAccessToken(userId, email);
-  assert.ok(typeof token === 'string' && token.length > 20, 'Access token should be a signed JWT string');
+  it('signs a valid access token', () => {
+    const token = signAccessToken(userId, email);
+    expect(typeof token).toBe('string');
+    expect(token.length).toBeGreaterThan(20);
+  });
 
-  const payload = verifyAccessToken(token);
-  assert.equal(payload.sub, userId, 'Payload sub should match userId');
-  assert.equal(payload.email, email, 'Payload email should match');
-  assert.equal(payload.type, 'access', 'Payload type should be access');
+  it('verifies payload fields of a signed access token', () => {
+    const token = signAccessToken(userId, email);
+    const payload = verifyAccessToken(token);
+    expect(payload.sub).toBe(userId);
+    expect(payload.email).toBe(email);
+    expect(payload.type).toBe('access');
+  });
 });
 
-test('Auth — Refresh Token Signing & Unique JTI per rotation', () => {
+describe('Auth — Refresh Token Signing & Unique JTI per rotation', () => {
   const userId = '00000000-0000-4000-8000-000000000001';
 
-  const token1 = signRefreshToken(userId);
-  const token2 = signRefreshToken(userId);
+  it('generates unique refresh tokens in quick succession (prevents hash collision)', () => {
+    const token1 = signRefreshToken(userId);
+    const token2 = signRefreshToken(userId);
+    expect(token1).not.toBe(token2);
+  });
 
-  assert.notEqual(token1, token2, 'Two refresh tokens signed in quick succession must have unique JTIs to prevent hash collisions');
-
-  const payload1 = verifyRefreshToken(token1);
-  assert.equal(payload1.sub, userId, 'Payload sub should match userId');
-  assert.equal(payload1.type, 'refresh', 'Payload type should be refresh');
-
-  const payload2 = verifyRefreshToken(token2);
-  assert.equal(payload2.sub, userId);
+  it('verifies payload fields of signed refresh tokens', () => {
+    const token = signRefreshToken(userId);
+    const payload = verifyRefreshToken(token);
+    expect(payload.sub).toBe(userId);
+    expect(payload.type).toBe('refresh');
+  });
 });
 
-test('Auth — Refresh Token Hashing (SHA-256)', () => {
-  const rawToken = 'sample-raw-refresh-token-string';
-  const hash1 = hashToken(rawToken);
-  const hash2 = hashToken(rawToken);
-
-  assert.equal(hash1, hash2, 'SHA-256 hash must be deterministic');
-  assert.equal(hash1.length, 64, 'SHA-256 hex digest must be 64 characters long');
-  assert.notEqual(hash1, rawToken, 'Hash must not equal raw token');
+describe('Auth — Refresh Token Hashing (SHA-256)', () => {
+  it('produces a deterministic 64-char hex SHA-256 hash', () => {
+    const rawToken = 'sample-raw-refresh-token-string';
+    const hash1 = hashToken(rawToken);
+    const hash2 = hashToken(rawToken);
+    expect(hash1).toBe(hash2);
+    expect(hash1).toHaveLength(64);
+    expect(hash1).not.toBe(rawToken);
+  });
 });
 
-test('Auth — Register Input Validation Schema', () => {
-  // Valid input
-  const valid = registerSchema.safeParse({
-    name: '  Jane Doe  ',
-    email: 'Jane.Doe@Example.com ',
-    password: 'Password123!',
+describe('Auth — Register Input Validation Schema', () => {
+  it('accepts valid input and normalises name and email', () => {
+    const result = registerSchema.safeParse({
+      name: '  Jane Doe  ',
+      email: 'Jane.Doe@Example.com ',
+      password: 'Password123!',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.name).toBe('Jane Doe');
+      expect(result.data.email).toBe('jane.doe@example.com');
+    }
   });
-  assert.equal(valid.success, true);
-  if (valid.success) {
-    assert.equal(valid.data.name, 'Jane Doe', 'Name must be trimmed');
-    assert.equal(valid.data.email, 'jane.doe@example.com', 'Email must be trimmed and lowercased');
-  }
 
-  // Short password rejection
-  const shortPass = registerSchema.safeParse({
-    name: 'Jane Doe',
-    email: 'jane@example.com',
-    password: '123',
+  it('rejects a password shorter than 8 characters', () => {
+    const result = registerSchema.safeParse({
+      name: 'Jane Doe',
+      email: 'jane@example.com',
+      password: '123',
+    });
+    expect(result.success).toBe(false);
   });
-  assert.equal(shortPass.success, false, 'Password under 8 characters must be rejected');
 
-  // Invalid email rejection
-  const invalidEmail = registerSchema.safeParse({
-    name: 'Jane Doe',
-    email: 'not-an-email',
-    password: 'Password123!',
+  it('rejects a malformed email address', () => {
+    const result = registerSchema.safeParse({
+      name: 'Jane Doe',
+      email: 'not-an-email',
+      password: 'Password123!',
+    });
+    expect(result.success).toBe(false);
   });
-  assert.equal(invalidEmail.success, false, 'Malformed email must be rejected');
 });
 
-test('Auth — Login Input Validation Schema', () => {
-  const valid = loginSchema.safeParse({
-    email: ' User@Demo.com ',
-    password: 'AnyPassword123',
+describe('Auth — Login Input Validation Schema', () => {
+  it('accepts valid input and normalises email', () => {
+    const result = loginSchema.safeParse({
+      email: ' User@Demo.com ',
+      password: 'AnyPassword123',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.email).toBe('user@demo.com');
+    }
   });
-  assert.equal(valid.success, true);
-  if (valid.success) {
-    assert.equal(valid.data.email, 'user@demo.com');
-  }
 
-  const emptyPass = loginSchema.safeParse({
-    email: 'user@demo.com',
-    password: '',
+  it('rejects an empty password', () => {
+    const result = loginSchema.safeParse({
+      email: 'user@demo.com',
+      password: '',
+    });
+    expect(result.success).toBe(false);
   });
-  assert.equal(emptyPass.success, false, 'Empty password must be rejected');
 });
 
-test('Auth — Atomic Conditional Refresh Token Claim (CAS)', async () => {
-  const { claimRefreshToken } = await import('../lib/auth/refresh-token');
-  const rawToken = 'test-token-cas';
-  let isRevoked = false;
+describe('Auth — Atomic Conditional Refresh Token Claim (CAS)', () => {
+  it('allows first claim and blocks second concurrent claim', async () => {
+    const { claimRefreshToken } = await import('../lib/auth/refresh-token');
+    const rawToken = 'test-token-cas';
+    let isRevoked = false;
 
-  const mockTx = {
-    refreshToken: {
-      updateMany: async ({ where }: any) => {
-        if (!isRevoked && where.revokedAt === null) {
-          isRevoked = true;
-          return { count: 1 };
-        }
-        return { count: 0 };
+    const mockTx = {
+      refreshToken: {
+        updateMany: async ({ where }: any) => {
+          if (!isRevoked && where.revokedAt === null) {
+            isRevoked = true;
+            return { count: 1 };
+          }
+          return { count: 0 };
+        },
+        findUnique: async () => ({ userId: 'user-123' }),
       },
-      findUnique: async () => ({ userId: 'user-123' }),
-    },
-  } as any;
+    } as any;
 
-  // First request should successfully claim the token
-  const firstClaim = await claimRefreshToken(rawToken, mockTx);
-  assert.equal(firstClaim, 'user-123', 'First claim must succeed and return userId');
+    const firstClaim = await claimRefreshToken(rawToken, mockTx);
+    expect(firstClaim).toBe('user-123');
 
-  // Second concurrent request with the same token must fail (0 updated records)
-  const secondClaim = await claimRefreshToken(rawToken, mockTx);
-  assert.equal(secondClaim, null, 'Second claim must fail and return null due to CAS constraint');
+    const secondClaim = await claimRefreshToken(rawToken, mockTx);
+    expect(secondClaim).toBeNull();
+  });
 });
-

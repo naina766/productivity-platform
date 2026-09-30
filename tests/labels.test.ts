@@ -1,48 +1,53 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
 import { createLabelSchema, updateLabelSchema } from '../lib/validations/label';
 
-test('Validations — Label Schemas', () => {
-  // Valid create
-  const validCreate = createLabelSchema.safeParse({
-    name: '  Bug Fix  ',
-    color: '#22c55e',
-  });
-  assert.equal(validCreate.success, true);
-  if (validCreate.success) {
-    assert.equal(validCreate.data.name, 'Bug Fix');
-    assert.equal(validCreate.data.color, '#22c55e');
-  }
+describe('Validations — Label Schemas', () => {
+  describe('createLabelSchema', () => {
+    it('accepts valid name and color, trimming whitespace', () => {
+      const result = createLabelSchema.safeParse({
+        name: '  Bug Fix  ',
+        color: '#22c55e',
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.name).toBe('Bug Fix');
+        expect(result.data.color).toBe('#22c55e');
+      }
+    });
 
-  // Default color
-  const defaultColor = createLabelSchema.safeParse({
-    name: 'Feature',
-  });
-  assert.equal(defaultColor.success, true);
-  if (defaultColor.success) {
-    assert.equal(defaultColor.data.color, '#22C55E');
-  }
+    it('applies a default color when color is omitted', () => {
+      const result = createLabelSchema.safeParse({ name: 'Feature' });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.color).toBe('#22C55E');
+      }
+    });
 
-  // Reject invalid hex color
-  const invalidColor = createLabelSchema.safeParse({
-    name: 'Feature',
-    color: 'not-a-hex',
-  });
-  assert.equal(invalidColor.success, false);
+    it('rejects an invalid hex color', () => {
+      const result = createLabelSchema.safeParse({
+        name: 'Feature',
+        color: 'not-a-hex',
+      });
+      expect(result.success).toBe(false);
+    });
 
-  // Reject empty name
-  const emptyName = createLabelSchema.safeParse({
-    name: '   ',
-    color: '#10B981',
+    it('rejects a whitespace-only name', () => {
+      const result = createLabelSchema.safeParse({
+        name: '   ',
+        color: '#10B981',
+      });
+      expect(result.success).toBe(false);
+    });
   });
-  assert.equal(emptyName.success, false);
 
-  // Update schema requires at least one field
-  const emptyUpdate = updateLabelSchema.safeParse({});
-  assert.equal(emptyUpdate.success, false);
+  describe('updateLabelSchema', () => {
+    it('rejects an empty update payload', () => {
+      const result = updateLabelSchema.safeParse({});
+      expect(result.success).toBe(false);
+    });
 
-  const validUpdate = updateLabelSchema.safeParse({
-    name: 'Refactor',
+    it('accepts a valid partial update', () => {
+      const result = updateLabelSchema.safeParse({ name: 'Refactor' });
+      expect(result.success).toBe(true);
+    });
   });
-  assert.equal(validUpdate.success, true);
 });
