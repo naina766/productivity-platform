@@ -1,6 +1,6 @@
 # NOVA — Full-Stack Project Management Platform
 
-NOVA is a collaborative project management platform built with Next.js 15 (App Router), React 19, TypeScript, PostgreSQL, and Prisma.
+NOVA is a collaborative project management platform built with Next.js 16 (App Router), React 19, TypeScript, PostgreSQL, and Prisma.
 
 It structures team work into **Workspaces → Projects → Tasks**, with server-enforced role-based access control, rotating refresh tokens, and an activity trail that records every change.
 
@@ -55,7 +55,7 @@ NOVA is a portfolio project covering the full vertical of a real application: au
 
 | Layer | Technology | Why |
 |-------|------------|-----|
-| Framework | Next.js 15 (App Router) | Route Handlers and middleware in one deployable |
+| Framework | Next.js 16 (App Router) | Route Handlers and middleware in one deployable |
 | UI | React 19, TypeScript, Tailwind CSS 3 | Typed components, utility styling with no runtime CSS |
 | Motion & icons | Framer Motion, Lucide React | Transitions and consistent iconography |
 | Data | PostgreSQL 16, Prisma 5 | Relational integrity, cascades, migrations |
