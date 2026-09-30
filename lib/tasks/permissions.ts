@@ -62,3 +62,27 @@ export async function requireValidAssignee(
     throw Errors.validation('Assignee must be a member of this project.');
   }
 }
+
+/**
+ * Verify that all specified labels belong to the target workspace.
+ * Prevents attaching another workspace's labels (IDOR / cross-workspace leak).
+ */
+export async function requireValidWorkspaceLabels(
+  workspaceId: string,
+  labelIds: string[],
+): Promise<void> {
+  if (!labelIds || labelIds.length === 0) return;
+
+  const uniqueLabelIds = Array.from(new Set(labelIds));
+  const count = await prisma.label.count({
+    where: {
+      workspaceId,
+      id: { in: uniqueLabelIds },
+    },
+  });
+
+  if (count !== uniqueLabelIds.length) {
+    throw Errors.badRequest('One or more labels are invalid or do not belong to this workspace.');
+  }
+}
+

@@ -43,6 +43,10 @@ test('Errors — getErrorMessage normalizes unknown error values safely', () => 
 });
 
 test('Errors — AppError factory methods generate proper status codes', () => {
+  const badReq = Errors.badRequest('Invalid payload');
+  assert.equal(badReq.status, 400);
+  assert.equal(badReq.code, 'BAD_REQUEST');
+
   const unauthorized = Errors.unauthorized('Session expired');
   assert.equal(unauthorized.status, 401);
   assert.equal(unauthorized.code, 'UNAUTHORIZED');

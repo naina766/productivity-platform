@@ -8,7 +8,7 @@
 import { prisma } from '@/lib/db/prisma';
 import { Errors } from '@/lib/errors';
 import { requireProjectAccess, requireProjectManageAccess } from '@/lib/projects/permissions';
-import { requireTaskAccess, requireValidAssignee } from '@/lib/tasks/permissions';
+import { requireTaskAccess, requireValidAssignee, requireValidWorkspaceLabels } from '@/lib/tasks/permissions';
 import { logActivity } from '@/lib/activity/activity.service';
 import { createNotification } from '@/lib/notifications/notification.service';
 import { TASK_STATUS_LABELS } from '@/types/task';
@@ -177,6 +177,11 @@ export async function createTask(
     await requireValidAssignee(projectId, project.workspaceId, data.assigneeId);
   }
 
+  // Validate labels belong to the project workspace if provided
+  if (data.labelIds && data.labelIds.length > 0) {
+    await requireValidWorkspaceLabels(project.workspaceId, data.labelIds);
+  }
+
   // Get next position value
   const maxPosition = await prisma.task.aggregate({
     where: { projectId },
@@ -256,6 +261,11 @@ export async function updateTask(
       task.project.workspaceId,
       data.assigneeId,
     );
+  }
+
+  // Validate labels belong to the project workspace if being changed
+  if (data.labelIds && data.labelIds.length > 0) {
+    await requireValidWorkspaceLabels(task.project.workspaceId, data.labelIds);
   }
 
   const beforeStatus = task.status;

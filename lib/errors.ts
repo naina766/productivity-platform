@@ -13,6 +13,8 @@ export class AppError extends Error {
 }
 
 export const Errors = {
+  badRequest: (msg = 'Invalid request') =>
+    new AppError(400, 'BAD_REQUEST', msg),
   unauthorized: (msg = 'Authentication required') =>
     new AppError(401, 'UNAUTHORIZED', msg),
   forbidden: (msg = 'You do not have permission for this resource') =>
