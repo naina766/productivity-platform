@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   Zap,
   LogOut,
@@ -12,6 +13,10 @@ import {
   RefreshCw,
   AlertCircle,
   Search,
+  ListTodo,
+  Calendar,
+  Clock,
+  AlertTriangle,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/components/auth/AuthContext';
@@ -145,13 +150,48 @@ export default function DashboardPage() {
           transition={{ duration: 0.35 }}
           className="flex items-center justify-between mb-10"
         >
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-lime-400 p-[1.5px] shadow-md shadow-emerald-500/20">
-              <div className="w-full h-full bg-[var(--card-main)] rounded-[10px] flex items-center justify-center">
-                <Zap className="w-3.5 h-3.5 text-emerald-400" />
+          <div className="flex items-center gap-6">
+            <Link href="/dashboard" className="flex items-center gap-2.5 group">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-lime-400 p-[1.5px] shadow-md shadow-emerald-500/20">
+                <div className="w-full h-full bg-[var(--card-main)] rounded-[10px] flex items-center justify-center">
+                  <Zap className="w-3.5 h-3.5 text-emerald-400" />
+                </div>
               </div>
-            </div>
-            <span className="text-xl font-bold tracking-tight">NOVA</span>
+              <span className="text-xl font-bold tracking-tight">NOVA</span>
+            </Link>
+
+            <nav className="hidden sm:flex items-center gap-1">
+              <Link
+                href="/dashboard"
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-[var(--card-main)] text-[var(--text-primary)] border border-[var(--border-color)] shadow-sm"
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/my-tasks"
+                className="px-3 py-1.5 rounded-xl text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--card-main)] transition-colors"
+              >
+                My Tasks
+              </Link>
+              <Link
+                href="/my-tasks?view=today"
+                className="px-3 py-1.5 rounded-xl text-xs font-medium text-[var(--text-secondary)] hover:text-lime-400 hover:bg-[var(--card-main)] transition-colors"
+              >
+                Today
+              </Link>
+              <Link
+                href="/my-tasks?view=upcoming"
+                className="px-3 py-1.5 rounded-xl text-xs font-medium text-[var(--text-secondary)] hover:text-teal-400 hover:bg-[var(--card-main)] transition-colors"
+              >
+                Upcoming
+              </Link>
+              <Link
+                href="/my-tasks?view=overdue"
+                className="px-3 py-1.5 rounded-xl text-xs font-medium text-[var(--text-secondary)] hover:text-red-400 hover:bg-[var(--card-main)] transition-colors"
+              >
+                Overdue
+              </Link>
+            </nav>
           </div>
 
           <div className="flex items-center gap-2">
@@ -207,6 +247,74 @@ export default function DashboardPage() {
             )}
           </motion.div>
         )}
+
+        {/* Task Views Quick Navigation */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.11 }}
+          className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8"
+        >
+          <Link
+            href="/my-tasks"
+            className="rounded-2xl bg-[var(--card-main)] border border-[var(--border-color)] hover:border-emerald-500/40 p-4 transition-all group flex items-center gap-3 shadow-sm hover:shadow-emerald-500/5"
+          >
+            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <ListTodo className="w-4 h-4 text-emerald-400" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-[var(--text-primary)] group-hover:text-emerald-400 transition-colors truncate">
+                My Tasks
+              </p>
+              <p className="text-[10px] text-[var(--text-muted)] truncate">All assigned to you</p>
+            </div>
+          </Link>
+
+          <Link
+            href="/my-tasks?view=today"
+            className="rounded-2xl bg-[var(--card-main)] border border-[var(--border-color)] hover:border-lime-500/40 p-4 transition-all group flex items-center gap-3 shadow-sm hover:shadow-lime-500/5"
+          >
+            <div className="w-9 h-9 rounded-xl bg-lime-500/10 border border-lime-500/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <Calendar className="w-4 h-4 text-lime-400" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-[var(--text-primary)] group-hover:text-lime-400 transition-colors truncate">
+                Today
+              </p>
+              <p className="text-[10px] text-[var(--text-muted)] truncate">Due before midnight</p>
+            </div>
+          </Link>
+
+          <Link
+            href="/my-tasks?view=upcoming"
+            className="rounded-2xl bg-[var(--card-main)] border border-[var(--border-color)] hover:border-teal-500/40 p-4 transition-all group flex items-center gap-3 shadow-sm hover:shadow-teal-500/5"
+          >
+            <div className="w-9 h-9 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <Clock className="w-4 h-4 text-teal-400" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-[var(--text-primary)] group-hover:text-teal-400 transition-colors truncate">
+                Upcoming
+              </p>
+              <p className="text-[10px] text-[var(--text-muted)] truncate">Future deadlines</p>
+            </div>
+          </Link>
+
+          <Link
+            href="/my-tasks?view=overdue"
+            className="rounded-2xl bg-[var(--card-main)] border border-[var(--border-color)] hover:border-red-500/40 p-4 transition-all group flex items-center gap-3 shadow-sm hover:shadow-red-500/5"
+          >
+            <div className="w-9 h-9 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <AlertTriangle className="w-4 h-4 text-red-400" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-[var(--text-primary)] group-hover:text-red-400 transition-colors truncate">
+                Overdue
+              </p>
+              <p className="text-[10px] text-[var(--text-muted)] truncate">Past due date</p>
+            </div>
+          </Link>
+        </motion.div>
 
         {workspace && (
           <motion.div

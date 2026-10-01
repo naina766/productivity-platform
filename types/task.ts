@@ -44,6 +44,15 @@ export interface MyTaskSummary extends TaskSummary {
   projectName: string;
 }
 
+export type TaskDateView = 'all' | 'today' | 'upcoming' | 'overdue';
+
+export interface TaskViewCounts {
+  all: number;
+  today: number;
+  upcoming: number;
+  overdue: number;
+}
+
 export interface CreateTaskInput {
   title: string;
   description?: string | null;

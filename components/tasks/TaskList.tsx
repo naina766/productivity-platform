@@ -56,9 +56,16 @@ export function TaskList({ tasks, onTaskClick }: TaskListProps) {
           >
             {/* Title + description */}
             <div className="min-w-0">
-              <h4 className="text-sm font-medium text-[var(--text-primary)] truncate">
-                {task.title}
-              </h4>
+              <div className="flex items-center gap-2">
+                <h4 className="text-sm font-medium text-[var(--text-primary)] truncate">
+                  {task.title}
+                </h4>
+                {(task as { projectName?: string }).projectName && (
+                  <span className="inline-flex items-center text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded shrink-0">
+                    {(task as { projectName?: string }).projectName}
+                  </span>
+                )}
+              </div>
               {task.description && (
                 <p className="text-xs text-[var(--text-muted)] truncate mt-0.5">
                   {task.description}

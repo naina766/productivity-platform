@@ -27,7 +27,7 @@ import type { CommentItem, CreateCommentInput, UpdateCommentInput } from '@/type
 import type { ActivityItem } from '@/types/activity';
 import type { NotificationItem } from '@/types/notification';
 
-import type { MyTaskSummary } from '@/types/task';
+import type { MyTaskSummary, TaskDateView, TaskViewCounts } from '@/types/task';
 /**
  * Browser-side API client.
  *
@@ -447,6 +447,19 @@ export async function apiMarkAllNotificationsRead(): Promise<
 > {
   return apiFetch('/api/notifications/read-all', { method: 'POST' });
 }
-export async function apiGetMyTasks(): Promise<ListResponse<MyTaskSummary>> {
-  return apiFetch('/api/my-tasks');
+export interface MyTasksResponse {
+  success: true;
+  data: MyTaskSummary[];
+  counts: TaskViewCounts;
+}
+
+export async function apiGetMyTasks(filters?: {
+  view?: TaskDateView;
+  status?: TaskStatus;
+  priority?: TaskPriority;
+  projectId?: string;
+  search?: string;
+  timezoneOffset?: number;
+}): Promise<MyTasksResponse> {
+  return apiFetch(`/api/my-tasks${buildQuery({ ...filters })}`);
 }
