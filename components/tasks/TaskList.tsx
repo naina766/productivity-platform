@@ -1,10 +1,11 @@
 'use client';
 
-import { Calendar, User, CheckSquare, Flag } from 'lucide-react';
+import { Calendar, User, CheckSquare, Flag, Repeat } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { TaskSummary, TaskPriority, TaskStatus } from '@/types/task';
 import { TASK_STATUS_LABELS, TASK_PRIORITY_LABELS } from '@/types/task';
 import { isTaskOverdue } from '@/lib/tasks/date-utils';
+import { RECURRENCE_LABELS } from '@/lib/tasks/recurring';
 
 const PRIORITY_BADGE: Record<TaskPriority, string> = {
   LOW: 'text-neutral-400 bg-neutral-400/10 border-neutral-400/20',
@@ -63,6 +64,15 @@ export function TaskList({ tasks, onTaskClick }: TaskListProps) {
                 {(task as { projectName?: string }).projectName && (
                   <span className="inline-flex items-center text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded shrink-0">
                     {(task as { projectName?: string }).projectName}
+                  </span>
+                )}
+                {task.isRecurring && (
+                  <span
+                    className="inline-flex items-center gap-1 text-[10px] font-semibold text-purple-400 bg-purple-400/10 border border-purple-400/20 px-1.5 py-0.5 rounded shrink-0"
+                    title={`Recurring: ${task.recurrenceInterval ? RECURRENCE_LABELS[task.recurrenceInterval] : 'Repeats'}`}
+                  >
+                    <Repeat className="w-2.5 h-2.5" />
+                    <span>{task.recurrenceInterval ? RECURRENCE_LABELS[task.recurrenceInterval] : 'Recurring'}</span>
                   </span>
                 )}
                 {task.milestone && (

@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Loader2, Pencil, AlertCircle, Trash2 } from 'lucide-react';
+import { X, Loader2, Pencil, AlertCircle, Trash2, Repeat } from 'lucide-react';
 import { apiUpdateTask, apiDeleteTask } from '@/lib/api/client';
-import type { TaskDetail, TaskStatus, TaskPriority } from '@/types/task';
+import type { TaskDetail, TaskStatus, TaskPriority, RecurrenceInterval } from '@/types/task';
 import type { ProjectMemberItem } from '@/types/project';
 import type { MilestoneItem } from '@/types/milestone';
 import { TASK_STATUS_LABELS, TASK_PRIORITY_LABELS, ALL_TASK_STATUSES, ALL_TASK_PRIORITIES } from '@/types/task';
@@ -39,6 +39,13 @@ export function EditTaskDialog({
   const [dueDate, setDueDate] = useState(
     task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
   );
+  const [isRecurring, setIsRecurring] = useState(task.isRecurring ?? false);
+  const [recurrenceInterval, setRecurrenceInterval] = useState<RecurrenceInterval>(
+    task.recurrenceInterval ?? 'WEEKLY'
+  );
+  const [recurrenceEndDate, setRecurrenceEndDate] = useState(
+    task.recurrenceEndDate ? new Date(task.recurrenceEndDate).toISOString().split('T')[0] : ''
+  );
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -55,6 +62,11 @@ export function EditTaskDialog({
       setMilestoneId(task.milestoneId ?? '');
       setDueDate(
         task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
+      );
+      setIsRecurring(task.isRecurring ?? false);
+      setRecurrenceInterval(task.recurrenceInterval ?? 'WEEKLY');
+      setRecurrenceEndDate(
+        task.recurrenceEndDate ? new Date(task.recurrenceEndDate).toISOString().split('T')[0] : ''
       );
       setError(null);
       setSaving(false);
@@ -92,6 +104,9 @@ export function EditTaskDialog({
         assigneeId: assigneeId || null,
         milestoneId: milestoneId || null,
         dueDate: dueDate ? new Date(dueDate).toISOString() : null,
+        isRecurring,
+        recurrenceInterval: isRecurring ? recurrenceInterval : null,
+        recurrenceEndDate: isRecurring && recurrenceEndDate ? new Date(recurrenceEndDate).toISOString() : null,
       });
       onUpdated(res.data);
       onClose();
@@ -291,6 +306,65 @@ export function EditTaskDialog({
                     </select>
                   </div>
                 )}
+
+                {/* Recurring Task toggle & options */}
+                <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)]/50 p-3 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="edit-task-recurring" className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        id="edit-task-recurring"
+                        type="checkbox"
+                        checked={isRecurring}
+                        onChange={(e) => setIsRecurring(e.target.checked)}
+                        disabled={saving}
+                        className="rounded border-[var(--border-color)] text-emerald-500 focus:ring-emerald-500/20"
+                      />
+                      <span className="text-sm font-medium text-[var(--text-primary)] flex items-center gap-1.5">
+                        <Repeat className="w-3.5 h-3.5 text-emerald-400" />
+                        Recurring Task
+                      </span>
+                    </label>
+                    {isRecurring && (
+                      <span className="text-xs text-[var(--text-muted)] font-medium">Repeats on completion</span>
+                    )}
+                  </div>
+
+                  {isRecurring && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-[var(--border-color)]/60">
+                      <div>
+                        <label htmlFor="edit-task-interval" className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
+                          Frequency
+                        </label>
+                        <select
+                          id="edit-task-interval"
+                          value={recurrenceInterval}
+                          onChange={(e) => setRecurrenceInterval(e.target.value as RecurrenceInterval)}
+                          disabled={saving}
+                          className="w-full px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-primary)] text-xs focus:outline-none focus:border-emerald-500/60"
+                        >
+                          <option value="DAILY">Daily</option>
+                          <option value="WEEKLY">Weekly</option>
+                          <option value="BIWEEKLY">Every 2 weeks</option>
+                          <option value="MONTHLY">Monthly</option>
+                          <option value="YEARLY">Yearly</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label htmlFor="edit-task-end-date" className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
+                          End date (optional)
+                        </label>
+                        <input
+                          id="edit-task-end-date"
+                          type="date"
+                          value={recurrenceEndDate}
+                          onChange={(e) => setRecurrenceEndDate(e.target.value)}
+                          disabled={saving}
+                          className="w-full px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-primary)] text-xs focus:outline-none focus:border-emerald-500/60"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {/* Actions */}
                 <div className="flex items-center justify-between pt-2">

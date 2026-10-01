@@ -4,6 +4,7 @@ import { requireProjectAccess, requireProjectManageAccess } from '@/lib/projects
 import { requireTaskAccess, requireValidAssignee, requireValidWorkspaceLabels } from '@/lib/tasks/permissions';
 import { logActivity } from '@/lib/activity/activity.service';
 import { createNotification } from '@/lib/notifications/notification.service';
+import { calculateNextOccurrence, shouldSpawnNextOccurrence } from './recurring';
 import { TASK_STATUS_LABELS } from '@/types/task';
 import type { Prisma } from '@prisma/client';
 import type { CreateTaskData, UpdateTaskData } from '@/lib/validations/task';
@@ -60,6 +61,10 @@ export function serializeTask(task: TaskRow): TaskSummary {
       : null,
     position: task.position,
     labels: task.labels.map((tl) => tl.label),
+    isRecurring: task.isRecurring,
+    recurrenceInterval: task.recurrenceInterval,
+    recurrenceEndDate: task.recurrenceEndDate?.toISOString() ?? null,
+    recurringParentId: task.recurringParentId,
     subtaskCount: subtasks.length,
     completedSubtaskCount: subtasks.filter((s) => s.isCompleted).length,
     subtasks,
@@ -94,6 +99,9 @@ export async function getProjectTasks(
   }
   if (filters?.milestoneId) {
     where.milestoneId = filters.milestoneId === 'none' ? null : filters.milestoneId;
+  }
+  if (filters?.isRecurring !== undefined) {
+    where.isRecurring = filters.isRecurring;
   }
   if (filters?.search) {
     where.OR = [
@@ -151,6 +159,9 @@ export async function createTask(
         assigneeId: data.assigneeId ?? null,
         milestoneId: data.milestoneId ?? null,
         dueDate: data.dueDate ? new Date(data.dueDate) : null,
+        isRecurring: data.isRecurring ?? false,
+        recurrenceInterval: data.isRecurring ? data.recurrenceInterval ?? null : null,
+        recurrenceEndDate: data.recurrenceEndDate ? new Date(data.recurrenceEndDate) : null,
         position: (_max.position ?? -1) + 1,
         ...(data.labelIds?.length
           ? {
@@ -252,6 +263,20 @@ export async function updateTask(
     if (data.position !== undefined) updateData.position = data.position;
     else if (nextPosition !== undefined) updateData.position = nextPosition;
 
+    if (data.isRecurring !== undefined) {
+      updateData.isRecurring = data.isRecurring;
+      if (!data.isRecurring) {
+        updateData.recurrenceInterval = null;
+        updateData.recurrenceEndDate = null;
+      }
+    }
+    if ('recurrenceInterval' in data) {
+      updateData.recurrenceInterval = data.recurrenceInterval ?? null;
+    }
+    if ('recurrenceEndDate' in data) {
+      updateData.recurrenceEndDate = data.recurrenceEndDate ? new Date(data.recurrenceEndDate) : null;
+    }
+
     if (data.labelIds !== undefined) {
       await tx.taskLabel.deleteMany({ where: { taskId } });
       if (data.labelIds.length > 0) {
@@ -305,6 +330,62 @@ export async function updateTask(
         title: 'Task completed',
         body: `"${task.title}" was marked as done.`,
       });
+    }
+
+    if (completed && task.isRecurring && task.recurrenceInterval) {
+      const nextDueDate = calculateNextOccurrence(task.dueDate, task.recurrenceInterval);
+      if (shouldSpawnNextOccurrence(nextDueDate, task.recurrenceEndDate)) {
+        const { _max: todoMax } = await tx.task.aggregate({
+          where: { projectId: task.projectId, status: 'TODO' },
+          _max: { position: true },
+        });
+        const nextPos = (todoMax.position ?? -1) + 1;
+
+        const nextRecurringTask = await tx.task.create({
+          data: {
+            projectId: task.projectId,
+            title: task.title,
+            description: task.description,
+            status: 'TODO',
+            priority: task.priority,
+            assigneeId: task.assigneeId,
+            milestoneId: task.milestoneId,
+            dueDate: nextDueDate,
+            position: nextPos,
+            isRecurring: true,
+            recurrenceInterval: task.recurrenceInterval,
+            recurrenceEndDate: task.recurrenceEndDate,
+            recurringParentId: task.recurringParentId ?? task.id,
+            ...(task.labels.length > 0
+              ? {
+                  labels: {
+                    create: task.labels.map((tl) => ({ labelId: tl.labelId })),
+                  },
+                }
+              : {}),
+            ...(task.subtasks.length > 0
+              ? {
+                  subtasks: {
+                    create: task.subtasks.map((st) => ({
+                      title: st.title,
+                      isCompleted: false,
+                      position: st.position,
+                    })),
+                  },
+                }
+              : {}),
+          },
+        });
+
+        await logActivity(tx, {
+          projectId: task.projectId,
+          taskId: nextRecurringTask.id,
+          actorId: userId,
+          type: 'TASK_CREATED',
+          message: `Created next recurring task "${nextRecurringTask.title}"`,
+          metadata: { recurringParentId: task.id, nextDueDate: nextDueDate.toISOString() },
+        });
+      }
     }
   });
 

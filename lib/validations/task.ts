@@ -9,6 +9,10 @@ const taskPriorities: [TaskPriority, ...TaskPriority[]] = [
   'LOW', 'MEDIUM', 'HIGH', 'URGENT',
 ];
 
+const recurrenceIntervals = [
+  'DAILY', 'WEEKLY', 'BIWEEKLY', 'MONTHLY', 'YEARLY',
+] as const;
+
 export const createTaskSchema = z.object({
   title: z
     .string({ required_error: 'Task title is required.' })
@@ -34,6 +38,13 @@ export const createTaskSchema = z.object({
     .optional()
     .nullable(),
   dueDate: z
+    .string()
+    .datetime({ offset: true })
+    .optional()
+    .nullable(),
+  isRecurring: z.boolean().optional(),
+  recurrenceInterval: z.enum(recurrenceIntervals).optional().nullable(),
+  recurrenceEndDate: z
     .string()
     .datetime({ offset: true })
     .optional()
@@ -74,6 +85,13 @@ export const updateTaskSchema = z
       .datetime({ offset: true })
       .nullable()
       .optional(),
+    isRecurring: z.boolean().optional(),
+    recurrenceInterval: z.enum(recurrenceIntervals).optional().nullable(),
+    recurrenceEndDate: z
+      .string()
+      .datetime({ offset: true })
+      .optional()
+      .nullable(),
     position: z.number().int().min(0).optional(),
     labelIds: z
       .array(z.string().uuid())

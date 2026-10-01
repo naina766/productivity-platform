@@ -12,6 +12,7 @@ import {
   MessageSquare,
   Activity,
   Info,
+  Repeat,
 } from 'lucide-react';
 import type { TaskDetail } from '@/types/task';
 import { TASK_STATUS_LABELS, TASK_PRIORITY_LABELS } from '@/types/task';
@@ -19,6 +20,7 @@ import { CommentSection } from '@/components/comments/CommentSection';
 import { ActivityTimeline } from '@/components/activity/ActivityTimeline';
 import { SubtaskList } from '@/components/tasks/SubtaskList';
 import { isTaskOverdue } from '@/lib/tasks/date-utils';
+import { RECURRENCE_LABELS } from '@/lib/tasks/recurring';
 
 const STATUS_BADGE: Record<string, string> = {
   TODO: 'text-neutral-400 bg-neutral-400/10 border-neutral-400/20',
@@ -248,6 +250,19 @@ export function TaskDetailPanel({
                           )}
                         </div>
                       </div>
+
+                      {task.isRecurring && (
+                        <div className="flex items-center gap-3">
+                          <Repeat className="w-4 h-4 text-purple-400 shrink-0" />
+                          <div>
+                            <p className="text-[11px] text-[var(--text-muted)] uppercase tracking-wide mb-0.5">Recurrence</p>
+                            <span className="text-sm font-medium text-purple-400">
+                              {task.recurrenceInterval ? RECURRENCE_LABELS[task.recurrenceInterval] : 'Repeats on completion'}
+                              {task.recurrenceEndDate && ` (until ${new Date(task.recurrenceEndDate).toLocaleDateString()})`}
+                            </span>
+                          </div>
+                        </div>
+                      )}
 
                       <div className="flex items-center gap-3">
                         <Clock className="w-4 h-4 text-[var(--text-muted)] shrink-0" />

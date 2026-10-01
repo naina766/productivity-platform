@@ -365,6 +365,7 @@ export async function apiGetTasks(
     priority?: TaskPriority;
     assigneeId?: string;
     milestoneId?: string;
+    isRecurring?: boolean;
     search?: string;
     sort?: TaskSort;
   },

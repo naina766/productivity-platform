@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Loader2, Plus, AlertCircle } from 'lucide-react';
+import { X, Loader2, Plus, AlertCircle, Repeat } from 'lucide-react';
 import { apiCreateTask } from '@/lib/api/client';
-import type { TaskDetail, TaskStatus, TaskPriority } from '@/types/task';
+import type { TaskDetail, TaskStatus, TaskPriority, RecurrenceInterval } from '@/types/task';
 import type { ProjectMemberItem } from '@/types/project';
 import type { MilestoneItem } from '@/types/milestone';
 import { TASK_STATUS_LABELS, TASK_PRIORITY_LABELS, ALL_TASK_STATUSES, ALL_TASK_PRIORITIES } from '@/types/task';
@@ -37,6 +37,9 @@ export function CreateTaskDialog({
   const [assigneeId, setAssigneeId] = useState<string>('');
   const [milestoneId, setMilestoneId] = useState<string>('');
   const [dueDate, setDueDate] = useState('');
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurrenceInterval, setRecurrenceInterval] = useState<RecurrenceInterval>('WEEKLY');
+  const [recurrenceEndDate, setRecurrenceEndDate] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const titleRef = useRef<HTMLInputElement>(null);
@@ -50,6 +53,9 @@ export function CreateTaskDialog({
       setAssigneeId('');
       setMilestoneId('');
       setDueDate(initialDueDate ?? '');
+      setIsRecurring(false);
+      setRecurrenceInterval('WEEKLY');
+      setRecurrenceEndDate('');
       setError(null);
       setSaving(false);
       setTimeout(() => titleRef.current?.focus(), 50);
@@ -84,6 +90,9 @@ export function CreateTaskDialog({
         assigneeId: assigneeId || undefined,
         milestoneId: milestoneId || undefined,
         dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+        isRecurring,
+        recurrenceInterval: isRecurring ? recurrenceInterval : undefined,
+        recurrenceEndDate: isRecurring && recurrenceEndDate ? new Date(recurrenceEndDate).toISOString() : undefined,
       });
       onCreated(res.data);
       onClose();
@@ -282,6 +291,65 @@ export function CreateTaskDialog({
                     </select>
                   </div>
                 )}
+
+                {/* Recurring Task toggle & options */}
+                <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)]/50 p-3 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="create-task-recurring" className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        id="create-task-recurring"
+                        type="checkbox"
+                        checked={isRecurring}
+                        onChange={(e) => setIsRecurring(e.target.checked)}
+                        disabled={saving}
+                        className="rounded border-[var(--border-color)] text-emerald-500 focus:ring-emerald-500/20"
+                      />
+                      <span className="text-sm font-medium text-[var(--text-primary)] flex items-center gap-1.5">
+                        <Repeat className="w-3.5 h-3.5 text-emerald-400" />
+                        Recurring Task
+                      </span>
+                    </label>
+                    {isRecurring && (
+                      <span className="text-xs text-[var(--text-muted)] font-medium">Repeats on completion</span>
+                    )}
+                  </div>
+
+                  {isRecurring && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-[var(--border-color)]/60">
+                      <div>
+                        <label htmlFor="create-task-interval" className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
+                          Frequency
+                        </label>
+                        <select
+                          id="create-task-interval"
+                          value={recurrenceInterval}
+                          onChange={(e) => setRecurrenceInterval(e.target.value as RecurrenceInterval)}
+                          disabled={saving}
+                          className="w-full px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-primary)] text-xs focus:outline-none focus:border-emerald-500/60"
+                        >
+                          <option value="DAILY">Daily</option>
+                          <option value="WEEKLY">Weekly</option>
+                          <option value="BIWEEKLY">Every 2 weeks</option>
+                          <option value="MONTHLY">Monthly</option>
+                          <option value="YEARLY">Yearly</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label htmlFor="create-task-end-date" className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
+                          End date (optional)
+                        </label>
+                        <input
+                          id="create-task-end-date"
+                          type="date"
+                          value={recurrenceEndDate}
+                          onChange={(e) => setRecurrenceEndDate(e.target.value)}
+                          disabled={saving}
+                          className="w-full px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-primary)] text-xs focus:outline-none focus:border-emerald-500/60"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {/* Actions */}
                 <div className="flex items-center justify-end gap-3 pt-2">

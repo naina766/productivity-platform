@@ -43,6 +43,9 @@ export interface TaskMilestone {
   status: 'OPEN' | 'COMPLETED';
 }
 
+import type { RecurrenceInterval } from '@/lib/tasks/recurring';
+export type { RecurrenceInterval };
+
 export interface TaskSummary {
   id: string;
   projectId: string;
@@ -57,6 +60,10 @@ export interface TaskSummary {
   milestone?: TaskMilestone | null;
   position: number;
   labels: TaskLabel[];
+  isRecurring: boolean;
+  recurrenceInterval?: RecurrenceInterval | null;
+  recurrenceEndDate?: string | null;
+  recurringParentId?: string | null;
   subtaskCount?: number;
   completedSubtaskCount?: number;
   subtasks?: SubtaskItem[];
@@ -93,6 +100,9 @@ export interface CreateTaskInput {
   assigneeId?: string | null;
   milestoneId?: string | null;
   dueDate?: string | null;
+  isRecurring?: boolean;
+  recurrenceInterval?: RecurrenceInterval | null;
+  recurrenceEndDate?: string | null;
   labelIds?: string[];
 }
 
@@ -104,6 +114,9 @@ export interface UpdateTaskInput {
   assigneeId?: string | null;
   milestoneId?: string | null;
   dueDate?: string | null;
+  isRecurring?: boolean;
+  recurrenceInterval?: RecurrenceInterval | null;
+  recurrenceEndDate?: string | null;
   position?: number;
   labelIds?: string[];
 }
@@ -113,6 +126,7 @@ export interface TaskFilters {
   priority?: TaskPriority;
   assigneeId?: string;
   milestoneId?: string;
+  isRecurring?: boolean;
   search?: string;
 }
 

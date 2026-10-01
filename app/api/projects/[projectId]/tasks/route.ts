@@ -42,6 +42,13 @@ export async function GET(req: NextRequest, { params }: RouteContext): Promise<N
     const assigneeId = searchParams.get('assigneeId');
     if (assigneeId) filters.assigneeId = assigneeId;
 
+    const milestoneId = searchParams.get('milestoneId');
+    if (milestoneId) filters.milestoneId = milestoneId;
+
+    const isRecurringParam = searchParams.get('isRecurring');
+    if (isRecurringParam === 'true') filters.isRecurring = true;
+    else if (isRecurringParam === 'false') filters.isRecurring = false;
+
     const search = searchParams.get('search');
     if (search) filters.search = search;
 
