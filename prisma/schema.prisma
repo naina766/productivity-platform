@@ -88,6 +88,7 @@ model User {
   activities      Activity[]        @relation("ActivityActor")
   notifications   Notification[]
   refreshTokens   RefreshToken[]
+  savedViews      SavedView[]
 
   @@index([email])
 }
@@ -117,9 +118,10 @@ model Workspace {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  members  WorkspaceMember[]
-  projects Project[]
-  labels   Label[]
+  members    WorkspaceMember[]
+  projects   Project[]
+  labels     Label[]
+  savedViews SavedView[]
 
   @@index([ownerId])
 }
@@ -158,6 +160,7 @@ model Project {
   tasks      Task[]
   activities Activity[]
   milestones Milestone[]
+  savedViews SavedView[]
 
   @@index([workspaceId])
   @@index([status])
@@ -323,3 +326,27 @@ model Notification {
   @@index([userId, createdAt])
   @@index([userId, readAt])
 }
+
+model SavedView {
+  id          String   @id @default(uuid()) @db.Uuid
+  workspaceId String   @db.Uuid
+  projectId   String?  @db.Uuid
+  userId      String   @db.Uuid
+  name        String
+  filters     Json     @default("{}")
+  sortBy      String?
+  sortOrder   String?
+  viewType    String   @default("list")
+  isShared    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project   Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([projectId])
+  @@index([userId])
+}
+

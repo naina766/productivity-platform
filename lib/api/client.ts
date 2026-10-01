@@ -34,6 +34,7 @@ import type { MyTaskSummary, TaskDateView, TaskViewCounts } from '@/types/task';
 import type { WorkspaceAnalytics } from '@/types/analytics';
 import type { MilestoneItem, CreateMilestoneInput, UpdateMilestoneInput } from '@/types/milestone';
 import type { GlobalSearchResults, SearchCategory } from '@/types/search';
+import type { SavedView, CreateSavedViewInput, UpdateSavedViewInput } from '@/types/saved-view';
 /**
  * Browser-side API client.
  *
@@ -566,3 +567,37 @@ export async function apiGlobalSearch(params: {
 }): Promise<ItemResponse<GlobalSearchResults>> {
   return apiFetch(`/api/search${buildQuery({ ...params })}`);
 }
+
+export async function apiGetSavedViews(
+  workspaceId: string,
+  projectId?: string
+): Promise<ListResponse<SavedView>> {
+  return apiFetch(`/api/workspaces/${workspaceId}/saved-views${buildQuery({ projectId })}`);
+}
+
+export async function apiCreateSavedView(
+  workspaceId: string,
+  data: CreateSavedViewInput
+): Promise<ItemResponse<SavedView>> {
+  return apiFetch(`/api/workspaces/${workspaceId}/saved-views`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function apiUpdateSavedView(
+  viewId: string,
+  data: UpdateSavedViewInput
+): Promise<ItemResponse<SavedView>> {
+  return apiFetch(`/api/saved-views/${viewId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function apiDeleteSavedView(viewId: string): Promise<MessageResponse> {
+  return apiFetch(`/api/saved-views/${viewId}`, {
+    method: 'DELETE',
+  });
+}
+

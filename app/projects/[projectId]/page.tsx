@@ -36,6 +36,7 @@ import { TaskBoard } from '@/components/tasks/TaskBoard';
 import { TaskList } from '@/components/tasks/TaskList';
 import { CalendarView } from '@/components/calendar/CalendarView';
 import { TaskFilters } from '@/components/tasks/TaskFilters';
+import { SavedViewsSelector } from '@/components/views/SavedViewsSelector';
 import { CreateTaskDialog } from '@/components/tasks/CreateTaskDialog';
 import { EditTaskDialog } from '@/components/tasks/EditTaskDialog';
 import { TaskDetailPanel } from '@/components/tasks/TaskDetail';
@@ -561,25 +562,66 @@ export default function ProjectPage({
             </div>
           </div>
 
-          {/* Filters */}
-          <div className="mb-4">
-            <TaskFilters
-              status={filterStatus}
-              priority={filterPriority}
-              assigneeId={filterAssigneeId}
-              milestoneId={filterMilestoneId}
-              search={filterSearch}
-              sort={filterSort}
-              members={project.members}
-              milestones={milestones}
-              onStatusChange={setFilterStatus}
-              onPriorityChange={setFilterPriority}
-              onAssigneeChange={setFilterAssigneeId}
-              onMilestoneChange={(mId) => setFilterMilestoneId(mId || undefined)}
-              onSearchChange={setFilterSearch}
-              onSortChange={setFilterSort}
-              onClear={handleClearFilters}
-            />
+          {/* Filters & Saved Views */}
+          <div className="mb-4 flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex-1">
+              <TaskFilters
+                status={filterStatus}
+                priority={filterPriority}
+                assigneeId={filterAssigneeId}
+                milestoneId={filterMilestoneId}
+                search={filterSearch}
+                sort={filterSort}
+                members={project.members}
+                milestones={milestones}
+                onStatusChange={setFilterStatus}
+                onPriorityChange={setFilterPriority}
+                onAssigneeChange={setFilterAssigneeId}
+                onMilestoneChange={(mId) => setFilterMilestoneId(mId || undefined)}
+                onSearchChange={setFilterSearch}
+                onSortChange={setFilterSort}
+                onClear={handleClearFilters}
+              />
+            </div>
+            {workspace?.id && (
+              <SavedViewsSelector
+                workspaceId={workspace.id}
+                projectId={project.id}
+                currentFilters={{
+                  status: filterStatus,
+                  priority: filterPriority,
+                  assigneeId: filterAssigneeId,
+                  milestoneId: filterMilestoneId,
+                  search: filterSearch,
+                  sort: filterSort,
+                }}
+                onApplyView={(view) => {
+                  if (view.filters.status && view.filters.status[0]) {
+                    setFilterStatus(view.filters.status[0]);
+                  } else {
+                    setFilterStatus(undefined);
+                  }
+
+                  if (view.filters.priority && view.filters.priority[0]) {
+                    setFilterPriority(view.filters.priority[0]);
+                  } else {
+                    setFilterPriority(undefined);
+                  }
+
+                  setFilterAssigneeId(view.filters.assigneeId || '');
+                  setFilterMilestoneId(view.filters.milestoneId || undefined);
+                  setFilterSearch(view.filters.search || '');
+
+                  if (view.sortBy && view.sortOrder) {
+                    setFilterSort(`${view.sortBy}-${view.sortOrder}` as TaskSort);
+                  }
+                  if (view.viewType === 'list' || view.viewType === 'board' || view.viewType === 'calendar') {
+                    setViewMode(view.viewType);
+                  }
+                }}
+                onResetView={handleClearFilters}
+              />
+            )}
           </div>
 
           {/* Task content */}
