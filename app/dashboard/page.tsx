@@ -20,14 +20,15 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/components/auth/AuthContext';
-import { apiLogout, apiGetProjects } from '@/lib/api/client';
+import { apiLogout, apiGetProjects, apiGetWorkspaceAnalytics } from '@/lib/api/client';
 import { getErrorMessage } from '@/lib/errors';
 import { ProjectCard } from '@/components/projects/ProjectCard';
-
+import { AnalyticsOverview } from '@/components/dashboard/AnalyticsOverview';
 import { ProjectEmptyState } from '@/components/projects/ProjectEmptyState';
 import { CreateProjectDialog } from '@/components/projects/CreateProjectDialog';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import type { ProjectSummary, ProjectDetail, WorkspaceRole } from '@/types/project';
+import type { WorkspaceAnalytics } from '@/types/analytics';
 import { WorkspaceMembers } from '@/components/workspace/WorkspaceMembers';
 
 const ROLE_LABELS: Record<string, string> = {
@@ -65,6 +66,9 @@ export default function DashboardPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState('');
 
+  const [analytics, setAnalytics] = useState<WorkspaceAnalytics | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       router.replace('/login');
@@ -87,11 +91,26 @@ export default function DashboardPage() {
     }
   }, [workspace, searchTerm]);
 
+  const fetchAnalytics = useCallback(async () => {
+    if (!workspace?.id) return;
+    setAnalyticsLoading(true);
+    try {
+      const tzOffset = new Date().getTimezoneOffset();
+      const res = await apiGetWorkspaceAnalytics(workspace.id, tzOffset);
+      setAnalytics(res.data);
+    } catch {
+      // Best-effort analytics
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  }, [workspace?.id]);
+
   useEffect(() => {
     if (!loading && isAuthenticated && workspace?.id) {
       void fetchProjects();
+      void fetchAnalytics();
     }
-  }, [loading, isAuthenticated, workspace?.id, fetchProjects]);
+  }, [loading, isAuthenticated, workspace?.id, fetchProjects, fetchAnalytics]);
 
   async function handleLogout() {
     try {
@@ -335,6 +354,15 @@ export default function DashboardPage() {
           </motion.div>
         )}
 
+        {/* Workspace Analytics Overview */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.135 }}
+        >
+          <AnalyticsOverview analytics={analytics} loading={analyticsLoading} />
+        </motion.div>
+
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -367,12 +395,17 @@ export default function DashboardPage() {
               </div>
               <button
                 type="button"
-                onClick={() => void fetchProjects()}
-                disabled={projectsLoading}
+                onClick={() => {
+                  void fetchProjects();
+                  void fetchAnalytics();
+                }}
+                disabled={projectsLoading || analyticsLoading}
                 aria-label="Refresh projects"
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--card-main)] border border-transparent hover:border-[var(--border-color)] transition-all disabled:opacity-50"
               >
-                <RefreshCw className={`w-4 h-4 ${projectsLoading ? 'animate-spin' : ''}`} />
+                <RefreshCw
+                  className={`w-4 h-4 ${projectsLoading || analyticsLoading ? 'animate-spin' : ''}`}
+                />
               </button>
               {workspace && (
                 <button

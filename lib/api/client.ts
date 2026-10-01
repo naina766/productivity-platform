@@ -28,6 +28,7 @@ import type { ActivityItem } from '@/types/activity';
 import type { NotificationItem } from '@/types/notification';
 
 import type { MyTaskSummary, TaskDateView, TaskViewCounts } from '@/types/task';
+import type { WorkspaceAnalytics } from '@/types/analytics';
 /**
  * Browser-side API client.
  *
@@ -473,4 +474,11 @@ export async function apiGetCalendarTasks(filters?: {
   priority?: TaskPriority;
 }): Promise<ListResponse<MyTaskSummary>> {
   return apiFetch(`/api/calendar${buildQuery({ ...filters })}`);
+}
+
+export async function apiGetWorkspaceAnalytics(
+  workspaceId: string,
+  timezoneOffset?: number
+): Promise<ItemResponse<WorkspaceAnalytics>> {
+  return apiFetch(`/api/workspaces/${workspaceId}/analytics${buildQuery({ timezoneOffset })}`);
 }

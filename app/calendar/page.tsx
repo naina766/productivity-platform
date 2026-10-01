@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -9,7 +9,6 @@ import {
   Loader2,
   AlertCircle,
   ArrowLeft,
-  ChevronRight,
   Filter,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthContext';
