@@ -17,6 +17,7 @@ import type {
 } from '@/types/project';
 
 import { calculateProjectTaskStats } from '@/lib/projects/project-progress';
+import { eventBus } from '@/lib/realtime/event-bus';
 
 const memberSelect = {
   id: true,
@@ -189,7 +190,7 @@ export async function updateProject(
   userId: string,
   data: UpdateProjectData,
 ): Promise<ProjectDetail> {
-  await requireProjectManageAccess(projectId, userId);
+  const { project } = await requireProjectManageAccess(projectId, userId);
 
   const updateData: Prisma.ProjectUpdateInput = {};
   if (data.name !== undefined) updateData.name = data.name;
@@ -205,7 +206,16 @@ export async function updateProject(
 
   await prisma.project.update({ where: { id: projectId }, data: updateData });
 
-  return getProjectById(projectId, userId);
+  const updatedProject = await getProjectById(projectId, userId);
+
+  eventBus.publish(project.workspaceId, {
+    type: 'PROJECT_UPDATED',
+    projectId,
+    actorId: userId,
+    data: updatedProject,
+  });
+
+  return updatedProject;
 }
 
 /** Projects are archived, never deleted, so task history stays recoverable. */
@@ -213,12 +223,19 @@ export async function archiveProject(
   projectId: string,
   userId: string,
 ): Promise<{ id: string; status: string }> {
-  await requireProjectManageAccess(projectId, userId);
+  const { project } = await requireProjectManageAccess(projectId, userId);
 
   const updated = await prisma.project.update({
     where: { id: projectId },
     data: { status: 'ARCHIVED' },
     select: { id: true, status: true },
+  });
+
+  eventBus.publish(project.workspaceId, {
+    type: 'PROJECT_UPDATED',
+    projectId,
+    actorId: userId,
+    data: { id: updated.id, status: updated.status },
   });
 
   return { id: updated.id, status: updated.status };

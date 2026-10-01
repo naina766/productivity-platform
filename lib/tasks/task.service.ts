@@ -5,6 +5,7 @@ import { requireTaskAccess, requireValidAssignee, requireValidWorkspaceLabels } 
 import { logActivity } from '@/lib/activity/activity.service';
 import { createNotification } from '@/lib/notifications/notification.service';
 import { calculateNextOccurrence, shouldSpawnNextOccurrence } from './recurring';
+import { eventBus } from '@/lib/realtime/event-bus';
 import { TASK_STATUS_LABELS } from '@/types/task';
 import type { Prisma } from '@prisma/client';
 import type { CreateTaskData, UpdateTaskData } from '@/lib/validations/task';
@@ -197,7 +198,15 @@ export async function createTask(
     return created;
   });
 
-  return serializeTask(task);
+  const serialized = serializeTask(task);
+  eventBus.publish(project.workspaceId, {
+    type: 'TASK_CREATED',
+    projectId: task.projectId,
+    actorId: userId,
+    data: serialized,
+  });
+
+  return serialized;
 }
 
 /**
@@ -392,7 +401,15 @@ export async function updateTask(
   const updated = await prisma.task.findUnique({ where: { id: taskId }, include: taskInclude });
   if (!updated) throw Errors.notFound('Task not found.');
 
-  return serializeTask(updated);
+  const serialized = serializeTask(updated);
+  eventBus.publish(task.project.workspaceId, {
+    type: 'TASK_UPDATED',
+    projectId: task.projectId,
+    actorId: userId,
+    data: serialized,
+  });
+
+  return serialized;
 }
 
 /** Deleting a task removes its comments, labels, and activity via cascade. */
@@ -401,4 +418,11 @@ export async function deleteTask(taskId: string, userId: string): Promise<void> 
   await requireProjectManageAccess(task.projectId, userId);
 
   await prisma.task.delete({ where: { id: taskId } });
+
+  eventBus.publish(task.project.workspaceId, {
+    type: 'TASK_DELETED',
+    projectId: task.projectId,
+    actorId: userId,
+    data: { taskId, projectId: task.projectId },
+  });
 }

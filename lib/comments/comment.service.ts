@@ -5,6 +5,7 @@ import { requireProjectManageAccess } from '@/lib/projects/permissions';
 import { logActivity } from '@/lib/activity/activity.service';
 import { createNotification } from '@/lib/notifications/notification.service';
 import { extractMentionStrings } from './mentions';
+import { eventBus } from '@/lib/realtime/event-bus';
 import type { Prisma } from '@prisma/client';
 import type { CommentItem } from '@/types/comment';
 
@@ -149,7 +150,18 @@ export async function createComment(
     return created;
   });
 
-  return serializeComment(comment);
+  const serialized = serializeComment(comment);
+  eventBus.publish(task.project.workspaceId, {
+    type: 'COMMENT_CREATED',
+    projectId: task.projectId,
+    actorId: userId,
+    data: {
+      taskId,
+      comment: serialized,
+    },
+  });
+
+  return serialized;
 }
 
 /**
@@ -164,7 +176,13 @@ async function requireCommentAccess(commentId: string, userId: string) {
       body: true,
       taskId: true,
       authorId: true,
-      task: { select: { projectId: true, title: true } },
+      task: {
+        select: {
+          projectId: true,
+          title: true,
+          project: { select: { workspaceId: true } },
+        },
+      },
     },
   });
   if (!comment) throw Errors.notFound('Comment not found.');
@@ -203,4 +221,14 @@ export async function deleteComment(commentId: string, userId: string): Promise<
   }
 
   await prisma.taskComment.delete({ where: { id: commentId } });
+
+  eventBus.publish(comment.task.project.workspaceId, {
+    type: 'COMMENT_DELETED',
+    projectId: comment.task.projectId,
+    actorId: userId,
+    data: {
+      commentId,
+      taskId: comment.taskId,
+    },
+  });
 }

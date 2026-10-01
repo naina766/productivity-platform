@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import { AuthProvider } from '@/components/auth/AuthContext';
+import { RealtimeProvider } from '@/components/realtime/RealtimeProvider';
 import { KeyboardShortcutsProvider } from '@/components/command/KeyboardShortcutsProvider';
 import './globals.css';
 
@@ -73,7 +74,9 @@ export default function RootLayout({
       </head>
       <body className="font-sans antialiased min-h-screen overflow-x-hidden transition-colors duration-200">
         <AuthProvider>
-          <KeyboardShortcutsProvider>{children}</KeyboardShortcutsProvider>
+          <RealtimeProvider>
+            <KeyboardShortcutsProvider>{children}</KeyboardShortcutsProvider>
+          </RealtimeProvider>
         </AuthProvider>
       </body>
     </html>

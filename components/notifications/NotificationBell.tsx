@@ -6,6 +6,7 @@ import { Bell } from 'lucide-react';
 import { apiGetNotifications } from '@/lib/api/client';
 import { NotificationPanel } from '@/components/notifications/NotificationPanel';
 import { useAuth } from '@/components/auth/AuthContext';
+import { useRealtimeSubscription } from '@/components/realtime/RealtimeProvider';
 
 interface NotificationBellProps {
   className?: string;
@@ -14,7 +15,7 @@ interface NotificationBellProps {
 /**
  * Notification bell with unread badge. Fetches the unread count once on
  * mount (the panel refetches the full list whenever it opens) and updates
- * immediately after read / mark-all-read interactions.
+ * immediately after read / mark-all-read interactions or realtime push events.
  */
 export function NotificationBell({ className }: NotificationBellProps) {
   const { isAuthenticated } = useAuth();
@@ -35,6 +36,11 @@ export function NotificationBell({ className }: NotificationBellProps) {
   useEffect(() => {
     if (isAuthenticated) void fetchCount();
   }, [isAuthenticated, fetchCount]);
+
+  // Live real-time update when another user triggers a notification
+  useRealtimeSubscription('NOTIFICATION_CREATED', () => {
+    void fetchCount();
+  });
 
   // Close on outside click / Escape.
   useEffect(() => {

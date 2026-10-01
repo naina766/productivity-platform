@@ -55,6 +55,7 @@ NOVA is a portfolio project covering the full vertical of a real application: au
 - **Member Invitations** — secure tokenized workspace invitations with role assignment and acceptance flow.
 - **@Mentions in Comments** — autocomplete team members with `@`, mention highlighting, and dedicated notification alerts.
 - **Task & Project Data Export** — instant export of tasks to RFC 4180 compliant CSV and structured JSON format, with support for filtered or all-task scopes.
+- **Realtime Collaboration (SSE)** — live synchronization of tasks, comments, projects, and notification badges across tabs and collaborators using HTTP Server-Sent Events with workspace isolation.
 - **Activity timeline** — an audit log of project, task, membership, and comment events.
 - **In-app notifications** — generated for assignments, mentions, comments, and completions, with an unread count and deep links.
 - **Theme modes** — dark, light, and system with smooth transitions.
@@ -71,7 +72,7 @@ NOVA is a portfolio project covering the full vertical of a real application: au
 | Data | PostgreSQL 16, Prisma 5 | Relational integrity, cascades, migrations |
 | Auth | `jsonwebtoken`, `bcryptjs` | Asymmetric signing secrets, slow password hashing |
 | Validation | Zod | Runtime validation of every request body and query |
-| Testing & linting | Jest, ts-jest, Oxlint, `tsc` | 196 tests across 20 suites, strict types, fast lint |
+| Testing & linting | Jest, ts-jest, Oxlint, `tsc` | 201 tests across 21 suites, strict types, fast lint |
 
 ---
 
@@ -308,7 +309,7 @@ Data lives in the `nova_postgres_data` volume. `docker compose down` preserves i
 
 ## Automated Testing
 
-196 tests across 20 suites, run in CI on every push and pull request to `main`.
+201 tests across 21 suites, run in CI on every push and pull request to `main`.
 
 ```bash
 npm test
@@ -336,6 +337,7 @@ npm test
 | `invitations.test.ts` | Secure invitation tokens, expiration checks, role assignment |
 | `mentions.test.ts` | @Mention parsing, token extraction, recipient resolution |
 | `export.test.ts` | RFC 4180 CSV escaping, structured JSON format, task metadata encoding |
+| `realtime.test.ts` | Event bus publish/subscribe, strict workspace isolation, SSE wire formatting |
 
 There is no browser E2E suite.
 
@@ -361,7 +363,7 @@ See [docs/screenshots/README.md](docs/screenshots/README.md) for the landing pag
 
 ## Known Limitations
 
-- **No realtime.** There are no WebSockets or server-sent events. Notifications and activity are read on demand; a change made by another user appears after the next fetch or reload.
+- **Realtime clustering.** The Server-Sent Events bus uses an in-memory event emitter scoped per process. Multi-node horizontal scaling across multiple server instances would require an external Redis PUB/SUB or Postgres LISTEN/NOTIFY adapter.
 - **Rate limiting is per process.** Counters live in the memory of a single Node instance, so they do not coordinate across replicas. A shared store such as Redis would be required to scale horizontally.
 - **No file attachments.** Tasks support text descriptions, labels, and comments only.
 - **No full-text search.** Filtering uses case-insensitive substring matching (`ILIKE`), not a PostgreSQL full-text index or trigram index.

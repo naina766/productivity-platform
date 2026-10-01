@@ -42,6 +42,7 @@ import { SavedViewsSelector } from '@/components/views/SavedViewsSelector';
 import { CreateTaskDialog } from '@/components/tasks/CreateTaskDialog';
 import { EditTaskDialog } from '@/components/tasks/EditTaskDialog';
 import { TaskDetailPanel } from '@/components/tasks/TaskDetail';
+import { useRealtimeSubscription } from '@/components/realtime/RealtimeProvider';
 import type { ProjectDetail, ProjectStatus, ProjectPriority, WorkspaceRole } from '@/types/project';
 import type { TaskSummary, TaskDetail, TaskStatus, TaskPriority, TaskSort } from '@/types/task';
 import type { MilestoneItem } from '@/types/milestone';
@@ -234,6 +235,44 @@ export default function ProjectPage({
     setDetailTask(null);
     setEditTask(null);
   }, []);
+
+  // Real-time collaboration: sync tasks and project state across tabs and users
+  useRealtimeSubscription(
+    '*',
+    useCallback(
+      (event) => {
+        if (event.projectId && event.projectId !== projectId) return;
+
+        if (event.type === 'TASK_CREATED') {
+          const task = event.data as TaskDetail;
+          if (task && event.actorId !== user?.id) {
+            setTasks((prev) => {
+              if (prev.some((t) => t.id === task.id)) return prev;
+              return [task, ...prev];
+            });
+          }
+        } else if (event.type === 'TASK_UPDATED') {
+          const updated = event.data as TaskSummary;
+          if (updated && event.actorId !== user?.id) {
+            setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+            setDetailTask((prev) => (prev?.id === updated.id ? { ...prev, ...updated } : prev));
+          }
+        } else if (event.type === 'TASK_DELETED') {
+          const payload = event.data as { taskId?: string };
+          if (payload?.taskId && event.actorId !== user?.id) {
+            setTasks((prev) => prev.filter((t) => t.id !== payload.taskId));
+            setDetailTask((prev) => (prev?.id === payload.taskId ? null : prev));
+            setEditTask((prev) => (prev?.id === payload.taskId ? null : prev));
+          }
+        } else if (event.type === 'PROJECT_UPDATED') {
+          if (event.actorId !== user?.id) {
+            void fetchProject();
+          }
+        }
+      },
+      [projectId, user?.id, fetchProject]
+    )
+  );
 
   const handleNewTask = useCallback((status?: TaskStatus) => {
     setCreateDefaultStatus(status);
