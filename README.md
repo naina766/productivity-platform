@@ -72,9 +72,9 @@ NOVA is a portfolio project covering the full vertical of a real application: au
 | UI | React 19, TypeScript, Tailwind CSS 3 | Typed components, utility styling with no runtime CSS |
 | Motion & icons | Framer Motion, Lucide React | Transitions and consistent iconography |
 | Data | PostgreSQL 16, Prisma 5 | Relational integrity, cascades, migrations |
-| Auth | `jsonwebtoken`, `bcryptjs` | Asymmetric signing secrets, slow password hashing |
+| Auth | `jsonwebtoken`, `bcryptjs` | Separate JWT signing secrets for access and refresh tokens, slow password hashing |
 | Validation | Zod | Runtime validation of every request body and query |
-| Testing & linting | Jest, ts-jest, Oxlint, `tsc` | 201 tests across 21 suites, strict types, fast lint |
+| Testing & linting | Jest, ts-jest, Oxlint, `tsc` | 203 tests across 21 suites, strict types, fast lint |
 
 ---
 
@@ -223,7 +223,7 @@ types/            Shared serialised API types
 
 ## Environment Variables
 
-Copy `.env.example` to `.env.local`:
+Copy `.env.example` to `.env`:
 
 | Variable | Purpose | Default |
 |----------|---------|---------|
@@ -276,7 +276,7 @@ These accounts exist only in the development seed.
 `docker-compose.yml` defines three services: `postgres`, a one-shot `migrate` runner, and `web`.
 
 ```bash
-cp .env.docker.example .env.docker   # add both JWT secrets
+cp .env.example .env
 docker compose up -d --build
 ```
 
@@ -312,7 +312,7 @@ Data lives in the `nova_postgres_data` volume. `docker compose down` preserves i
 
 ## Automated Testing
 
-201 tests across 21 suites, run in CI on every push and pull request to `main`.
+203 tests across 21 suites, run in CI on every push and pull request to `main`.
 
 ```bash
 npm test
@@ -348,13 +348,32 @@ There is no browser E2E suite.
 
 ## Deployment
 
-Targets any platform that runs Next.js with a managed PostgreSQL instance.
+Targets any platform that runs Next.js with a managed PostgreSQL instance (e.g. Vercel).
 
-1. Run `npx prisma migrate deploy` as a release step.
-2. Set `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET` to distinct random values.
-3. Set `NEXT_PUBLIC_SITE_URL` to the production origin.
+**Vercel Deployment Flow:**
+1. Import GitHub repository in Vercel.
+2. Select the `main` branch.
+3. Configure the following production environment variables:
+   ```env
+   DATABASE_URL="your-managed-postgres-url"
+   JWT_ACCESS_SECRET="generate-a-secure-random-string"
+   JWT_REFRESH_SECRET="generate-another-secure-random-string"
+   JWT_ACCESS_TTL="15m"
+   JWT_REFRESH_TTL="7d"
+   NEXT_PUBLIC_SITE_URL="https://your-production-domain.com"
+   NODE_ENV="production"
+   ```
+4. Deploy the application.
+5. Apply Prisma migrations against the production database:
+   ```bash
+   npx prisma migrate deploy
+   ```
+*(Do NOT use `npx prisma migrate dev` or `npx prisma migrate reset` against production).*
 
-`Secure` is added to the refresh cookie automatically when `NODE_ENV=production`, so the app must be served over HTTPS.
+**Important Production Notes:**
+- `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET` must be distinct random values. Never commit them.
+- Do not use `localhost` in production `DATABASE_URL`.
+- `Secure` is added to the refresh cookie automatically when `NODE_ENV=production`, so the app must be served over HTTPS.
 
 ---
 
