@@ -6,11 +6,13 @@ import { X, Loader2, Plus, AlertCircle } from 'lucide-react';
 import { apiCreateTask } from '@/lib/api/client';
 import type { TaskDetail, TaskStatus, TaskPriority } from '@/types/task';
 import type { ProjectMemberItem } from '@/types/project';
+import type { MilestoneItem } from '@/types/milestone';
 import { TASK_STATUS_LABELS, TASK_PRIORITY_LABELS, ALL_TASK_STATUSES, ALL_TASK_PRIORITIES } from '@/types/task';
 
 interface CreateTaskDialogProps {
   projectId: string;
   members?: ProjectMemberItem[];
+  milestones?: MilestoneItem[];
   defaultStatus?: TaskStatus;
   initialDueDate?: string;
   open: boolean;
@@ -21,6 +23,7 @@ interface CreateTaskDialogProps {
 export function CreateTaskDialog({
   projectId,
   members = [],
+  milestones = [],
   defaultStatus,
   initialDueDate,
   open,
@@ -32,6 +35,7 @@ export function CreateTaskDialog({
   const [status, setStatus] = useState<TaskStatus>(defaultStatus ?? 'TODO');
   const [priority, setPriority] = useState<TaskPriority>('MEDIUM');
   const [assigneeId, setAssigneeId] = useState<string>('');
+  const [milestoneId, setMilestoneId] = useState<string>('');
   const [dueDate, setDueDate] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -44,6 +48,7 @@ export function CreateTaskDialog({
       setStatus(defaultStatus ?? 'TODO');
       setPriority('MEDIUM');
       setAssigneeId('');
+      setMilestoneId('');
       setDueDate(initialDueDate ?? '');
       setError(null);
       setSaving(false);
@@ -77,6 +82,7 @@ export function CreateTaskDialog({
         status,
         priority,
         assigneeId: assigneeId || undefined,
+        milestoneId: milestoneId || undefined,
         dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
       });
       onCreated(res.data);
@@ -253,6 +259,29 @@ export function CreateTaskDialog({
                     </div>
                   </div>
                 </div>
+
+                {/* Milestone row */}
+                {milestones.length > 0 && (
+                  <div>
+                    <label htmlFor="create-task-milestone" className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">
+                      Milestone
+                    </label>
+                    <select
+                      id="create-task-milestone"
+                      value={milestoneId}
+                      onChange={(e) => setMilestoneId(e.target.value)}
+                      disabled={saving}
+                      className="w-full px-4 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-primary)] text-sm focus:outline-none focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/20 transition-all disabled:opacity-50 appearance-none"
+                    >
+                      <option value="">No milestone</option>
+                      {milestones.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 {/* Actions */}
                 <div className="flex items-center justify-end gap-3 pt-2">

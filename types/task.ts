@@ -37,6 +37,12 @@ export interface UpdateSubtaskInput {
   position?: number;
 }
 
+export interface TaskMilestone {
+  id: string;
+  title: string;
+  status: 'OPEN' | 'COMPLETED';
+}
+
 export interface TaskSummary {
   id: string;
   projectId: string;
@@ -47,6 +53,8 @@ export interface TaskSummary {
   dueDate: string | null;
   assigneeId: string | null;
   assignee: TaskAssignee | null;
+  milestoneId?: string | null;
+  milestone?: TaskMilestone | null;
   position: number;
   labels: TaskLabel[];
   subtaskCount?: number;
@@ -83,6 +91,7 @@ export interface CreateTaskInput {
   status?: TaskStatus;
   priority?: TaskPriority;
   assigneeId?: string | null;
+  milestoneId?: string | null;
   dueDate?: string | null;
   labelIds?: string[];
 }
@@ -93,6 +102,7 @@ export interface UpdateTaskInput {
   status?: TaskStatus;
   priority?: TaskPriority;
   assigneeId?: string | null;
+  milestoneId?: string | null;
   dueDate?: string | null;
   position?: number;
   labelIds?: string[];
@@ -102,6 +112,7 @@ export interface TaskFilters {
   status?: TaskStatus;
   priority?: TaskPriority;
   assigneeId?: string;
+  milestoneId?: string;
   search?: string;
 }
 

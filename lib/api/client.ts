@@ -32,6 +32,7 @@ import type { NotificationItem } from '@/types/notification';
 
 import type { MyTaskSummary, TaskDateView, TaskViewCounts } from '@/types/task';
 import type { WorkspaceAnalytics } from '@/types/analytics';
+import type { MilestoneItem, CreateMilestoneInput, UpdateMilestoneInput } from '@/types/milestone';
 /**
  * Browser-side API client.
  *
@@ -363,6 +364,7 @@ export async function apiGetTasks(
     status?: TaskStatus;
     priority?: TaskPriority;
     assigneeId?: string;
+    milestoneId?: string;
     search?: string;
     sort?: TaskSort;
   },
@@ -428,6 +430,40 @@ export async function apiDeleteSubtask(
   subtaskId: string
 ): Promise<MessageResponse> {
   return apiFetch(`/api/subtasks/${subtaskId}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function apiGetProjectMilestones(
+  projectId: string
+): Promise<ItemResponse<{ milestones: MilestoneItem[] }>> {
+  return apiFetch(`/api/projects/${projectId}/milestones`);
+}
+
+export async function apiCreateMilestone(
+  projectId: string,
+  data: CreateMilestoneInput
+): Promise<ItemResponse<MilestoneItem>> {
+  return apiFetch(`/api/projects/${projectId}/milestones`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function apiUpdateMilestone(
+  milestoneId: string,
+  data: UpdateMilestoneInput
+): Promise<ItemResponse<MilestoneItem>> {
+  return apiFetch(`/api/milestones/${milestoneId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function apiDeleteMilestone(
+  milestoneId: string
+): Promise<MessageResponse> {
+  return apiFetch(`/api/milestones/${milestoneId}`, {
     method: 'DELETE',
   });
 }

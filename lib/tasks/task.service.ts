@@ -12,6 +12,7 @@ import type { TaskSummary, TaskFilters, TaskSort } from '@/types/task';
 const taskInclude = {
   assignee: { select: { id: true, name: true, email: true, avatarUrl: true } },
   labels: { select: { label: { select: { id: true, name: true, color: true } } } },
+  milestone: { select: { id: true, title: true, status: true } },
   subtasks: {
     select: {
       id: true,
@@ -49,6 +50,14 @@ export function serializeTask(task: TaskRow): TaskSummary {
     dueDate: task.dueDate?.toISOString() ?? null,
     assigneeId: task.assigneeId,
     assignee: task.assignee,
+    milestoneId: task.milestoneId,
+    milestone: task.milestone
+      ? {
+          id: task.milestone.id,
+          title: task.milestone.title,
+          status: task.milestone.status as 'OPEN' | 'COMPLETED',
+        }
+      : null,
     position: task.position,
     labels: task.labels.map((tl) => tl.label),
     subtaskCount: subtasks.length,
@@ -82,6 +91,9 @@ export async function getProjectTasks(
   if (filters?.priority) where.priority = filters.priority;
   if (filters?.assigneeId) {
     where.assigneeId = filters.assigneeId === 'unassigned' ? null : filters.assigneeId;
+  }
+  if (filters?.milestoneId) {
+    where.milestoneId = filters.milestoneId === 'none' ? null : filters.milestoneId;
   }
   if (filters?.search) {
     where.OR = [
@@ -137,6 +149,7 @@ export async function createTask(
         status: data.status ?? 'TODO',
         priority: data.priority ?? 'MEDIUM',
         assigneeId: data.assigneeId ?? null,
+        milestoneId: data.milestoneId ?? null,
         dueDate: data.dueDate ? new Date(data.dueDate) : null,
         position: (_max.position ?? -1) + 1,
         ...(data.labelIds?.length
@@ -228,6 +241,9 @@ export async function updateTask(
     if (data.priority !== undefined) updateData.priority = data.priority;
     if ('assigneeId' in data) {
       updateData.assignee = data.assigneeId ? { connect: { id: data.assigneeId } } : { disconnect: true };
+    }
+    if ('milestoneId' in data) {
+      updateData.milestone = data.milestoneId ? { connect: { id: data.milestoneId } } : { disconnect: true };
     }
     if ('dueDate' in data) {
       updateData.dueDate = data.dueDate ? new Date(data.dueDate) : null;

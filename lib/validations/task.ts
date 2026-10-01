@@ -27,6 +27,10 @@ export const createTaskSchema = z.object({
   assigneeId: z
     .string()
     .uuid('assigneeId must be a valid UUID.')
+    .optional(),
+  milestoneId: z
+    .string()
+    .uuid('milestoneId must be a valid UUID.')
     .optional()
     .nullable(),
   dueDate: z
@@ -56,6 +60,11 @@ export const updateTaskSchema = z
     status: z.enum(taskStatuses).optional(),
     priority: z.enum(taskPriorities).optional(),
     assigneeId: z
+      .string()
+      .uuid()
+      .nullable()
+      .optional(),
+    milestoneId: z
       .string()
       .uuid()
       .nullable()

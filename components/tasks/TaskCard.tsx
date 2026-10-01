@@ -1,6 +1,6 @@
 'use client';
 
-import { Calendar, GripVertical, CheckSquare } from 'lucide-react';
+import { Calendar, GripVertical, CheckSquare, Flag } from 'lucide-react';
 import type { TaskSummary, TaskPriority } from '@/types/task';
 import { isTaskOverdue } from '@/lib/tasks/date-utils';
 
@@ -57,8 +57,17 @@ export function TaskCard({ task, onClick, isDragging }: TaskCardProps) {
         </p>
       )}
 
-      {task.labels.length > 0 && (
+      {(task.labels.length > 0 || task.milestone) && (
         <div className="flex flex-wrap gap-1 mb-2.5 ml-5.5">
+          {task.milestone && (
+            <span
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium border text-teal-400 bg-teal-400/10 border-teal-400/20"
+              title={`Milestone: ${task.milestone.title}`}
+            >
+              <Flag className="w-2.5 h-2.5" />
+              <span className="truncate max-w-[90px]">{task.milestone.title}</span>
+            </span>
+          )}
           {task.labels.map((label) => (
             <span
               key={label.id}

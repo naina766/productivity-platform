@@ -26,11 +26,13 @@ import {
   apiGetProject,
   apiGetTask,
   apiGetTasks,
+  apiGetProjectMilestones,
 } from '@/lib/api/client';
 import { EditProjectDialog } from '@/components/projects/EditProjectDialog';
 import { ArchiveProjectDialog } from '@/components/projects/ArchiveProjectDialog';
 import { ProjectMembers } from '@/components/projects/ProjectMembers';
 import { ProjectProgressCard } from '@/components/projects/ProjectProgressCard';
+import { MilestonesList } from '@/components/milestones/MilestonesList';
 import { TaskBoard } from '@/components/tasks/TaskBoard';
 import { TaskList } from '@/components/tasks/TaskList';
 import { CalendarView } from '@/components/calendar/CalendarView';
@@ -40,6 +42,7 @@ import { EditTaskDialog } from '@/components/tasks/EditTaskDialog';
 import { TaskDetailPanel } from '@/components/tasks/TaskDetail';
 import type { ProjectDetail, ProjectStatus, ProjectPriority, WorkspaceRole } from '@/types/project';
 import type { TaskSummary, TaskDetail, TaskStatus, TaskPriority, TaskSort } from '@/types/task';
+import type { MilestoneItem } from '@/types/milestone';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 const VALID_TASK_STATUSES = ['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE'] as const;
@@ -100,8 +103,10 @@ export default function ProjectPage({
   const [filterStatus, setFilterStatus] = useState<TaskStatus | undefined>();
   const [filterPriority, setFilterPriority] = useState<TaskPriority | undefined>();
   const [filterAssigneeId, setFilterAssigneeId] = useState('');
+  const [filterMilestoneId, setFilterMilestoneId] = useState<string | undefined>();
   const [filterSearch, setFilterSearch] = useState('');
   const [filterSort, setFilterSort] = useState<TaskSort>('position');
+  const [milestones, setMilestones] = useState<MilestoneItem[]>([]);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -125,6 +130,8 @@ export default function ProjectPage({
     }
     const assignee = qs.get('assignee') ?? qs.get('assigneeId');
     if (assignee) setFilterAssigneeId(assignee);
+    const milestone = qs.get('milestone') ?? qs.get('milestoneId');
+    if (milestone) setFilterMilestoneId(milestone);
     const search = qs.get('search');
     if (search) setFilterSearch(search);
     const sort = qs.get('sort');
@@ -148,6 +155,7 @@ export default function ProjectPage({
     if (filterStatus) qs.set('status', filterStatus);
     if (filterPriority) qs.set('priority', filterPriority);
     if (filterAssigneeId) qs.set('assignee', filterAssigneeId);
+    if (filterMilestoneId) qs.set('milestone', filterMilestoneId);
     if (filterSearch) qs.set('search', filterSearch);
     if (filterSort !== 'position') qs.set('sort', filterSort);
     const existingTask = new URLSearchParams(window.location.search).get('task');
@@ -157,7 +165,7 @@ export default function ProjectPage({
     if (next !== current) {
       window.history.replaceState(null, '', next ? `?${next}` : window.location.pathname);
     }
-  }, [filterStatus, filterPriority, filterAssigneeId, filterSearch, filterSort, isAuthenticated]);
+  }, [filterStatus, filterPriority, filterAssigneeId, filterMilestoneId, filterSearch, filterSort, isAuthenticated]);
 
   const fetchProject = useCallback(async () => {
     if (!isAuthenticated) return;
@@ -188,6 +196,7 @@ export default function ProjectPage({
         status: filterStatus,
         priority: filterPriority,
         assigneeId: filterAssigneeId || undefined,
+        milestoneId: filterMilestoneId || undefined,
         search: filterSearch || undefined,
         sort: filterSort,
       });
@@ -197,7 +206,7 @@ export default function ProjectPage({
     } finally {
       setTasksLoading(false);
     }
-  }, [projectId, isAuthenticated, filterStatus, filterPriority, filterAssigneeId, filterSearch, filterSort]);
+  }, [projectId, isAuthenticated, filterStatus, filterPriority, filterAssigneeId, filterMilestoneId, filterSearch, filterSort]);
 
   useEffect(() => {
     if (!loading && isAuthenticated) {
@@ -241,6 +250,7 @@ export default function ProjectPage({
     setFilterStatus(undefined);
     setFilterPriority(undefined);
     setFilterAssigneeId('');
+    setFilterMilestoneId(undefined);
     setFilterSearch('');
     setFilterSort('position');
   }, []);
@@ -470,6 +480,14 @@ export default function ProjectPage({
           />
         </motion.div>
 
+        <MilestonesList
+          projectId={project.id}
+          canManage={canManage && !isArchived}
+          selectedMilestoneId={filterMilestoneId}
+          onFilterByMilestone={setFilterMilestoneId}
+          onMilestonesChange={setMilestones}
+        />
+
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -548,12 +566,15 @@ export default function ProjectPage({
               status={filterStatus}
               priority={filterPriority}
               assigneeId={filterAssigneeId}
+              milestoneId={filterMilestoneId}
               search={filterSearch}
               sort={filterSort}
               members={project.members}
+              milestones={milestones}
               onStatusChange={setFilterStatus}
               onPriorityChange={setFilterPriority}
               onAssigneeChange={setFilterAssigneeId}
+              onMilestoneChange={(mId) => setFilterMilestoneId(mId || undefined)}
               onSearchChange={setFilterSearch}
               onSortChange={setFilterSort}
               onClear={handleClearFilters}
@@ -585,7 +606,7 @@ export default function ProjectPage({
               <div className="w-10 h-10 rounded-xl bg-[var(--card-main)] border border-[var(--border-color)] flex items-center justify-center mx-auto mb-3">
                 <SquareKanban className="w-5 h-5 text-[var(--text-muted)]" />
               </div>
-              {filterStatus || filterPriority || filterAssigneeId || filterSearch ? (
+              {filterStatus || filterPriority || filterAssigneeId || filterMilestoneId || filterSearch ? (
                 <>
                   <p className="text-sm font-semibold text-[var(--text-secondary)] mb-1">
                     No tasks match your filters
@@ -668,6 +689,7 @@ export default function ProjectPage({
           <CreateTaskDialog
             projectId={project.id}
             members={project.members}
+            milestones={milestones}
             defaultStatus={createDefaultStatus}
             open={createOpen}
             onClose={() => setCreateOpen(false)}
@@ -677,6 +699,7 @@ export default function ProjectPage({
             <EditTaskDialog
               task={editTask}
               members={project.members}
+              milestones={milestones}
               canDelete={canManage && !isArchived}
               open={!!editTask}
               onClose={() => setEditTask(null)}

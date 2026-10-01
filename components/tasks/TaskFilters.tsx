@@ -3,18 +3,22 @@
 import { Search, X } from 'lucide-react';
 import type { TaskStatus, TaskPriority, TaskSort } from '@/types/task';
 import type { ProjectMemberItem } from '@/types/project';
+import type { MilestoneItem } from '@/types/milestone';
 import { ALL_TASK_STATUSES, ALL_TASK_PRIORITIES, TASK_STATUS_LABELS, TASK_PRIORITY_LABELS } from '@/types/task';
 
 interface TaskFiltersProps {
   status: TaskStatus | undefined;
   priority: TaskPriority | undefined;
   assigneeId: string;
+  milestoneId?: string;
   search: string;
   sort: TaskSort;
   members: ProjectMemberItem[];
+  milestones?: MilestoneItem[];
   onStatusChange: (status: TaskStatus | undefined) => void;
   onPriorityChange: (priority: TaskPriority | undefined) => void;
   onAssigneeChange: (assigneeId: string) => void;
+  onMilestoneChange?: (milestoneId: string) => void;
   onSearchChange: (search: string) => void;
   onSortChange: (sort: TaskSort) => void;
   onClear: () => void;
@@ -24,17 +28,20 @@ export function TaskFilters({
   status,
   priority,
   assigneeId,
+  milestoneId,
   search,
   sort,
   members,
+  milestones,
   onStatusChange,
   onPriorityChange,
   onAssigneeChange,
+  onMilestoneChange,
   onSearchChange,
   onSortChange,
   onClear,
 }: TaskFiltersProps) {
-  const hasFilters = status || priority || assigneeId || search;
+  const hasFilters = status || priority || assigneeId || search || milestoneId;
 
   return (
     <div className="flex items-center gap-3 flex-wrap">
@@ -86,6 +93,23 @@ export function TaskFilters({
           <option key={m.userId} value={m.userId}>{m.user.name}</option>
         ))}
       </select>
+
+      {/* Milestone filter */}
+      {milestones && milestones.length > 0 && (
+        <select
+          value={milestoneId ?? ''}
+          onChange={(e) => onMilestoneChange?.(e.target.value)}
+          className="px-3 py-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-primary)] text-xs focus:outline-none focus:border-emerald-500/60 transition-all appearance-none min-w-[120px]"
+        >
+          <option value="">All milestones</option>
+          <option value="none">No milestone</option>
+          {milestones.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.title}
+            </option>
+          ))}
+        </select>
+      )}
 
       {/* Sort */}
       <select

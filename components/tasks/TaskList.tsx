@@ -1,6 +1,6 @@
 'use client';
 
-import { Calendar, User, CheckSquare } from 'lucide-react';
+import { Calendar, User, CheckSquare, Flag } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { TaskSummary, TaskPriority, TaskStatus } from '@/types/task';
 import { TASK_STATUS_LABELS, TASK_PRIORITY_LABELS } from '@/types/task';
@@ -63,6 +63,15 @@ export function TaskList({ tasks, onTaskClick }: TaskListProps) {
                 {(task as { projectName?: string }).projectName && (
                   <span className="inline-flex items-center text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded shrink-0">
                     {(task as { projectName?: string }).projectName}
+                  </span>
+                )}
+                {task.milestone && (
+                  <span
+                    className="inline-flex items-center gap-1 text-[10px] font-semibold text-teal-400 bg-teal-400/10 border border-teal-400/20 px-1.5 py-0.5 rounded shrink-0"
+                    title={`Milestone: ${task.milestone.title}`}
+                  >
+                    <Flag className="w-2.5 h-2.5" />
+                    <span>{task.milestone.title}</span>
                   </span>
                 )}
                 {(task.subtaskCount ?? 0) > 0 && (
