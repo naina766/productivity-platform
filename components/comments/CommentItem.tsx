@@ -6,6 +6,7 @@ import { Pencil, Trash2, X, Check, Loader2 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthContext';
 import { apiUpdateComment, apiDeleteComment } from '@/lib/api/client';
 import { relativeTimeFrom } from '@/lib/format';
+import { parseMentionTokens } from '@/lib/comments/mentions';
 import type { CommentItem as CommentItemType } from '@/types/comment';
 
 const AVATAR_TONES = [
@@ -144,7 +145,18 @@ export function CommentItem({ comment, canModerate, onEdited, onDeleted }: Comme
         ) : (
           <>
             <p className="mt-1 text-sm text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap break-words">
-              {comment.body}
+              {parseMentionTokens(comment.body).map((token, i) =>
+                token.type === 'mention' ? (
+                  <span
+                    key={i}
+                    className="inline-flex items-center text-emerald-400 bg-emerald-500/10 font-semibold px-1 py-0.5 rounded text-xs mx-0.5 border border-emerald-500/20"
+                  >
+                    {token.content}
+                  </span>
+                ) : (
+                  <span key={i}>{token.content}</span>
+                )
+              )}
             </p>
 
             {/* Actions */}

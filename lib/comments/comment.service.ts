@@ -4,6 +4,7 @@ import { requireTaskAccess } from '@/lib/tasks/permissions';
 import { requireProjectManageAccess } from '@/lib/projects/permissions';
 import { logActivity } from '@/lib/activity/activity.service';
 import { createNotification } from '@/lib/notifications/notification.service';
+import { extractMentionStrings } from './mentions';
 import type { Prisma } from '@prisma/client';
 import type { CommentItem } from '@/types/comment';
 
@@ -78,6 +79,37 @@ export async function createComment(
 
   const excerpt = content.length > 160 ? `${content.slice(0, 160)}…` : content;
 
+  // Extract mentions from content
+  const mentionStrings = extractMentionStrings(content);
+  const mentionedUserIds = new Set<string>();
+
+  if (mentionStrings.length > 0) {
+    // Find project and workspace members who match these mention tokens
+    const projectMembers = await prisma.projectMember.findMany({
+      where: { projectId: task.projectId },
+      include: { user: { select: { id: true, name: true, email: true } } },
+    });
+
+    for (const member of projectMembers) {
+      if (member.userId === userId) continue;
+      const lowerName = member.user.name.toLowerCase();
+      const lowerEmail = member.user.email.toLowerCase();
+      const firstName = lowerName.split(' ')[0] ?? '';
+
+      const isMentioned = mentionStrings.some(
+        (m) =>
+          lowerName === m ||
+          lowerEmail === m ||
+          firstName === m ||
+          lowerName.includes(m)
+      );
+
+      if (isMentioned) {
+        mentionedUserIds.add(member.userId);
+      }
+    }
+  }
+
   const comment = await prisma.$transaction(async (tx) => {
     const created = await tx.taskComment.create({
       data: { taskId, authorId: userId, body: content },
@@ -93,7 +125,19 @@ export async function createComment(
       metadata: { title: task.title, commentId: created.id },
     });
 
+    // Notify directly mentioned users with targeted message
+    for (const mentionedId of mentionedUserIds) {
+      await createNotification(tx, {
+        userId: mentionedId,
+        taskId,
+        title: `${authorName} mentioned you on "${task.title}"`,
+        body: `${authorName}: "${excerpt}"`,
+      });
+    }
+
+    // Notify remaining recipients (assignee, previous commenters)
     for (const recipientId of recipients) {
+      if (mentionedUserIds.has(recipientId)) continue;
       await createNotification(tx, {
         userId: recipientId,
         taskId,
