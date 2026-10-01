@@ -19,6 +19,15 @@ export interface ProjectMemberItem {
   user: SafeProjectUser;
 }
 
+export interface ProjectProgressStats {
+  total: number;
+  completed: number;
+  inProgress: number;
+  inReview: number;
+  todo: number;
+  completionRate: number;
+}
+
 /** Lean summary used in list views (dashboard). */
 export interface ProjectSummary {
   id: string;
@@ -29,6 +38,10 @@ export interface ProjectSummary {
   startDate: string | null;
   dueDate: string | null;
   memberCount: number;
+  taskCount?: number;
+  completedTaskCount?: number;
+  progressPercentage?: number;
+  progressStats?: ProjectProgressStats;
   createdAt: string;
   updatedAt: string;
 }

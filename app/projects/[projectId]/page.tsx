@@ -30,6 +30,7 @@ import {
 import { EditProjectDialog } from '@/components/projects/EditProjectDialog';
 import { ArchiveProjectDialog } from '@/components/projects/ArchiveProjectDialog';
 import { ProjectMembers } from '@/components/projects/ProjectMembers';
+import { ProjectProgressCard } from '@/components/projects/ProjectProgressCard';
 import { TaskBoard } from '@/components/tasks/TaskBoard';
 import { TaskList } from '@/components/tasks/TaskList';
 import { CalendarView } from '@/components/calendar/CalendarView';
@@ -453,6 +454,8 @@ export default function ProjectPage({
             </Field>
           </div>
         </motion.div>
+
+        <ProjectProgressCard tasks={tasks} loading={tasksLoading} />
 
         <motion.div
           initial={{ opacity: 0, y: 8 }}

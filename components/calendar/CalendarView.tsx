@@ -6,9 +6,6 @@ import {
   ChevronRight,
   Calendar as CalendarIcon,
   Plus,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
   X,
 } from 'lucide-react';
 import type { TaskSummary, TaskPriority, TaskStatus } from '@/types/task';
@@ -18,7 +15,6 @@ import {
   getWeekDays,
   groupTasksByDate,
   formatMonthYear,
-  formatDateKey,
   type CalendarDay,
 } from '@/lib/calendar/calendar-utils';
 
@@ -78,16 +74,18 @@ export function CalendarView<T extends TaskSummary = TaskSummary>({
     tasks: T[];
   } | null>(null);
 
+  const [today] = useState(() => new Date());
+
   const groupedTasks = useMemo(() => groupTasksByDate(tasks), [tasks]);
 
   const monthDays = useMemo(
-    () => getMonthDays(currentDate.getFullYear(), currentDate.getMonth(), new Date()),
-    [currentDate]
+    () => getMonthDays(currentDate.getFullYear(), currentDate.getMonth(), today),
+    [currentDate, today]
   );
 
   const weekDays = useMemo(
-    () => getWeekDays(currentDate, new Date()),
-    [currentDate]
+    () => getWeekDays(currentDate, today),
+    [currentDate, today]
   );
 
   // Month navigation
@@ -212,7 +210,7 @@ export function CalendarView<T extends TaskSummary = TaskSummary>({
                     : 'bg-transparent text-[var(--text-primary)]'
                 } ${day.isWeekend ? 'bg-[var(--bg-secondary)]/10' : ''} ${
                   day.isToday ? 'bg-emerald-500/[0.03]' : ''
-                } hover:bg-[var(--bg-secondary)]/40`}
+                } ${isSelected ? 'ring-1 ring-emerald-500/50 bg-emerald-500/5' : ''} hover:bg-[var(--bg-secondary)]/40`}
               >
                 {/* Day header */}
                 <div className="flex items-center justify-between mb-1">

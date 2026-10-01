@@ -16,6 +16,8 @@ import type {
   WorkspaceRole,
 } from '@/types/project';
 
+import { calculateProjectTaskStats } from '@/lib/projects/project-progress';
+
 const memberSelect = {
   id: true,
   userId: true,
@@ -67,22 +69,30 @@ export async function getWorkspaceProjects(
       dueDate: true,
       createdAt: true,
       updatedAt: true,
-      _count: { select: { members: true } },
+      _count: { select: { members: true, tasks: true } },
+      tasks: { select: { status: true } },
     },
   });
 
-  return projects.map((p) => ({
-    id: p.id,
-    name: p.name,
-    description: p.description,
-    status: p.status as ProjectSummary['status'],
-    priority: p.priority as ProjectSummary['priority'],
-    startDate: p.startDate?.toISOString() ?? null,
-    dueDate: p.dueDate?.toISOString() ?? null,
-    memberCount: p._count.members,
-    createdAt: p.createdAt.toISOString(),
-    updatedAt: p.updatedAt.toISOString(),
-  }));
+  return projects.map((p) => {
+    const progressStats = calculateProjectTaskStats(p.tasks);
+    return {
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      status: p.status as ProjectSummary['status'],
+      priority: p.priority as ProjectSummary['priority'],
+      startDate: p.startDate?.toISOString() ?? null,
+      dueDate: p.dueDate?.toISOString() ?? null,
+      memberCount: p._count.members,
+      taskCount: progressStats.total,
+      completedTaskCount: progressStats.completed,
+      progressPercentage: progressStats.completionRate,
+      progressStats,
+      createdAt: p.createdAt.toISOString(),
+      updatedAt: p.updatedAt.toISOString(),
+    };
+  });
 }
 
 export async function getProjectById(projectId: string, userId: string): Promise<ProjectDetail> {
@@ -103,10 +113,13 @@ export async function getProjectById(projectId: string, userId: string): Promise
       workspaceId: true,
       workspace: { select: { id: true, name: true } },
       members: { select: memberSelect, orderBy: { createdAt: 'asc' } },
-      _count: { select: { members: true } },
+      _count: { select: { members: true, tasks: true } },
+      tasks: { select: { status: true } },
     },
   });
   if (!project) throw Errors.notFound('Project not found.');
+
+  const progressStats = calculateProjectTaskStats(project.tasks);
 
   return {
     id: project.id,
@@ -117,6 +130,10 @@ export async function getProjectById(projectId: string, userId: string): Promise
     startDate: project.startDate?.toISOString() ?? null,
     dueDate: project.dueDate?.toISOString() ?? null,
     memberCount: project._count.members,
+    taskCount: progressStats.total,
+    completedTaskCount: progressStats.completed,
+    progressPercentage: progressStats.completionRate,
+    progressStats,
     createdAt: project.createdAt.toISOString(),
     updatedAt: project.updatedAt.toISOString(),
     workspaceId: project.workspaceId,

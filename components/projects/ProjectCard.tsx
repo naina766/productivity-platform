@@ -13,6 +13,7 @@ import {
   Zap,
 } from 'lucide-react';
 import type { ProjectSummary, ProjectStatus, ProjectPriority } from '@/types/project';
+import { ProjectProgressBar } from '@/components/projects/ProjectProgressBar';
 
 const STATUS_CONFIG: Record<
   ProjectStatus,
@@ -103,9 +104,20 @@ export function ProjectCard({ project, index = 0 }: ProjectCardProps) {
 
         {/* Description */}
         {project.description && (
-          <p className="text-sm text-[var(--text-muted)] mb-4 line-clamp-2 leading-relaxed">
+          <p className="text-sm text-[var(--text-muted)] mb-3 line-clamp-2 leading-relaxed">
             {project.description}
           </p>
+        )}
+
+        {/* Task Progress Bar */}
+        {project.taskCount !== undefined && (
+          <div className="mb-4">
+            <ProjectProgressBar
+              completed={project.completedTaskCount ?? 0}
+              total={project.taskCount}
+              size="sm"
+            />
+          </div>
         )}
 
         {/* Footer: members + due date + arrow */}
