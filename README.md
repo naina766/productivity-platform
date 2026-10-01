@@ -58,7 +58,9 @@ NOVA is a portfolio project covering the full vertical of a real application: au
 - **Realtime Collaboration (SSE)** — live synchronization of tasks, comments, projects, and notification badges across tabs and collaborators using HTTP Server-Sent Events with workspace isolation.
 - **Activity timeline** — an audit log of project, task, membership, and comment events.
 - **In-app notifications** — generated for assignments, mentions, comments, and completions, with an unread count and deep links.
-- **Theme modes** — dark, light, and system with smooth transitions.
+- **Shared sticky navigation** — unified `AppNavbar` across all authenticated pages with breadcrumbs, workspace badge, theme toggle, keyboard shortcut button, notifications, and responsive mobile drawer.
+- **Theme modes** — dark, light, and system with smooth transitions and zero flash on load.
+- **Accessibility** — skip-to-content link, comprehensive ARIA labels, keyboard navigable modals and panels, focus-visible ring on all interactive elements.
 
 ---
 
@@ -158,6 +160,7 @@ Key relations: a `Workspace` owns `Project`s and `WorkspaceMember` rows; a `Proj
 | Rate limiting | Per-IP fixed-window limits on login, register, and refresh |
 | Validation | Zod on every body and query parameter, with trimming and length bounds |
 | Errors | Only `AppError` messages reach the client; anything unexpected returns a generic message |
+| Security headers | `X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`, `Strict-Transport-Security`, `Referrer-Policy`, `Permissions-Policy` applied globally via `next.config.ts` |
 
 Access and refresh tokens are signed with **different secrets** and carry a `type` claim, so a refresh token cannot be replayed as an access token and vice versa.
 

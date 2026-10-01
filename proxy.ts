@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
- * NOVA route protection middleware.
+ * NOVA route protection proxy.
  *
  * Runs in the Edge runtime — cannot use Node.js-only APIs (jsonwebtoken, Prisma, etc.).
  * We use the refresh_token cookie as a coarse presence check:
@@ -13,15 +13,15 @@ import { NextRequest, NextResponse } from 'next/server';
  *   - The AuthContext loadUser flow on the client
  */
 
-const PROTECTED_PATHS = ['/dashboard', '/projects'];
+const PROTECTED_PATHS = ['/dashboard', '/projects', '/my-tasks', '/calendar', '/tasks'];
 
 const AUTH_PATHS = ['/login', '/register'];
 
-export function middleware(req: NextRequest): NextResponse {
+export function proxy(req: NextRequest): NextResponse {
   const { pathname } = req.nextUrl;
   const hasRefreshCookie = req.cookies.has('refresh_token');
 
-  // Protect /dashboard (and future protected routes)
+  // Protect authenticated routes
   if (PROTECTED_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'))) {
     if (!hasRefreshCookie) {
       const loginUrl = req.nextUrl.clone();

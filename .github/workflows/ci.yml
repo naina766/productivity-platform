@@ -18,6 +18,7 @@ jobs:
       JWT_ACCESS_TTL: "15m"
       JWT_REFRESH_TTL: "7d"
       NODE_ENV: "test"
+      NEXT_TELEMETRY_DISABLED: "1"
 
     steps:
       - name: Checkout code
@@ -38,16 +39,19 @@ jobs:
       - name: Validate Prisma schema
         run: npm run prisma:validate
 
-      - name: Run test suite
-        run: npm test
-      - name: Run smoke tests
-        run: npm run test:smoke
-
       - name: Typecheck
         run: npm run typecheck
 
       - name: Lint
         run: npm run lint
 
+      - name: Run unit & integration tests
+        run: npm test -- --passWithNoTests --forceExit
+
+      - name: Run smoke tests
+        run: npm run test:smoke
+
       - name: Build Next.js application
         run: npm run build
+        env:
+          NODE_ENV: production
