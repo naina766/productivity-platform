@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import { AuthProvider } from '@/components/auth/AuthContext';
+import { KeyboardShortcutsProvider } from '@/components/command/KeyboardShortcutsProvider';
 import './globals.css';
 
 const inter = Inter({
@@ -71,7 +72,9 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="font-sans antialiased min-h-screen overflow-x-hidden transition-colors duration-200">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <KeyboardShortcutsProvider>{children}</KeyboardShortcutsProvider>
+        </AuthProvider>
       </body>
     </html>
   );
