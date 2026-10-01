@@ -14,11 +14,13 @@ import {
   AlertCircle,
   ArrowLeft,
   ChevronRight,
+  Download,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthContext';
 import { apiGetMyTasks } from '@/lib/api/client';
 import { TaskList } from '@/components/tasks/TaskList';
 import { TaskDetailPanel } from '@/components/tasks/TaskDetail';
+import { ExportTasksDialog } from '@/components/export/ExportTasksDialog';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { GlobalSearchTrigger } from '@/components/search/GlobalSearchTrigger';
 import type {
@@ -65,6 +67,10 @@ function MyTasksContent() {
 
   // Selected task for detail panel
   const [selectedTask, setSelectedTask] = useState<TaskDetail | null>(null);
+
+  // Export dialog
+  const [exportOpen, setExportOpen] = useState(false);
+  const [allUserTasks, setAllUserTasks] = useState<MyTaskSummary[]>([]);
 
   // Sync activeView with URL param if it changes
   useEffect(() => {
@@ -138,6 +144,27 @@ function MyTasksContent() {
     setSelectedTask(task as TaskDetail);
   }, []);
 
+  const handleOpenExport = useCallback(async () => {
+    setExportOpen(true);
+    const hasFilters = Boolean(
+      activeView !== 'all' ||
+      statusFilter !== 'ALL' ||
+      priorityFilter !== 'ALL' ||
+      selectedProjectId !== 'ALL' ||
+      searchQuery.trim()
+    );
+    if (hasFilters) {
+      try {
+        const res = await apiGetMyTasks({ view: 'all' });
+        setAllUserTasks(res.data);
+      } catch {
+        setAllUserTasks(tasks);
+      }
+    } else {
+      setAllUserTasks(tasks);
+    }
+  }, [activeView, statusFilter, priorityFilter, selectedProjectId, searchQuery, tasks]);
+
   if (loading) {
     return (
       <main className="min-h-screen bg-[var(--bg-main)] flex items-center justify-center">
@@ -179,6 +206,15 @@ function MyTasksContent() {
           </div>
 
           <div className="flex items-center gap-2 self-end sm:self-auto">
+            <button
+              type="button"
+              onClick={() => void handleOpenExport()}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-[var(--text-secondary)] hover:text-teal-400 hover:bg-[var(--card-main)] border border-[var(--border-color)] hover:border-teal-500/30 transition-all"
+              title="Export tasks to CSV or JSON"
+            >
+              <Download className="w-3.5 h-3.5 text-teal-400" />
+              <span>Export</span>
+            </button>
             <Link
               href="/calendar"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-[var(--text-secondary)] hover:text-emerald-400 hover:bg-[var(--card-main)] border border-[var(--border-color)] hover:border-emerald-500/30 transition-all"
@@ -473,6 +509,15 @@ function MyTasksContent() {
           canModerate={false}
         />
       )}
+
+      {/* Export Tasks Dialog */}
+      <ExportTasksDialog
+        open={exportOpen}
+        onClose={() => setExportOpen(false)}
+        filteredTasks={tasks}
+        allTasks={allUserTasks.length > 0 ? allUserTasks : tasks}
+        projectName="my-tasks"
+      />
     </main>
   );
 }

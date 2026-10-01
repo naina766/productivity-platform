@@ -41,13 +41,23 @@ NOVA is a portfolio project covering the full vertical of a real application: au
 - **Workspace tenancy** — every read and write resolves the full `User → Workspace → Project → Task` chain on the server.
 - **Roles** — three ordered roles (`OWNER` > `ADMIN` > `MEMBER`) with a single rank table driving every check.
 - **Projects** — create, edit, search, and archive. Archiving is a status change, so history is never destroyed.
-- **Kanban board** — four task columns with native HTML5 drag-and-drop, plus a list view.
-- **Tasks** — status, priority, due date, assignee, labels, and free-text search/filtering.
-- **URL-synchronized state** — filters and the open task are reflected in the query string, so a board view is linkable and survives a reload.
-- **Comments** — per-task threads; authors edit their own, workspace admins can moderate any.
+- **Kanban board & List views** — four task columns with native HTML5 drag-and-drop, plus an interactive list view.
+- **My Tasks cockpit** (`/my-tasks`) — personalized task dashboard filtered to the current user with custom sorting and filters.
+- **Today / Upcoming / Overdue Views** (`/tasks/today`, `/tasks/upcoming`, `/tasks/overdue`) — time-scoped triage views with date boundary isolation.
+- **Interactive Calendar View** (`/calendar`) — full monthly view with task distribution, status filtering, and quick inspector.
+- **Dashboard Analytics** — visual KPI cards, completion rates, priority distribution, and team workload metrics.
+- **Project Milestones & Roadmaps** — track delivery checkpoints, due dates, and real-time completion percentages.
+- **Interactive Subtasks** — structured checklists inside tasks with instant progress calculation.
+- **Recurring Tasks** — daily, weekly, and monthly recurrence engine that automatically schedules the next task upon completion.
+- **Global Search & Command Palette** (`⌘K` / `Ctrl+K`) — instant fuzzy search across tasks, projects, milestones, and members, plus quick actions.
+- **Global Keyboard Shortcuts** — single-key navigation chords (`G then D`, `G then M`, `G then T`, `?` cheatsheet).
+- **Saved Views & Filter Presets** — save and recall project filter combinations.
+- **Member Invitations** — secure tokenized workspace invitations with role assignment and acceptance flow.
+- **@Mentions in Comments** — autocomplete team members with `@`, mention highlighting, and dedicated notification alerts.
+- **Task & Project Data Export** — instant export of tasks to RFC 4180 compliant CSV and structured JSON format, with support for filtered or all-task scopes.
 - **Activity timeline** — an audit log of project, task, membership, and comment events.
-- **In-app notifications** — generated for assignments, comments, and completions, with an unread count and deep links.
-- **Theme modes** — dark, light, and system.
+- **In-app notifications** — generated for assignments, mentions, comments, and completions, with an unread count and deep links.
+- **Theme modes** — dark, light, and system with smooth transitions.
 
 ---
 
@@ -61,7 +71,7 @@ NOVA is a portfolio project covering the full vertical of a real application: au
 | Data | PostgreSQL 16, Prisma 5 | Relational integrity, cascades, migrations |
 | Auth | `jsonwebtoken`, `bcryptjs` | Asymmetric signing secrets, slow password hashing |
 | Validation | Zod | Runtime validation of every request body and query |
-| Testing & linting | Jest, ts-jest, Oxlint, `tsc` | 92 tests, strict types, fast lint |
+| Testing & linting | Jest, ts-jest, Oxlint, `tsc` | 196 tests across 20 suites, strict types, fast lint |
 
 ---
 
@@ -298,7 +308,7 @@ Data lives in the `nova_postgres_data` volume. `docker compose down` preserves i
 
 ## Automated Testing
 
-92 tests across 7 suites, run in CI on every push and pull request to `main`.
+196 tests across 20 suites, run in CI on every push and pull request to `main`.
 
 ```bash
 npm test
@@ -313,6 +323,19 @@ npm test
 | `labels.test.ts` | Zod schemas for workspace labels |
 | `errors.test.ts` | `getErrorMessage` across errors, plain objects, and browser events |
 | `smoke/smoke.test.ts` | End-to-end logic paths that must not regress |
+| `date-utils.test.ts` | Date boundaries for Today, Upcoming, and Overdue task triage |
+| `calendar-utils.test.ts` | Month grid generation, multi-month day math, calendar task mapping |
+| `analytics.test.ts` | Analytics calculation, completion ratios, priority & member distributions |
+| `project-progress.test.ts` | Overall project health, progress percentage derivation, task metrics |
+| `subtasks.test.ts` | Subtask creation, reordering, validation, completion computation |
+| `milestones.test.ts` | Project milestone schedules, dates, and status transitions |
+| `recurring.test.ts` | Recurrence date computations (daily, weekly, monthly) and next task generator |
+| `search.test.ts` | Cross-entity search query parsing and multi-category scoping |
+| `command.test.ts` | Command palette action registry and search matching |
+| `saved-views.test.ts` | Filter preset persistence, sorting, and user isolation |
+| `invitations.test.ts` | Secure invitation tokens, expiration checks, role assignment |
+| `mentions.test.ts` | @Mention parsing, token extraction, recipient resolution |
+| `export.test.ts` | RFC 4180 CSV escaping, structured JSON format, task metadata encoding |
 
 There is no browser E2E suite.
 

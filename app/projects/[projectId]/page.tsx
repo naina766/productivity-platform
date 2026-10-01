@@ -19,6 +19,7 @@ import {
   Plus,
   LayoutList,
   LayoutGrid,
+  Download,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/components/auth/AuthContext';
@@ -29,6 +30,7 @@ import {
 } from '@/lib/api/client';
 import { EditProjectDialog } from '@/components/projects/EditProjectDialog';
 import { ArchiveProjectDialog } from '@/components/projects/ArchiveProjectDialog';
+import { ExportTasksDialog } from '@/components/export/ExportTasksDialog';
 import { ProjectMembers } from '@/components/projects/ProjectMembers';
 import { ProjectProgressCard } from '@/components/projects/ProjectProgressCard';
 import { MilestonesList } from '@/components/milestones/MilestonesList';
@@ -90,6 +92,8 @@ export default function ProjectPage({
   const [pageError, setPageError] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [allProjectTasks, setAllProjectTasks] = useState<TaskSummary[]>([]);
 
   const [tasks, setTasks] = useState<TaskSummary[]>([]);
   const [tasksLoading, setTasksLoading] = useState(true);
@@ -255,6 +259,23 @@ export default function ProjectPage({
     setFilterSearch('');
     setFilterSort('position');
   }, []);
+
+  const handleOpenExport = useCallback(async () => {
+    setExportOpen(true);
+    const hasFilters = Boolean(
+      filterStatus || filterPriority || filterAssigneeId || filterMilestoneId || filterSearch
+    );
+    if (hasFilters) {
+      try {
+        const res = await apiGetTasks(projectId);
+        setAllProjectTasks(res.data);
+      } catch {
+        setAllProjectTasks(tasks);
+      }
+    } else {
+      setAllProjectTasks(tasks);
+    }
+  }, [projectId, filterStatus, filterPriority, filterAssigneeId, filterMilestoneId, filterSearch, tasks]);
 
   const workspaceRole = workspace?.role as WorkspaceRole | undefined;
   const canManage =
@@ -548,6 +569,18 @@ export default function ProjectPage({
                 </button>
               </div>
 
+              {/* Export button */}
+              <button
+                id="export-tasks-btn"
+                type="button"
+                onClick={() => void handleOpenExport()}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--border-color)] text-xs font-medium text-[var(--text-secondary)] hover:text-teal-400 hover:bg-[var(--card-main)] hover:border-teal-500/30 transition-all"
+                title="Export tasks to CSV or JSON"
+              >
+                <Download className="w-3.5 h-3.5 text-teal-400" />
+                <span className="hidden sm:inline">Export</span>
+              </button>
+
               {!isArchived && (
                 <button
                   id="new-task-btn"
@@ -728,6 +761,13 @@ export default function ProjectPage({
             onArchived={() => {
               setProject((p) => p ? { ...p, status: 'ARCHIVED' } : p);
             }}
+          />
+          <ExportTasksDialog
+            open={exportOpen}
+            onClose={() => setExportOpen(false)}
+            filteredTasks={tasks}
+            allTasks={allProjectTasks.length > 0 ? allProjectTasks : tasks}
+            projectName={project.name}
           />
           <CreateTaskDialog
             projectId={project.id}
