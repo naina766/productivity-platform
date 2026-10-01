@@ -32,6 +32,7 @@ import { ArchiveProjectDialog } from '@/components/projects/ArchiveProjectDialog
 import { ProjectMembers } from '@/components/projects/ProjectMembers';
 import { TaskBoard } from '@/components/tasks/TaskBoard';
 import { TaskList } from '@/components/tasks/TaskList';
+import { CalendarView } from '@/components/calendar/CalendarView';
 import { TaskFilters } from '@/components/tasks/TaskFilters';
 import { CreateTaskDialog } from '@/components/tasks/CreateTaskDialog';
 import { EditTaskDialog } from '@/components/tasks/EditTaskDialog';
@@ -88,7 +89,8 @@ export default function ProjectPage({
   const [tasks, setTasks] = useState<TaskSummary[]>([]);
   const [tasksLoading, setTasksLoading] = useState(true);
   const [tasksError, setTasksError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'board' | 'list'>('board');
+  const [viewMode, setViewMode] = useState<'board' | 'list' | 'calendar'>('board');
+  const [calendarDate, setCalendarDate] = useState<Date>(new Date());
   const [createOpen, setCreateOpen] = useState(false);
   const [createDefaultStatus, setCreateDefaultStatus] = useState<TaskStatus | undefined>();
   const [editTask, setEditTask] = useState<TaskDetail | null>(null);
@@ -323,6 +325,19 @@ export default function ProjectPage({
 
           {/* Logo + actions */}
           <div className="flex items-center gap-2">
+            <Link
+              href="/calendar"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-[var(--text-secondary)] hover:text-emerald-400 hover:bg-[var(--card-main)] border border-[var(--border-color)] transition-all"
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Calendar</span>
+            </Link>
+            <Link
+              href="/my-tasks"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--card-main)] border border-[var(--border-color)] transition-all"
+            >
+              <span className="hidden sm:inline">My Tasks</span>
+            </Link>
             <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-emerald-500 to-lime-400 p-[1.5px] shadow-sm shadow-emerald-500/20">
               <div className="w-full h-full bg-[var(--card-main)] rounded-[9px] flex items-center justify-center">
                 <Zap className="w-3 h-3 text-emerald-400" />
@@ -496,6 +511,18 @@ export default function ProjectPage({
                   <LayoutList className="w-3.5 h-3.5" />
                   List
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('calendar')}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-all ${
+                    viewMode === 'calendar'
+                      ? 'bg-emerald-500/10 text-emerald-400'
+                      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  <Calendar className="w-3.5 h-3.5" />
+                  Calendar
+                </button>
               </div>
 
               {!isArchived && (
@@ -596,10 +623,20 @@ export default function ProjectPage({
               onTaskUpdated={handleTaskUpdated}
               onNewTask={handleNewTask}
             />
-          ) : (
+          ) : viewMode === 'list' ? (
             <TaskList
               tasks={tasks}
               onTaskClick={handleTaskClick}
+            />
+          ) : (
+            <CalendarView
+              tasks={tasks}
+              currentDate={calendarDate}
+              onDateChange={setCalendarDate}
+              onTaskClick={handleTaskClick}
+              onDayClick={() => {
+                handleNewTask();
+              }}
             />
           )}
         </motion.div>

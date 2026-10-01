@@ -178,6 +178,13 @@ function MyTasksContent() {
           </div>
 
           <div className="flex items-center gap-2 self-end sm:self-auto">
+            <Link
+              href="/calendar"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-[var(--text-secondary)] hover:text-emerald-400 hover:bg-[var(--card-main)] border border-[var(--border-color)] hover:border-emerald-500/30 transition-all"
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              <span>Calendar</span>
+            </Link>
             <NotificationBell />
             <Link
               href="/dashboard"

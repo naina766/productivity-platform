@@ -463,3 +463,14 @@ export async function apiGetMyTasks(filters?: {
 }): Promise<MyTasksResponse> {
   return apiFetch(`/api/my-tasks${buildQuery({ ...filters })}`);
 }
+
+export async function apiGetCalendarTasks(filters?: {
+  start?: string;
+  end?: string;
+  projectId?: string;
+  assigneeId?: string;
+  status?: TaskStatus;
+  priority?: TaskPriority;
+}): Promise<ListResponse<MyTaskSummary>> {
+  return apiFetch(`/api/calendar${buildQuery({ ...filters })}`);
+}

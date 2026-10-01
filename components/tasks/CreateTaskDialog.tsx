@@ -10,8 +10,9 @@ import { TASK_STATUS_LABELS, TASK_PRIORITY_LABELS, ALL_TASK_STATUSES, ALL_TASK_P
 
 interface CreateTaskDialogProps {
   projectId: string;
-  members: ProjectMemberItem[];
+  members?: ProjectMemberItem[];
   defaultStatus?: TaskStatus;
+  initialDueDate?: string;
   open: boolean;
   onClose: () => void;
   onCreated: (task: TaskDetail) => void;
@@ -19,8 +20,9 @@ interface CreateTaskDialogProps {
 
 export function CreateTaskDialog({
   projectId,
-  members,
+  members = [],
   defaultStatus,
+  initialDueDate,
   open,
   onClose,
   onCreated,
@@ -42,12 +44,12 @@ export function CreateTaskDialog({
       setStatus(defaultStatus ?? 'TODO');
       setPriority('MEDIUM');
       setAssigneeId('');
-      setDueDate('');
+      setDueDate(initialDueDate ?? '');
       setError(null);
       setSaving(false);
       setTimeout(() => titleRef.current?.focus(), 50);
     }
-  }, [open, defaultStatus]);
+  }, [open, defaultStatus, initialDueDate]);
 
   useEffect(() => {
     if (!open) return;

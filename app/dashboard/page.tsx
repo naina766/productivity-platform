@@ -191,6 +191,12 @@ export default function DashboardPage() {
               >
                 Overdue
               </Link>
+              <Link
+                href="/calendar"
+                className="px-3 py-1.5 rounded-xl text-xs font-medium text-[var(--text-secondary)] hover:text-emerald-400 hover:bg-[var(--card-main)] transition-colors"
+              >
+                Calendar
+              </Link>
             </nav>
           </div>
 
