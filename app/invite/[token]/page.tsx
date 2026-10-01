@@ -75,7 +75,7 @@ export default function InviteAcceptPage({ params }: InvitePageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden">
+    <main id="main-content" className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden">
       {/* Decorative gradient background */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-gradient-to-tr from-emerald-500/10 via-lime-500/5 to-transparent rounded-full blur-3xl pointer-events-none" />
 
@@ -229,6 +229,6 @@ export default function InviteAcceptPage({ params }: InvitePageProps) {
           </div>
         )}
       </motion.div>
-    </div>
+    </main>
   );
 }

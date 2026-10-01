@@ -51,7 +51,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] flex flex-col items-center justify-center px-4 py-16 relative overflow-hidden">
+    <main id="main-content" className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] flex flex-col items-center justify-center px-4 py-16 relative overflow-hidden">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-teal-600/8 blur-[120px] rounded-full"

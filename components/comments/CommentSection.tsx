@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { apiGetTaskComments } from '@/lib/api/client';
+import { useRealtimeSubscription } from '@/components/realtime/RealtimeProvider';
 import { CommentComposer } from '@/components/comments/CommentComposer';
 import { CommentItem } from '@/components/comments/CommentItem';
 import type { CommentItem as CommentItemType } from '@/types/comment';
@@ -34,6 +35,23 @@ export function CommentSection({ taskId, canModerate }: CommentSectionProps) {
   useEffect(() => {
     void fetchComments();
   }, [fetchComments]);
+
+  useRealtimeSubscription('COMMENT_CREATED', (event) => {
+    const data = event.data as { taskId?: string; comment?: CommentItemType };
+    if (data?.taskId === taskId && data?.comment) {
+      setComments((prev) => {
+        if (prev.some((c) => c.id === data.comment!.id)) return prev;
+        return [...prev, data.comment!];
+      });
+    }
+  });
+
+  useRealtimeSubscription('COMMENT_DELETED', (event) => {
+    const data = event.data as { taskId?: string; commentId?: string };
+    if (data?.taskId === taskId && data?.commentId) {
+      setComments((prev) => prev.filter((c) => c.id !== data.commentId));
+    }
+  });
 
   return (
     <div className="space-y-4">

@@ -126,4 +126,54 @@ describe('Realtime Collaboration & Workspace Event Bus', () => {
     expect(sse).toContain('data: {"id":"evt-12345","type":"TASK_CREATED"');
     expect(sse.endsWith('\n\n')).toBe(true);
   });
+
+  it('publishes and delivers NOTIFICATION_CREATED events scoped to the workspace', () => {
+    const received: RealtimeEvent[] = [];
+    const unsubscribe = eventBus.subscribe(workspaceA, (e) => {
+      if (e.type === 'NOTIFICATION_CREATED') {
+        received.push(e);
+      }
+    });
+
+    eventBus.publish(workspaceA, {
+      type: 'NOTIFICATION_CREATED',
+      projectId: 'proj-1',
+      actorId: 'user-actor',
+      data: { userId: 'user-recipient', title: 'Task assigned' },
+    });
+
+    expect(received).toHaveLength(1);
+    expect(received[0].type).toBe('NOTIFICATION_CREATED');
+    expect(received[0].actorId).toBe('user-actor');
+    expect(received[0].data).toEqual({ userId: 'user-recipient', title: 'Task assigned' });
+
+    unsubscribe();
+  });
+
+  it('publishes and delivers COMMENT_CREATED and COMMENT_DELETED events', () => {
+    const received: RealtimeEvent[] = [];
+    const unsubscribe = eventBus.subscribe(workspaceA, (e) => {
+      received.push(e);
+    });
+
+    eventBus.publish(workspaceA, {
+      type: 'COMMENT_CREATED',
+      projectId: 'proj-1',
+      actorId: 'user-1',
+      data: { taskId: 'task-1', comment: { id: 'c-1', body: 'Looks good' } },
+    });
+
+    eventBus.publish(workspaceA, {
+      type: 'COMMENT_DELETED',
+      projectId: 'proj-1',
+      actorId: 'user-1',
+      data: { taskId: 'task-1', commentId: 'c-1' },
+    });
+
+    expect(received).toHaveLength(2);
+    expect(received[0].type).toBe('COMMENT_CREATED');
+    expect(received[1].type).toBe('COMMENT_DELETED');
+
+    unsubscribe();
+  });
 });

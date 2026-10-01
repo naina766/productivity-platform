@@ -206,6 +206,15 @@ export async function createTask(
     data: serialized,
   });
 
+  if (task.assigneeId && task.assigneeId !== userId) {
+    eventBus.publish(project.workspaceId, {
+      type: 'NOTIFICATION_CREATED',
+      projectId: task.projectId,
+      actorId: userId,
+      data: { userId: task.assigneeId },
+    });
+  }
+
   return serialized;
 }
 
@@ -408,6 +417,24 @@ export async function updateTask(
     actorId: userId,
     data: serialized,
   });
+
+  if (assigneeChanged && nextAssignee && nextAssignee !== userId) {
+    eventBus.publish(task.project.workspaceId, {
+      type: 'NOTIFICATION_CREATED',
+      projectId: task.projectId,
+      actorId: userId,
+      data: { userId: nextAssignee },
+    });
+  }
+
+  if (completed && nextAssignee && nextAssignee !== userId) {
+    eventBus.publish(task.project.workspaceId, {
+      type: 'NOTIFICATION_CREATED',
+      projectId: task.projectId,
+      actorId: userId,
+      data: { userId: nextAssignee },
+    });
+  }
 
   return serialized;
 }

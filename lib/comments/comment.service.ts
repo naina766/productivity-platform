@@ -161,6 +161,25 @@ export async function createComment(
     },
   });
 
+  for (const mentionedId of mentionedUserIds) {
+    eventBus.publish(task.project.workspaceId, {
+      type: 'NOTIFICATION_CREATED',
+      projectId: task.projectId,
+      actorId: userId,
+      data: { userId: mentionedId },
+    });
+  }
+
+  for (const recipientId of recipients) {
+    if (mentionedUserIds.has(recipientId)) continue;
+    eventBus.publish(task.project.workspaceId, {
+      type: 'NOTIFICATION_CREATED',
+      projectId: task.projectId,
+      actorId: userId,
+      data: { userId: recipientId },
+    });
+  }
+
   return serialized;
 }
 
