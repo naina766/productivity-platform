@@ -55,7 +55,7 @@ function ProjectSkeleton() {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, workspace, loading, isAuthenticated, loadUser } = useAuth();
+  const { user, workspace, loading, isAuthenticated } = useAuth();
 
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [projectsLoading, setProjectsLoading] = useState(false);

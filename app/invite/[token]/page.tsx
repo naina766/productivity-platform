@@ -26,7 +26,7 @@ interface InvitePageProps {
 export default function InviteAcceptPage({ params }: InvitePageProps) {
   const { token } = use(params);
   const router = useRouter();
-  const { user, isAuthenticated, loading: authLoading, loadUser } = useAuth();
+  const { user, isAuthenticated, loadUser } = useAuth();
 
   const [details, setDetails] = useState<PublicInvitationDetails | null>(null);
   const [loading, setLoading] = useState(true);
