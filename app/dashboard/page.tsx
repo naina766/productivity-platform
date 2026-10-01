@@ -4,8 +4,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
-  Zap,
-  LogOut,
   FolderPlus,
   Building2,
   Shield,
@@ -20,14 +18,13 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/components/auth/AuthContext';
-import { apiLogout, apiGetProjects, apiGetWorkspaceAnalytics } from '@/lib/api/client';
+import { apiGetProjects, apiGetWorkspaceAnalytics } from '@/lib/api/client';
 import { getErrorMessage } from '@/lib/errors';
 import { ProjectCard } from '@/components/projects/ProjectCard';
 import { AnalyticsOverview } from '@/components/dashboard/AnalyticsOverview';
 import { ProjectEmptyState } from '@/components/projects/ProjectEmptyState';
 import { CreateProjectDialog } from '@/components/projects/CreateProjectDialog';
-import { NotificationBell } from '@/components/notifications/NotificationBell';
-import { GlobalSearchTrigger } from '@/components/search/GlobalSearchTrigger';
+import { AppNavbar } from '@/components/layout/AppNavbar';
 import type { ProjectSummary, ProjectDetail, WorkspaceRole } from '@/types/project';
 import type { WorkspaceAnalytics } from '@/types/analytics';
 import { WorkspaceMembers } from '@/components/workspace/WorkspaceMembers';
@@ -113,19 +110,6 @@ export default function DashboardPage() {
     }
   }, [loading, isAuthenticated, workspace?.id, fetchProjects, fetchAnalytics]);
 
-  async function handleLogout() {
-    try {
-      await apiLogout();
-    } catch {
-      // Best-effort logout
-    }
-    try {
-      await loadUser();
-    } catch {
-      // Ignore
-    }
-    router.replace('/login');
-  }
 
   function handleProjectCreated(project: ProjectDetail) {
     setProjects((prev) => [
@@ -156,85 +140,16 @@ export default function DashboardPage() {
   const roleLabel = workspace ? (ROLE_LABELS[workspace.role] ?? workspace.role) : null;
 
   return (
-    <main className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] relative overflow-hidden">
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] relative overflow-hidden">
+      <AppNavbar />
+
       {/* Background glow */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-emerald-600/5 blur-[160px] rounded-full"
       />
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35 }}
-          className="flex items-center justify-between mb-10"
-        >
-          <div className="flex items-center gap-6">
-            <Link href="/dashboard" className="flex items-center gap-2.5 group">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-lime-400 p-[1.5px] shadow-md shadow-emerald-500/20">
-                <div className="w-full h-full bg-[var(--card-main)] rounded-[10px] flex items-center justify-center">
-                  <Zap className="w-3.5 h-3.5 text-emerald-400" />
-                </div>
-              </div>
-              <span className="text-xl font-bold tracking-tight">NOVA</span>
-            </Link>
-
-            <nav className="hidden sm:flex items-center gap-1">
-              <Link
-                href="/dashboard"
-                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-[var(--card-main)] text-[var(--text-primary)] border border-[var(--border-color)] shadow-sm"
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/my-tasks"
-                className="px-3 py-1.5 rounded-xl text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--card-main)] transition-colors"
-              >
-                My Tasks
-              </Link>
-              <Link
-                href="/my-tasks?view=today"
-                className="px-3 py-1.5 rounded-xl text-xs font-medium text-[var(--text-secondary)] hover:text-lime-400 hover:bg-[var(--card-main)] transition-colors"
-              >
-                Today
-              </Link>
-              <Link
-                href="/my-tasks?view=upcoming"
-                className="px-3 py-1.5 rounded-xl text-xs font-medium text-[var(--text-secondary)] hover:text-teal-400 hover:bg-[var(--card-main)] transition-colors"
-              >
-                Upcoming
-              </Link>
-              <Link
-                href="/my-tasks?view=overdue"
-                className="px-3 py-1.5 rounded-xl text-xs font-medium text-[var(--text-secondary)] hover:text-red-400 hover:bg-[var(--card-main)] transition-colors"
-              >
-                Overdue
-              </Link>
-              <Link
-                href="/calendar"
-                className="px-3 py-1.5 rounded-xl text-xs font-medium text-[var(--text-secondary)] hover:text-emerald-400 hover:bg-[var(--card-main)] transition-colors"
-              >
-                Calendar
-              </Link>
-            </nav>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <GlobalSearchTrigger />
-            <NotificationBell />
-            <button
-              id="dashboard-logout-btn"
-              type="button"
-              onClick={() => void handleLogout()}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-color)] hover:border-[var(--text-muted)] transition-all"
-            >
-              <LogOut className="w-4 h-4" />
-              Sign out
-            </button>
-          </div>
-        </motion.div>
-
+      <main className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -456,16 +371,16 @@ export default function DashboardPage() {
             )}
           </div>
         </motion.div>
-      </div>
 
-      {workspace && (
-        <CreateProjectDialog
-          workspaceId={workspace.id}
-          open={createOpen}
-          onClose={() => setCreateOpen(false)}
-          onCreated={handleProjectCreated}
-        />
-      )}
-    </main>
+        {workspace && (
+          <CreateProjectDialog
+            workspaceId={workspace.id}
+            open={createOpen}
+            onClose={() => setCreateOpen(false)}
+            onCreated={handleProjectCreated}
+          />
+        )}
+      </main>
+    </div>
   );
 }

@@ -46,8 +46,7 @@ import { useRealtimeSubscription } from '@/components/realtime/RealtimeProvider'
 import type { ProjectDetail, ProjectStatus, ProjectPriority, WorkspaceRole } from '@/types/project';
 import type { TaskSummary, TaskDetail, TaskStatus, TaskPriority, TaskSort } from '@/types/task';
 import type { MilestoneItem } from '@/types/milestone';
-import { NotificationBell } from '@/components/notifications/NotificationBell';
-import { GlobalSearchTrigger } from '@/components/search/GlobalSearchTrigger';
+import { AppNavbar } from '@/components/layout/AppNavbar';
 
 const VALID_TASK_STATUSES = ['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE'] as const;
 const VALID_TASK_PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const;
@@ -374,55 +373,21 @@ export default function ProjectPage({
   const isArchived = project.status === 'ARCHIVED';
 
   return (
-    <main className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] relative">
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] relative">
+      <AppNavbar
+        breadcrumbs={[
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: project.name },
+        ]}
+      />
+
       {/* Background glow */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-emerald-600/4 blur-[160px] rounded-full"
       />
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
-        <motion.div
-          initial={{ opacity: 0, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between mb-8"
-        >
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-1.5 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors group"
-          >
-            <ChevronLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-            Dashboard
-          </Link>
-
-          {/* Logo + actions */}
-          <div className="flex items-center gap-2">
-            <Link
-              href="/calendar"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-[var(--text-secondary)] hover:text-emerald-400 hover:bg-[var(--card-main)] border border-[var(--border-color)] transition-all"
-            >
-              <Calendar className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Calendar</span>
-            </Link>
-            <Link
-              href="/my-tasks"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--card-main)] border border-[var(--border-color)] transition-all"
-            >
-              <span className="hidden sm:inline">My Tasks</span>
-            </Link>
-            <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-emerald-500 to-lime-400 p-[1.5px] shadow-sm shadow-emerald-500/20">
-              <div className="w-full h-full bg-[var(--card-main)] rounded-[9px] flex items-center justify-center">
-                <Zap className="w-3 h-3 text-emerald-400" />
-              </div>
-            </div>
-            <span className="text-sm font-bold tracking-tight">NOVA</span>
-            <div className="flex items-center gap-1.5 ml-1">
-              <GlobalSearchTrigger compact />
-              <NotificationBell />
-            </div>
-          </div>
-        </motion.div>
-
+      <main className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -779,7 +744,6 @@ export default function ProjectPage({
             />
           )}
         </motion.div>
-      </div>
 
       {project && (
         <>
@@ -846,6 +810,7 @@ export default function ProjectPage({
           )}
         </>
       )}
-    </main>
+      </main>
+    </div>
   );
 }

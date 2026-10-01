@@ -12,8 +12,6 @@ import {
   Search,
   Loader2,
   AlertCircle,
-  ArrowLeft,
-  ChevronRight,
   Download,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthContext';
@@ -21,8 +19,7 @@ import { apiGetMyTasks } from '@/lib/api/client';
 import { TaskList } from '@/components/tasks/TaskList';
 import { TaskDetailPanel } from '@/components/tasks/TaskDetail';
 import { ExportTasksDialog } from '@/components/export/ExportTasksDialog';
-import { NotificationBell } from '@/components/notifications/NotificationBell';
-import { GlobalSearchTrigger } from '@/components/search/GlobalSearchTrigger';
+import { AppNavbar } from '@/components/layout/AppNavbar';
 import type {
   MyTaskSummary,
   TaskSummary,
@@ -174,34 +171,27 @@ function MyTasksContent() {
   }
 
   return (
-    <main className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] relative overflow-hidden">
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] relative overflow-hidden">
+      <AppNavbar />
+
       {/* Background glow */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-emerald-600/5 blur-[160px] rounded-full"
       />
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-        {/* Navigation & Header */}
+      <main className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        {/* Page header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/dashboard"
-              className="w-9 h-9 rounded-xl bg-[var(--card-main)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-muted)] transition-all"
-              title="Back to Dashboard"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                <ListTodo className="w-4 h-4 text-emerald-400" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold tracking-tight">Task Views</h1>
-                <p className="text-xs text-[var(--text-muted)]">
-                  {workspace ? workspace.name : 'Personal Workspace'}
-                </p>
-              </div>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+              <ListTodo className="w-4 h-4 text-emerald-400" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight">My Tasks</h1>
+              <p className="text-xs text-[var(--text-muted)]">
+                {workspace ? workspace.name : 'Personal Workspace'}
+              </p>
             </div>
           </div>
 
@@ -215,22 +205,6 @@ function MyTasksContent() {
               <Download className="w-3.5 h-3.5 text-teal-400" />
               <span>Export</span>
             </button>
-            <Link
-              href="/calendar"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-[var(--text-secondary)] hover:text-emerald-400 hover:bg-[var(--card-main)] border border-[var(--border-color)] hover:border-emerald-500/30 transition-all"
-            >
-              <Calendar className="w-3.5 h-3.5" />
-              <span>Calendar</span>
-            </Link>
-            <GlobalSearchTrigger compact />
-            <NotificationBell />
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-color)] hover:border-[var(--text-muted)] transition-all"
-            >
-              <span>Dashboard</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </Link>
           </div>
         </div>
 
@@ -494,7 +468,6 @@ function MyTasksContent() {
             <TaskList tasks={tasks} onTaskClick={handleTaskClick} />
           </div>
         )}
-      </div>
 
       {/* Task Detail Slide-out / Modal */}
       {selectedTask && (
@@ -518,7 +491,8 @@ function MyTasksContent() {
         allTasks={allUserTasks.length > 0 ? allUserTasks : tasks}
         projectName="my-tasks"
       />
-    </main>
+      </main>
+    </div>
   );
 }
 

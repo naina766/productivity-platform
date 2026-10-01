@@ -2,13 +2,11 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import {
   Calendar as CalendarIcon,
   Plus,
   Loader2,
   AlertCircle,
-  ArrowLeft,
   Filter,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthContext';
@@ -17,8 +15,7 @@ import { CalendarView } from '@/components/calendar/CalendarView';
 import { formatDateKey } from '@/lib/calendar/calendar-utils';
 import { TaskDetailPanel } from '@/components/tasks/TaskDetail';
 import { CreateTaskDialog } from '@/components/tasks/CreateTaskDialog';
-import { NotificationBell } from '@/components/notifications/NotificationBell';
-import { GlobalSearchTrigger } from '@/components/search/GlobalSearchTrigger';
+import { AppNavbar } from '@/components/layout/AppNavbar';
 import type {
   MyTaskSummary,
   TaskSummary,
@@ -142,92 +139,43 @@ export default function CalendarPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] relative overflow-hidden">
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] relative overflow-hidden">
+      <AppNavbar />
+
       {/* Background glow */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-emerald-600/5 blur-[160px] rounded-full"
       />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-        {/* Navigation & Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/dashboard"
-              className="w-9 h-9 rounded-xl bg-[var(--card-main)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-muted)] transition-all"
-              title="Back to Dashboard"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                <CalendarIcon className="w-4 h-4 text-emerald-400" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold tracking-tight">Calendar</h1>
-                <p className="text-xs text-[var(--text-muted)]">
-                  {workspace ? workspace.name : 'Personal Workspace'}
-                </p>
-              </div>
+      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        {/* Page header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+              <CalendarIcon className="w-4 h-4 text-emerald-400" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight">Calendar</h1>
+              <p className="text-xs text-[var(--text-muted)]">
+                {workspace ? workspace.name : 'Personal Workspace'}
+              </p>
             </div>
           </div>
 
-          {/* Navigation bar & Quick Links */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <nav className="hidden md:flex items-center gap-1 text-xs">
-              <Link
-                href="/dashboard"
-                className="px-3 py-1.5 rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--card-main)] transition-colors"
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/my-tasks"
-                className="px-3 py-1.5 rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--card-main)] transition-colors"
-              >
-                My Tasks
-              </Link>
-              <Link
-                href="/my-tasks?view=today"
-                className="px-3 py-1.5 rounded-xl text-[var(--text-secondary)] hover:text-lime-400 hover:bg-[var(--card-main)] transition-colors"
-              >
-                Today
-              </Link>
-              <Link
-                href="/my-tasks?view=upcoming"
-                className="px-3 py-1.5 rounded-xl text-[var(--text-secondary)] hover:text-teal-400 hover:bg-[var(--card-main)] transition-colors"
-              >
-                Upcoming
-              </Link>
-              <Link
-                href="/my-tasks?view=overdue"
-                className="px-3 py-1.5 rounded-xl text-[var(--text-secondary)] hover:text-red-400 hover:bg-[var(--card-main)] transition-colors"
-              >
-                Overdue
-              </Link>
-              <span className="px-3 py-1.5 rounded-xl font-semibold bg-[var(--card-main)] text-emerald-400 border border-[var(--border-color)]">
-                Calendar
-              </span>
-            </nav>
-
-            <GlobalSearchTrigger compact />
-            <NotificationBell />
-
-            {projects.length > 0 && (
-              <button
-                type="button"
-                onClick={() => {
-                  setCreateTargetDate(new Date());
-                  setCreateOpen(true);
-                }}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-semibold transition-all shadow-md shadow-emerald-500/20 active:scale-95"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>New Task</span>
-              </button>
-            )}
-          </div>
+          {projects.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                setCreateTargetDate(new Date());
+                setCreateOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-semibold transition-all shadow-md shadow-emerald-500/20 active:scale-95"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>New Task</span>
+            </button>
+          )}
         </div>
 
         {/* Filter bar */}
@@ -329,7 +277,6 @@ export default function CalendarPage() {
           viewMode={viewMode}
           onViewModeChange={setViewMode}
         />
-      </div>
 
       {/* Task Detail Modal */}
       {selectedTask && (
@@ -359,6 +306,7 @@ export default function CalendarPage() {
           }}
         />
       )}
-    </main>
+      </main>
+    </div>
   );
 }
