@@ -20,6 +20,7 @@ import { apiGetMyTasks } from '@/lib/api/client';
 import { TaskList } from '@/components/tasks/TaskList';
 import { TaskDetailPanel } from '@/components/tasks/TaskDetail';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { GlobalSearchTrigger } from '@/components/search/GlobalSearchTrigger';
 import type {
   MyTaskSummary,
   TaskSummary,
@@ -185,6 +186,7 @@ function MyTasksContent() {
               <Calendar className="w-3.5 h-3.5" />
               <span>Calendar</span>
             </Link>
+            <GlobalSearchTrigger compact />
             <NotificationBell />
             <Link
               href="/dashboard"

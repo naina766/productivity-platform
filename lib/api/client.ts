@@ -33,6 +33,7 @@ import type { NotificationItem } from '@/types/notification';
 import type { MyTaskSummary, TaskDateView, TaskViewCounts } from '@/types/task';
 import type { WorkspaceAnalytics } from '@/types/analytics';
 import type { MilestoneItem, CreateMilestoneInput, UpdateMilestoneInput } from '@/types/milestone';
+import type { GlobalSearchResults, SearchCategory } from '@/types/search';
 /**
  * Browser-side API client.
  *
@@ -555,4 +556,13 @@ export async function apiGetWorkspaceAnalytics(
   timezoneOffset?: number
 ): Promise<ItemResponse<WorkspaceAnalytics>> {
   return apiFetch(`/api/workspaces/${workspaceId}/analytics${buildQuery({ timezoneOffset })}`);
+}
+
+export async function apiGlobalSearch(params: {
+  q: string;
+  workspaceId?: string;
+  category?: SearchCategory;
+  limit?: number;
+}): Promise<ItemResponse<GlobalSearchResults>> {
+  return apiFetch(`/api/search${buildQuery({ ...params })}`);
 }

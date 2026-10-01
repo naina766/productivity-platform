@@ -18,6 +18,7 @@ import { formatDateKey } from '@/lib/calendar/calendar-utils';
 import { TaskDetailPanel } from '@/components/tasks/TaskDetail';
 import { CreateTaskDialog } from '@/components/tasks/CreateTaskDialog';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { GlobalSearchTrigger } from '@/components/search/GlobalSearchTrigger';
 import type {
   MyTaskSummary,
   TaskSummary,
@@ -210,6 +211,7 @@ export default function CalendarPage() {
               </span>
             </nav>
 
+            <GlobalSearchTrigger compact />
             <NotificationBell />
 
             {projects.length > 0 && (

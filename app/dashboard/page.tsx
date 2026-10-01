@@ -27,6 +27,7 @@ import { AnalyticsOverview } from '@/components/dashboard/AnalyticsOverview';
 import { ProjectEmptyState } from '@/components/projects/ProjectEmptyState';
 import { CreateProjectDialog } from '@/components/projects/CreateProjectDialog';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { GlobalSearchTrigger } from '@/components/search/GlobalSearchTrigger';
 import type { ProjectSummary, ProjectDetail, WorkspaceRole } from '@/types/project';
 import type { WorkspaceAnalytics } from '@/types/analytics';
 import { WorkspaceMembers } from '@/components/workspace/WorkspaceMembers';
@@ -220,6 +221,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <GlobalSearchTrigger />
             <NotificationBell />
             <button
               id="dashboard-logout-btn"

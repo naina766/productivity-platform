@@ -26,7 +26,6 @@ import {
   apiGetProject,
   apiGetTask,
   apiGetTasks,
-  apiGetProjectMilestones,
 } from '@/lib/api/client';
 import { EditProjectDialog } from '@/components/projects/EditProjectDialog';
 import { ArchiveProjectDialog } from '@/components/projects/ArchiveProjectDialog';
@@ -44,6 +43,7 @@ import type { ProjectDetail, ProjectStatus, ProjectPriority, WorkspaceRole } fro
 import type { TaskSummary, TaskDetail, TaskStatus, TaskPriority, TaskSort } from '@/types/task';
 import type { MilestoneItem } from '@/types/milestone';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { GlobalSearchTrigger } from '@/components/search/GlobalSearchTrigger';
 
 const VALID_TASK_STATUSES = ['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE'] as const;
 const VALID_TASK_PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const;
@@ -355,7 +355,8 @@ export default function ProjectPage({
               </div>
             </div>
             <span className="text-sm font-bold tracking-tight">NOVA</span>
-            <div className="ml-1">
+            <div className="flex items-center gap-1.5 ml-1">
+              <GlobalSearchTrigger compact />
               <NotificationBell />
             </div>
           </div>
