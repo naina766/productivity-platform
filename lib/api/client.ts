@@ -35,6 +35,7 @@ import type { WorkspaceAnalytics } from '@/types/analytics';
 import type { MilestoneItem, CreateMilestoneInput, UpdateMilestoneInput } from '@/types/milestone';
 import type { GlobalSearchResults, SearchCategory } from '@/types/search';
 import type { SavedView, CreateSavedViewInput, UpdateSavedViewInput } from '@/types/saved-view';
+import type { WorkspaceInvitationItem, CreateInvitationInput, PublicInvitationDetails } from '@/types/invitation';
 /**
  * Browser-side API client.
  *
@@ -600,4 +601,44 @@ export async function apiDeleteSavedView(viewId: string): Promise<MessageRespons
     method: 'DELETE',
   });
 }
+
+export async function apiGetWorkspaceInvitations(
+  workspaceId: string
+): Promise<ListResponse<WorkspaceInvitationItem>> {
+  return apiFetch(`/api/workspaces/${workspaceId}/invitations`);
+}
+
+export async function apiCreateWorkspaceInvitation(
+  workspaceId: string,
+  data: CreateInvitationInput
+): Promise<ItemResponse<WorkspaceInvitationItem>> {
+  return apiFetch(`/api/workspaces/${workspaceId}/invitations`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function apiRevokeWorkspaceInvitation(
+  workspaceId: string,
+  invitationId: string
+): Promise<MessageResponse> {
+  return apiFetch(`/api/workspaces/${workspaceId}/invitations/${invitationId}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function apiGetInvitationDetails(
+  token: string
+): Promise<ItemResponse<PublicInvitationDetails>> {
+  return apiFetch(`/api/invitations/${token}`);
+}
+
+export async function apiAcceptInvitation(
+  token: string
+): Promise<ItemResponse<{ workspaceId: string; workspaceName: string; role: string }>> {
+  return apiFetch(`/api/invitations/${token}`, {
+    method: 'POST',
+  });
+}
+
 

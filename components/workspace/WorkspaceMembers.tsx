@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Users, Plus, Loader2, AlertCircle, UserMinus, Shield } from 'lucide-react';
+import { Users, Plus, UserPlus, Loader2, AlertCircle, UserMinus, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
   apiGetWorkspaceMembers,
@@ -11,6 +11,7 @@ import {
 import type { WorkspaceMemberItem } from '@/types/workspace';
 import type { WorkspaceRole } from '@/types/project';
 import { AddMemberDialog } from '@/components/workspace/AddMemberDialog';
+import { InviteMemberDialog } from '@/components/workspace/InviteMemberDialog';
 import { getErrorMessage } from '@/lib/errors';
 
 interface WorkspaceMembersProps {
@@ -35,6 +36,7 @@ export function WorkspaceMembers({ workspaceId, currentRole }: WorkspaceMembersP
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [actionUserId, setActionUserId] = useState<string | null>(null);
 
@@ -112,15 +114,26 @@ export function WorkspaceMembers({ workspaceId, currentRole }: WorkspaceMembersP
           )}
         </div>
         {canManage && (
-          <button
-            id="add-member-btn"
-            type="button"
-            onClick={() => setAddOpen(true)}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-500 hover:bg-emerald-400 text-white transition-all duration-150 shadow-sm shadow-emerald-500/20 active:scale-95"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Add member
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              id="invite-member-btn"
+              type="button"
+              onClick={() => setInviteOpen(true)}
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-500 hover:bg-emerald-400 text-white transition-all duration-150 shadow-sm shadow-emerald-500/20 active:scale-95"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              Invite Member
+            </button>
+            <button
+              id="add-member-btn"
+              type="button"
+              onClick={() => setAddOpen(true)}
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium border border-[var(--border-color)] bg-[var(--bg-secondary)] hover:bg-[var(--card-main)] text-[var(--text-primary)] transition-all duration-150"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Quick Add
+            </button>
+          </div>
         )}
       </div>
 
@@ -247,6 +260,15 @@ export function WorkspaceMembers({ workspaceId, currentRole }: WorkspaceMembersP
         open={addOpen}
         onClose={() => setAddOpen(false)}
         onAdded={handleAdded}
+      />
+
+      <InviteMemberDialog
+        workspaceId={workspaceId}
+        open={inviteOpen}
+        onClose={() => setInviteOpen(false)}
+        onInviteSent={() => {
+          setNotice('Invitation created and link copied to clipboard!');
+        }}
       />
     </div>
   );

@@ -60,6 +60,13 @@ enum RecurrenceInterval {
   YEARLY
 }
 
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+  EXPIRED
+}
+
 enum ActivityType {
   PROJECT_CREATED
   TASK_CREATED
@@ -89,6 +96,7 @@ model User {
   notifications   Notification[]
   refreshTokens   RefreshToken[]
   savedViews      SavedView[]
+  sentInvitations WorkspaceInvitation[] @relation("InvitedByUser")
 
   @@index([email])
 }
@@ -118,10 +126,11 @@ model Workspace {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  members    WorkspaceMember[]
-  projects   Project[]
-  labels     Label[]
-  savedViews SavedView[]
+  members     WorkspaceMember[]
+  projects    Project[]
+  labels      Label[]
+  savedViews  SavedView[]
+  invitations WorkspaceInvitation[]
 
   @@index([ownerId])
 }
@@ -349,4 +358,27 @@ model SavedView {
   @@index([projectId])
   @@index([userId])
 }
+
+model WorkspaceInvitation {
+  id          String           @id @default(uuid()) @db.Uuid
+  workspaceId String           @db.Uuid
+  email       String           @db.Citext
+  role        WorkspaceRole    @default(MEMBER)
+  token       String           @unique
+  invitedById String           @db.Uuid
+  status      InvitationStatus @default(PENDING)
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  invitedBy User      @relation("InvitedByUser", fields: [invitedById], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([email])
+  @@index([token])
+  @@index([status])
+}
+
 
