@@ -16,6 +16,27 @@ export interface TaskLabel {
   color: string;
 }
 
+export interface SubtaskItem {
+  id: string;
+  taskId: string;
+  title: string;
+  isCompleted: boolean;
+  position: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateSubtaskInput {
+  title: string;
+  isCompleted?: boolean;
+}
+
+export interface UpdateSubtaskInput {
+  title?: string;
+  isCompleted?: boolean;
+  position?: number;
+}
+
 export interface TaskSummary {
   id: string;
   projectId: string;
@@ -28,16 +49,19 @@ export interface TaskSummary {
   assignee: TaskAssignee | null;
   position: number;
   labels: TaskLabel[];
+  subtaskCount?: number;
+  completedSubtaskCount?: number;
+  subtasks?: SubtaskItem[];
   createdAt: string;
   updatedAt: string;
 }
 
 /**
- * The task shape the API returns. Identical to the summary: the endpoints never
- * expose a separate detail view, so a distinct type would imply fields the
- * server does not send.
+ * The task shape the API returns.
  */
-export type TaskDetail = TaskSummary;
+export interface TaskDetail extends TaskSummary {
+  subtasks?: SubtaskItem[];
+}
 
 // MyTaskSummary includes project name for My Tasks view
 export interface MyTaskSummary extends TaskSummary {

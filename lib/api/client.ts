@@ -22,6 +22,9 @@ import type {
   TaskStatus,
   TaskPriority,
   TaskSort,
+  SubtaskItem,
+  CreateSubtaskInput,
+  UpdateSubtaskInput,
 } from '@/types/task';
 import type { CommentItem, CreateCommentInput, UpdateCommentInput } from '@/types/comment';
 import type { ActivityItem } from '@/types/activity';
@@ -393,6 +396,40 @@ export async function apiUpdateTask(
 
 export async function apiDeleteTask(taskId: string): Promise<MessageResponse> {
   return apiFetch(`/api/tasks/${taskId}`, { method: 'DELETE' });
+}
+
+export async function apiGetSubtasks(
+  taskId: string
+): Promise<ItemResponse<{ subtasks: SubtaskItem[] }>> {
+  return apiFetch(`/api/tasks/${taskId}/subtasks`);
+}
+
+export async function apiCreateSubtask(
+  taskId: string,
+  data: CreateSubtaskInput
+): Promise<ItemResponse<SubtaskItem>> {
+  return apiFetch(`/api/tasks/${taskId}/subtasks`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function apiUpdateSubtask(
+  subtaskId: string,
+  data: UpdateSubtaskInput
+): Promise<ItemResponse<SubtaskItem>> {
+  return apiFetch(`/api/subtasks/${subtaskId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function apiDeleteSubtask(
+  subtaskId: string
+): Promise<MessageResponse> {
+  return apiFetch(`/api/subtasks/${subtaskId}`, {
+    method: 'DELETE',
+  });
 }
 
 export async function apiGetTaskComments(

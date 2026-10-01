@@ -1,9 +1,10 @@
 'use client';
 
-import { Calendar, User } from 'lucide-react';
+import { Calendar, User, CheckSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { TaskSummary, TaskPriority, TaskStatus } from '@/types/task';
 import { TASK_STATUS_LABELS, TASK_PRIORITY_LABELS } from '@/types/task';
+import { isTaskOverdue } from '@/lib/tasks/date-utils';
 
 const PRIORITY_BADGE: Record<TaskPriority, string> = {
   LOW: 'text-neutral-400 bg-neutral-400/10 border-neutral-400/20',
@@ -42,8 +43,7 @@ export function TaskList({ tasks, onTaskClick }: TaskListProps) {
 
       {/* Rows */}
       {tasks.map((task, i) => {
-        const isOverdue =
-          task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'DONE';
+        const isOverdue = isTaskOverdue(task.dueDate, task.status);
 
         return (
           <motion.div
@@ -63,6 +63,21 @@ export function TaskList({ tasks, onTaskClick }: TaskListProps) {
                 {(task as { projectName?: string }).projectName && (
                   <span className="inline-flex items-center text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded shrink-0">
                     {(task as { projectName?: string }).projectName}
+                  </span>
+                )}
+                {(task.subtaskCount ?? 0) > 0 && (
+                  <span
+                    className={`inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded border shrink-0 ${
+                      task.completedSubtaskCount === task.subtaskCount
+                        ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+                        : 'text-[var(--text-muted)] bg-neutral-800/60 border-neutral-700/40'
+                    }`}
+                    title={`${task.completedSubtaskCount ?? 0} of ${task.subtaskCount} subtasks completed`}
+                  >
+                    <CheckSquare className="w-3 h-3" />
+                    <span>
+                      {task.completedSubtaskCount ?? 0}/{task.subtaskCount}
+                    </span>
                   </span>
                 )}
               </div>

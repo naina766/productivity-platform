@@ -1,7 +1,8 @@
 'use client';
 
-import { Calendar, GripVertical } from 'lucide-react';
+import { Calendar, GripVertical, CheckSquare } from 'lucide-react';
 import type { TaskSummary, TaskPriority } from '@/types/task';
+import { isTaskOverdue } from '@/lib/tasks/date-utils';
 
 const PRIORITY_DOT: Record<TaskPriority, string> = {
   LOW: 'bg-neutral-400',
@@ -17,8 +18,7 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task, onClick, isDragging }: TaskCardProps) {
-  const isOverdue =
-    task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'DONE';
+  const isOverdue = isTaskOverdue(task.dueDate, task.status);
 
   return (
     <div
@@ -76,7 +76,7 @@ export function TaskCard({ task, onClick, isDragging }: TaskCardProps) {
       )}
 
       <div className="flex items-center justify-between ml-5.5">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           {task.dueDate && (
             <span
               className={`inline-flex items-center gap-1 text-[11px] ${
@@ -88,6 +88,21 @@ export function TaskCard({ task, onClick, isDragging }: TaskCardProps) {
                 month: 'short',
                 day: 'numeric',
               })}
+            </span>
+          )}
+          {(task.subtaskCount ?? 0) > 0 && (
+            <span
+              className={`inline-flex items-center gap-1 text-[11px] ${
+                task.completedSubtaskCount === task.subtaskCount
+                  ? 'text-emerald-400 font-medium'
+                  : 'text-[var(--text-muted)]'
+              }`}
+              title={`${task.completedSubtaskCount ?? 0} of ${task.subtaskCount} subtasks completed`}
+            >
+              <CheckSquare className="w-3 h-3" />
+              <span>
+                {task.completedSubtaskCount ?? 0}/{task.subtaskCount}
+              </span>
             </span>
           )}
         </div>

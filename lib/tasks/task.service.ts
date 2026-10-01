@@ -12,11 +12,33 @@ import type { TaskSummary, TaskFilters, TaskSort } from '@/types/task';
 const taskInclude = {
   assignee: { select: { id: true, name: true, email: true, avatarUrl: true } },
   labels: { select: { label: { select: { id: true, name: true, color: true } } } },
-} as const;
+  subtasks: {
+    select: {
+      id: true,
+      taskId: true,
+      title: true,
+      isCompleted: true,
+      position: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+    orderBy: { position: 'asc' },
+  },
+} satisfies Prisma.TaskInclude;
 
 type TaskRow = Prisma.TaskGetPayload<{ include: typeof taskInclude }>;
 
 export function serializeTask(task: TaskRow): TaskSummary {
+  const subtasks = task.subtasks?.map((s) => ({
+    id: s.id,
+    taskId: s.taskId,
+    title: s.title,
+    isCompleted: s.isCompleted,
+    position: s.position,
+    createdAt: s.createdAt.toISOString(),
+    updatedAt: s.updatedAt.toISOString(),
+  })) ?? [];
+
   return {
     id: task.id,
     projectId: task.projectId,
@@ -29,6 +51,9 @@ export function serializeTask(task: TaskRow): TaskSummary {
     assignee: task.assignee,
     position: task.position,
     labels: task.labels.map((tl) => tl.label),
+    subtaskCount: subtasks.length,
+    completedSubtaskCount: subtasks.filter((s) => s.isCompleted).length,
+    subtasks,
     createdAt: task.createdAt.toISOString(),
     updatedAt: task.updatedAt.toISOString(),
   };
