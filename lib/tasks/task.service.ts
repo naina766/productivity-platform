@@ -16,7 +16,7 @@ const taskInclude = {
 
 type TaskRow = Prisma.TaskGetPayload<{ include: typeof taskInclude }>;
 
-function serializeTask(task: TaskRow): TaskSummary {
+export function serializeTask(task: TaskRow): TaskSummary {
   return {
     id: task.id,
     projectId: task.projectId,

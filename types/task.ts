@@ -39,6 +39,11 @@ export interface TaskSummary {
  */
 export type TaskDetail = TaskSummary;
 
+// MyTaskSummary includes project name for My Tasks view
+export interface MyTaskSummary extends TaskSummary {
+  projectName: string;
+}
+
 export interface CreateTaskInput {
   title: string;
   description?: string | null;

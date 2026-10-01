@@ -27,6 +27,7 @@ import type { CommentItem, CreateCommentInput, UpdateCommentInput } from '@/type
 import type { ActivityItem } from '@/types/activity';
 import type { NotificationItem } from '@/types/notification';
 
+import type { MyTaskSummary } from '@/types/task';
 /**
  * Browser-side API client.
  *
@@ -52,7 +53,7 @@ interface ItemResponse<T> {
   data: T;
 }
 
-interface ListResponse<T> {
+export interface ListResponse<T> {
   success: true;
   data: T[];
 }
@@ -445,4 +446,7 @@ export async function apiMarkAllNotificationsRead(): Promise<
   ItemResponse<{ unreadCount: number }>
 > {
   return apiFetch('/api/notifications/read-all', { method: 'POST' });
+}
+export async function apiGetMyTasks(): Promise<ListResponse<MyTaskSummary>> {
+  return apiFetch('/api/my-tasks');
 }
