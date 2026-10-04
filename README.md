@@ -246,18 +246,41 @@ node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 
 ## Local Setup & Seed
 
-**Prerequisites:** Node.js 24, and Docker (for PostgreSQL only).
+**Prerequisites:**
+- Node.js 24
+- Docker Desktop
+- npm
 
-```bash
-npm install
-docker compose up -d postgres
-npx prisma generate
-npx prisma migrate deploy
-npm run db:seed
-npm run dev
-```
-
-Open http://localhost:3000.
+1. Install project dependencies:
+   ```bash
+   npm install
+   ```
+2. Copy the environment configuration template:
+   ```bash
+   cp .env.example .env
+   ```
+3. Generate distinct random secrets for `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET` (e.g. using `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`) and add them to `.env`.
+4. Start the local PostgreSQL database service:
+   ```bash
+   docker compose up -d postgres
+   ```
+5. Generate the Prisma client:
+   ```bash
+   npx prisma generate
+   ```
+6. Apply database migrations:
+   ```bash
+   npx prisma migrate deploy
+   ```
+7. (Optional) Populate the database with development seed data:
+   ```bash
+   npm run db:seed
+   ```
+8. Start the development server:
+   ```bash
+   npm run dev
+   ```
+9. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 The seed uses deterministic ids and upserts, so running it repeatedly updates records instead of duplicating them.
 
@@ -273,19 +296,41 @@ These accounts exist only in the development seed.
 
 ## Docker Setup
 
-`docker-compose.yml` defines three services: `postgres`, a one-shot `migrate` runner, and `web`.
+`docker-compose.yml` configures a complete containerized environment using three services running in dependency order:
 
-```bash
-cp .env.example .env
-docker compose up -d --build
+```text
+postgres (PostgreSQL 16 with healthcheck on host port 5433)
+   ↓
+migrate (runs 'npx prisma migrate deploy' once postgres is healthy)
+   ↓
+web (Next.js 16 standalone production container on host port 3000)
 ```
 
-- `localhost:3000` — the application
-- `localhost:5433` — PostgreSQL (container port 5432)
+1. Copy the environment template to `.env` and fill in JWT secrets:
+   ```bash
+   cp .env.example .env
+   ```
+2. Build and start all services in the background:
+   ```bash
+   docker compose up -d --build
+   ```
+3. Check service health and container status:
+   ```bash
+   docker compose ps
+   ```
+
+- Application: [http://localhost:3000](http://localhost:3000)
+- PostgreSQL: `localhost:5433` (mapped to container port 5432)
 
 `web` waits for `migrate` to exit successfully, so the app never starts against an un-migrated database. The `runner` stage executes the Next.js standalone build as a non-root user.
 
-Data lives in the `nova_postgres_data` volume. `docker compose down` preserves it; `docker compose down -v` deletes it.
+**Persistence & Volume Management:**
+- Data lives in the named volume `nova_postgres_data`.
+- To stop the containers while preserving database state:
+  ```bash
+  docker compose down
+  ```
+- **Warning:** `docker compose down -v` will remove containers and delete the `nova_postgres_data` volume, permanently destroying local database state.
 
 ---
 
@@ -348,32 +393,58 @@ There is no browser E2E suite.
 
 ## Deployment
 
-Targets any platform that runs Next.js with a managed PostgreSQL instance (e.g. Vercel).
+NOVA is architected as a single deployable Next.js application with zero external daemon or separate backend dependencies.
 
-**Vercel Deployment Flow:**
-1. Import GitHub repository in Vercel.
+### Recommended Production Architecture
+
+```text
+GitHub (main branch)
+   ↓
+Vercel / Next.js hosting platform
+   ↓
+Next.js 16 (App Router, Route Handlers, SSR, SSE)
+   ↓
+Managed PostgreSQL (e.g. Neon, Supabase, AWS RDS)
+```
+
+### Production Environment Variables
+
+Configure the following environment variables in your hosting provider's project settings (e.g. Vercel Project Settings > Environment Variables):
+
+| Variable | Description | Example / Requirement |
+|----------|-------------|-----------------------|
+| `DATABASE_URL` | Production PostgreSQL connection string | `postgresql://user:pass@host:5432/nova?sslmode=require` |
+| `JWT_ACCESS_SECRET` | Secret key for signing access tokens | 64+ char random string (distinct from refresh secret) |
+| `JWT_REFRESH_SECRET` | Secret key for signing refresh tokens | 64+ char random string (distinct from access secret) |
+| `JWT_ACCESS_TTL` | Access token lifespan | `15m` |
+| `JWT_REFRESH_TTL` | Refresh token lifespan | `7d` |
+| `NEXT_PUBLIC_SITE_URL` | Canonical public URL of the application | `https://your-production-domain.com` |
+| `NODE_ENV` | Node environment | `production` |
+
+> [!IMPORTANT]
+> - `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET` must be distinct, cryptographically strong random values. Never commit real secrets to source control.
+> - Do not use `localhost:5433` or local Docker connection strings in production.
+> - In production (`NODE_ENV=production`), the refresh token cookie automatically has the `Secure` flag enabled, requiring the application to be served over HTTPS.
+
+### Production Migration Strategy
+
+Database schema migrations must be applied using:
+```bash
+npx prisma migrate deploy
+```
+- Run `npx prisma migrate deploy` in your CI/CD deployment pipeline or release phase before routing traffic to the updated application.
+- **NEVER run `npx prisma migrate dev`** against a production database.
+- **NEVER run `npx prisma migrate reset`** against a production database (this drops and recreates the database, causing irreversible data loss).
+
+### Vercel Deployment Flow
+
+1. Import the GitHub repository (`naina766/productivity-platform`) into Vercel.
 2. Select the `main` branch.
-3. Configure the following production environment variables:
-   ```env
-   DATABASE_URL="your-managed-postgres-url"
-   JWT_ACCESS_SECRET="generate-a-secure-random-string"
-   JWT_REFRESH_SECRET="generate-another-secure-random-string"
-   JWT_ACCESS_TTL="15m"
-   JWT_REFRESH_TTL="7d"
-   NEXT_PUBLIC_SITE_URL="https://your-production-domain.com"
-   NODE_ENV="production"
-   ```
-4. Deploy the application.
-5. Apply Prisma migrations against the production database:
-   ```bash
-   npx prisma migrate deploy
-   ```
-*(Do NOT use `npx prisma migrate dev` or `npx prisma migrate reset` against production).*
-
-**Important Production Notes:**
-- `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET` must be distinct random values. Never commit them.
-- Do not use `localhost` in production `DATABASE_URL`.
-- `Secure` is added to the refresh cookie automatically when `NODE_ENV=production`, so the app must be served over HTTPS.
+3. Configure the production environment variables listed above.
+4. Provide the managed PostgreSQL database URL in `DATABASE_URL`.
+5. Deploy the application.
+6. Apply migrations using `npx prisma migrate deploy` via CI or release command.
+7. Verify authentication, database connectivity, and application routes.
 
 ---
 
