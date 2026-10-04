@@ -1,3 +1,6 @@
+process.env.JWT_ACCESS_SECRET = 'test-jwt-access-secret-minimum-32-characters-long!';
+process.env.JWT_REFRESH_SECRET = 'test-jwt-refresh-secret-minimum-32-characters-long!';
+
 import { eventBus, formatSSEMessage } from '@/lib/realtime/event-bus';
 import type { RealtimeEvent } from '@/types/realtime';
 
@@ -177,3 +180,110 @@ describe('Realtime Collaboration & Workspace Event Bus', () => {
     unsubscribe();
   });
 });
+
+import {
+  createSSETicket,
+  consumeSSETicket,
+  _clearSSETickets,
+} from '@/lib/realtime/sse-tickets';
+import { signAccessToken, signRefreshToken } from '@/lib/auth/jwt';
+
+describe('Realtime — Short-Lived SSE Connection Credentials & Ticket Security', () => {
+  const userId = 'usr-12345';
+  const workspaceId = 'ws-security-1111';
+  const otherWorkspaceId = 'ws-intruder-2222';
+
+  beforeEach(() => {
+    _clearSSETickets();
+  });
+
+  describe('Ticket Issuance & Consumption', () => {
+    it('creates an opaque random ticket with short expiration (60s)', () => {
+      const { ticket, expiresIn } = createSSETicket(userId, workspaceId);
+
+      expect(typeof ticket).toBe('string');
+      expect(ticket.length).toBe(64); // 32 bytes hex = 64 characters
+      expect(expiresIn).toBe(60);
+    });
+
+    it('consumes a valid ticket successfully on matching workspace', () => {
+      const { ticket } = createSSETicket(userId, workspaceId);
+      const resolvedUserId = consumeSSETicket(ticket, workspaceId);
+
+      expect(resolvedUserId).toBe(userId);
+    });
+
+    it('enforces single-use: consuming a ticket twice returns null on second attempt (prevents replay)', () => {
+      const { ticket } = createSSETicket(userId, workspaceId);
+
+      const firstAttempt = consumeSSETicket(ticket, workspaceId);
+      expect(firstAttempt).toBe(userId);
+
+      const secondAttempt = consumeSSETicket(ticket, workspaceId);
+      expect(secondAttempt).toBeNull();
+    });
+
+    it('enforces strict workspace isolation: ticket for workspace A cannot connect to workspace B', () => {
+      const { ticket } = createSSETicket(userId, workspaceId);
+
+      // Attempt to use workspace A's ticket to access workspace B
+      const result = consumeSSETicket(ticket, otherWorkspaceId);
+      expect(result).toBeNull();
+
+      // Ensure that even after failed attempt, ticket was consumed/invalidated
+      const replayResult = consumeSSETicket(ticket, workspaceId);
+      expect(replayResult).toBeNull();
+    });
+
+    it('rejects missing, empty, or non-existent tickets', () => {
+      expect(consumeSSETicket('', workspaceId)).toBeNull();
+      expect(consumeSSETicket('completely-unknown-ticket', workspaceId)).toBeNull();
+    });
+
+    it('rejects expired tickets', () => {
+      const now = Date.now();
+      const { ticket } = createSSETicket(userId, workspaceId);
+
+      // Advance time past 60s expiration
+      const dateSpy = jest.spyOn(Date, 'now').mockReturnValue(now + 61 * 1000);
+
+      const result = consumeSSETicket(ticket, workspaceId);
+      expect(result).toBeNull();
+
+      dateSpy.mockRestore();
+    });
+  });
+
+  describe('Credential Security & URL Hardening', () => {
+    it('never accepts an access JWT in place of an SSE ticket', () => {
+      const jwt = signAccessToken(userId, 'user@test.com');
+      const result = consumeSSETicket(jwt, workspaceId);
+
+      // An access JWT must not be accepted by the SSE ticket store
+      expect(result).toBeNull();
+    });
+
+    it('never accepts a refresh JWT in place of an SSE ticket', () => {
+      const refreshJwt = signRefreshToken(userId);
+      const result = consumeSSETicket(refreshJwt, workspaceId);
+
+      // A refresh JWT must not be accepted by the SSE ticket store
+      expect(result).toBeNull();
+    });
+
+    it('reconnection requires a fresh ticket and cannot reuse an expired/consumed ticket', () => {
+      // 1. Initial connection with ticket 1
+      const initial = createSSETicket(userId, workspaceId);
+      expect(consumeSSETicket(initial.ticket, workspaceId)).toBe(userId);
+
+      // 2. Disconnect occurs. Client attempts to reuse old ticket -> fails
+      expect(consumeSSETicket(initial.ticket, workspaceId)).toBeNull();
+
+      // 3. Client must acquire a brand new ticket to reconnect successfully
+      const reconnect = createSSETicket(userId, workspaceId);
+      expect(reconnect.ticket).not.toBe(initial.ticket);
+      expect(consumeSSETicket(reconnect.ticket, workspaceId)).toBe(userId);
+    });
+  });
+});
+

@@ -156,6 +156,8 @@ Key relations: a `Workspace` owns `Project`s and `WorkspaceMember` rows; a `Proj
 | Rotation | A single conditional `updateMany` claims the old row and issues a new one in one transaction, so a replayed token finds nothing to claim |
 | Cookie | `HttpOnly; SameSite=Lax; Path=/`, plus `Secure` when `NODE_ENV=production` |
 | Logout | The stored hash is deleted, so the token is dead server-side and not merely cleared from the browser |
+| Invitation tokens | Stored exclusively as SHA-256 hashes (`WorkspaceInvitation.tokenHash`); raw tokens are never persisted at rest |
+| SSE authentication | Authenticated via short-lived (60s) single-use tickets (`/events/ticket`); JWTs are never passed in URLs or query strings |
 | Timing | Login compares against a real bcrypt hash even when the email is unknown, so response time does not reveal account existence |
 | Rate limiting | Per-IP fixed-window limits on login, register, and refresh |
 | Validation | Zod on every body and query parameter, with trimming and length bounds |
@@ -357,7 +359,7 @@ web (Next.js 16 standalone production container on host port 3000)
 
 ## Automated Testing
 
-203 tests across 21 suites, run in CI on every push and pull request to `main`.
+222 tests across 21 suites, run in CI on every push and pull request to `main`.
 
 ```bash
 npm test
@@ -382,10 +384,10 @@ npm test
 | `search.test.ts` | Cross-entity search query parsing and multi-category scoping |
 | `command.test.ts` | Command palette action registry and search matching |
 | `saved-views.test.ts` | Filter preset persistence, sorting, and user isolation |
-| `invitations.test.ts` | Secure invitation tokens, expiration checks, role assignment |
+| `invitations.test.ts` | Secure invitation token SHA-256 hashing at rest, expiration checks, role assignment, acceptance guards |
 | `mentions.test.ts` | @Mention parsing, token extraction, recipient resolution |
 | `export.test.ts` | RFC 4180 CSV escaping, structured JSON format, task metadata encoding |
-| `realtime.test.ts` | Event bus publish/subscribe, strict workspace isolation, SSE wire formatting |
+| `realtime.test.ts` | Event bus publish/subscribe, strict workspace isolation, short-lived single-use SSE tickets, URL hardening |
 
 There is no browser E2E suite.
 

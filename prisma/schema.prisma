@@ -364,7 +364,7 @@ model WorkspaceInvitation {
   workspaceId String           @db.Uuid
   email       String           @db.Citext
   role        WorkspaceRole    @default(MEMBER)
-  token       String           @unique
+  tokenHash   String           @unique
   invitedById String           @db.Uuid
   status      InvitationStatus @default(PENDING)
   expiresAt   DateTime
@@ -377,7 +377,7 @@ model WorkspaceInvitation {
 
   @@index([workspaceId])
   @@index([email])
-  @@index([token])
+  @@index([tokenHash])
   @@index([status])
 }
 

@@ -25,8 +25,15 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@prisma/client": [
+        "./node_modules/.prisma/client"
       ]
-    }
+    },
+    "types": [
+      "jest",
+      "node"
+    ]
   },
   "include": [
     "next-env.d.ts",
@@ -37,7 +44,6 @@
   ],
   "exclude": [
     "node_modules",
-    "backend",
-    "tests"
+    "backend"
   ]
 }

@@ -2,7 +2,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import { getCurrentUser, getUserWorkspace } from '@/lib/auth/session';
 import { prisma } from '@/lib/db/prisma';
 import { serializeTask } from '@/lib/tasks/task.service';
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import {
   ALL_TASK_STATUSES,
   ALL_TASK_PRIORITIES,

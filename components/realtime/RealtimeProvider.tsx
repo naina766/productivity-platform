@@ -9,7 +9,7 @@ import React, {
   useCallback,
 } from 'react';
 import { useAuth } from '@/components/auth/AuthContext';
-import { getAccessToken } from '@/lib/api/client';
+import { apiGetSSETicket } from '@/lib/api/client';
 import type { RealtimeEvent, RealtimeEventType } from '@/types/realtime';
 
 export type RealtimeStatus = 'connected' | 'connecting' | 'disconnected';
@@ -73,71 +73,86 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     let attempts = 0;
     let isDisposed = false;
 
-    const connect = () => {
+    const connect = async () => {
       if (isDisposed) return;
 
-      const token = getAccessToken();
-      const url = token
-        ? `/api/workspaces/${workspace.id}/events?token=${encodeURIComponent(token)}`
-        : `/api/workspaces/${workspace.id}/events`;
-
       setStatus('connecting');
-      eventSource = new EventSource(url, { withCredentials: true });
 
-      eventSource.onopen = () => {
+      try {
+        // Request short-lived single-use ticket via authenticated API client
+        const ticketData = await apiGetSSETicket(workspace.id);
         if (isDisposed) return;
-        setStatus('connected');
-        attempts = 0;
-      };
 
-      const handleEvent = (e: MessageEvent) => {
-        if (isDisposed) return;
-        try {
-          const parsed = JSON.parse(e.data) as RealtimeEvent;
-          setLastEvent(parsed);
+        const url = `/api/workspaces/${workspace.id}/events?ticket=${encodeURIComponent(ticketData.ticket)}`;
+        eventSource = new EventSource(url, { withCredentials: true });
 
-          // Dispatch to specific listeners and wildcard listeners
-          const specific = listenersRef.current.get(parsed.type);
-          specific?.forEach((fn) => fn(parsed));
+        eventSource.onopen = () => {
+          if (isDisposed) return;
+          setStatus('connected');
+          attempts = 0;
+        };
 
-          const wildcards = listenersRef.current.get('*');
-          wildcards?.forEach((fn) => fn(parsed));
-        } catch {
-          // Ignore parse errors on malformed messages
-        }
-      };
+        const handleEvent = (e: MessageEvent) => {
+          if (isDisposed) return;
+          try {
+            const parsed = JSON.parse(e.data) as RealtimeEvent;
+            setLastEvent(parsed);
 
-      // Listen to standard SSE events
-      eventSource.onmessage = handleEvent;
+            // Dispatch to specific listeners and wildcard listeners
+            const specific = listenersRef.current.get(parsed.type);
+            specific?.forEach((fn) => fn(parsed));
 
-      const eventTypes: RealtimeEventType[] = [
-        'TASK_CREATED',
-        'TASK_UPDATED',
-        'TASK_DELETED',
-        'COMMENT_CREATED',
-        'COMMENT_DELETED',
-        'NOTIFICATION_CREATED',
-        'PROJECT_UPDATED',
-        'HEARTBEAT',
-      ];
+            const wildcards = listenersRef.current.get('*');
+            wildcards?.forEach((fn) => fn(parsed));
+          } catch {
+            // Ignore parse errors on malformed messages
+          }
+        };
 
-      eventTypes.forEach((type) => {
-        eventSource?.addEventListener(type, handleEvent);
-      });
+        // Listen to standard SSE events
+        eventSource.onmessage = handleEvent;
 
-      eventSource.onerror = () => {
+        const eventTypes: RealtimeEventType[] = [
+          'TASK_CREATED',
+          'TASK_UPDATED',
+          'TASK_DELETED',
+          'COMMENT_CREATED',
+          'COMMENT_DELETED',
+          'NOTIFICATION_CREATED',
+          'PROJECT_UPDATED',
+          'HEARTBEAT',
+        ];
+
+        eventTypes.forEach((type) => {
+          eventSource?.addEventListener(type, handleEvent);
+        });
+
+        eventSource.onerror = () => {
+          if (isDisposed) return;
+          setStatus('disconnected');
+          eventSource?.close();
+          eventSource = null;
+
+          // Exponential backoff reconnect: 2s, 4s, 8s, up to 16s max
+          // Next attempt will automatically request a fresh ticket
+          attempts++;
+          const delay = Math.min(1000 * Math.pow(2, attempts), 16000);
+          reconnectTimeout = setTimeout(connect, delay);
+        };
+      } catch {
         if (isDisposed) return;
         setStatus('disconnected');
         eventSource?.close();
+        eventSource = null;
 
-        // Exponential backoff reconnect: 2s, 4s, 8s, up to 16s max
+        // Exponential backoff on ticket acquisition failure
         attempts++;
         const delay = Math.min(1000 * Math.pow(2, attempts), 16000);
         reconnectTimeout = setTimeout(connect, delay);
-      };
+      }
     };
 
-    connect();
+    void connect();
 
     return () => {
       isDisposed = true;

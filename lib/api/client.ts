@@ -641,4 +641,13 @@ export async function apiAcceptInvitation(
   });
 }
 
+export async function apiGetSSETicket(
+  workspaceId: string
+): Promise<{ success: true; ticket: string; expiresIn: number }> {
+  return apiFetch<{ success: true; ticket: string; expiresIn: number }>(
+    `/api/workspaces/${workspaceId}/events/ticket`,
+    { method: 'POST' }
+  );
+}
+
 

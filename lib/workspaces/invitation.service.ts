@@ -9,12 +9,17 @@ import type {
   PublicInvitationDetails,
 } from '@/types/invitation';
 
+export function hashInvitationToken(raw: string): string {
+  return crypto.createHash('sha256').update(raw).digest('hex');
+}
+
 interface DbInvitation {
   id: string;
   workspaceId: string;
   email: string;
   role: string;
-  token: string;
+  tokenHash?: string;
+  token?: string;
   invitedById: string;
   status: string;
   expiresAt: Date;
@@ -28,21 +33,22 @@ interface DbInvitation {
   };
 }
 
-export function serializeInvitation(inv: DbInvitation): WorkspaceInvitationItem {
+export function serializeInvitation(inv: DbInvitation, rawToken?: string): WorkspaceInvitationItem {
+  const token = rawToken ?? inv.token ?? '';
   return {
     id: inv.id,
     workspaceId: inv.workspaceId,
     workspaceName: inv.workspace?.name,
     email: inv.email,
     role: inv.role as WorkspaceInvitationItem['role'],
-    token: inv.token,
+    token,
     invitedById: inv.invitedById,
     invitedByName: inv.invitedBy?.name,
     status: inv.status as WorkspaceInvitationItem['status'],
     expiresAt: inv.expiresAt.toISOString(),
     acceptedAt: inv.acceptedAt ? inv.acceptedAt.toISOString() : null,
     createdAt: inv.createdAt.toISOString(),
-    inviteUrl: `/invite/${inv.token}`,
+    inviteUrl: token ? `/invite/${token}` : undefined,
   };
 }
 
@@ -92,11 +98,26 @@ export async function createWorkspaceInvitation(
   });
 
   if (existingInvite) {
-    return serializeInvitation(existingInvite);
+    // Re-issue a fresh cryptographically random raw token and update its hash
+    const rawToken = crypto.randomBytes(24).toString('hex');
+    const tokenHash = hashInvitationToken(rawToken);
+    const updated = await prisma.workspaceInvitation.update({
+      where: { id: existingInvite.id },
+      data: {
+        tokenHash,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+      include: {
+        workspace: { select: { name: true } },
+        invitedBy: { select: { name: true } },
+      },
+    });
+    return serializeInvitation(updated, rawToken);
   }
 
-  // 4. Generate token and 7-day expiration
-  const token = crypto.randomBytes(24).toString('hex');
+  // 4. Generate cryptographically random raw token and 7-day expiration
+  const rawToken = crypto.randomBytes(24).toString('hex');
+  const tokenHash = hashInvitationToken(rawToken);
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
   const invitation = await prisma.workspaceInvitation.create({
@@ -104,7 +125,7 @@ export async function createWorkspaceInvitation(
       workspaceId,
       email: normalizedEmail,
       role,
-      token,
+      tokenHash,
       invitedById: actorId,
       status: 'PENDING',
       expiresAt,
@@ -115,7 +136,7 @@ export async function createWorkspaceInvitation(
     },
   });
 
-  return serializeInvitation(invitation);
+  return serializeInvitation(invitation, rawToken);
 }
 
 export async function listWorkspaceInvitations(
@@ -145,7 +166,7 @@ export async function listWorkspaceInvitations(
     orderBy: { createdAt: 'desc' },
   });
 
-  return invitations.map(serializeInvitation);
+  return invitations.map((inv) => serializeInvitation(inv));
 }
 
 export async function revokeWorkspaceInvitation(
@@ -172,9 +193,10 @@ export async function revokeWorkspaceInvitation(
   });
 }
 
-export async function getInvitationByToken(token: string): Promise<PublicInvitationDetails> {
+export async function getInvitationByToken(rawToken: string): Promise<PublicInvitationDetails> {
+  const tokenHash = hashInvitationToken(rawToken);
   const invitation = await prisma.workspaceInvitation.findUnique({
-    where: { token },
+    where: { tokenHash },
     include: {
       workspace: { select: { name: true } },
       invitedBy: { select: { name: true } },
@@ -201,11 +223,12 @@ export async function getInvitationByToken(token: string): Promise<PublicInvitat
 }
 
 export async function acceptWorkspaceInvitation(
-  token: string,
+  rawToken: string,
   userId: string
 ): Promise<{ workspaceId: string; workspaceName: string; role: string }> {
+  const tokenHash = hashInvitationToken(rawToken);
   const invitation = await prisma.workspaceInvitation.findUnique({
-    where: { token },
+    where: { tokenHash },
     include: {
       workspace: { select: { id: true, name: true, ownerId: true } },
       invitedBy: { select: { name: true } },

@@ -3,31 +3,45 @@ import crypto from 'crypto';
 import { verifyAccessToken } from '@/lib/auth/jwt';
 import { prisma } from '@/lib/db/prisma';
 import { eventBus, formatSSEMessage } from '@/lib/realtime/event-bus';
+import { consumeSSETicket } from '@/lib/realtime/sse-tickets';
 
 export const dynamic = 'force-dynamic';
 
-async function resolveUserFromRequest(req: NextRequest) {
-  let token: string | null = null;
+async function resolveUserFromRequest(req: NextRequest, workspaceId: string) {
+  // Option 1: Standard Authorization header (Bearer token)
   const authHeader = req.headers.get('authorization');
   if (authHeader?.startsWith('Bearer ')) {
-    token = authHeader.slice(7);
-  } else {
-    token = req.nextUrl.searchParams.get('token');
+    const token = authHeader.slice(7);
+    try {
+      const payload = verifyAccessToken(token);
+      if (payload.type !== 'access') return null;
+
+      return await prisma.user.findUnique({
+        where: { id: payload.sub },
+        select: { id: true, name: true, email: true },
+      });
+    } catch {
+      return null;
+    }
   }
 
-  if (!token) return null;
+  // Option 2: Short-lived single-use SSE ticket / credential in query parameter
+  // Access tokens and refresh tokens in query parameter are strictly forbidden and rejected
+  const ticket =
+    req.nextUrl.searchParams.get('ticket') ||
+    req.nextUrl.searchParams.get('credential');
 
-  try {
-    const payload = verifyAccessToken(token);
-    if (payload.type !== 'access') return null;
+  if (ticket) {
+    const userId = consumeSSETicket(ticket, workspaceId);
+    if (!userId) return null;
 
     return await prisma.user.findUnique({
-      where: { id: payload.sub },
+      where: { id: userId },
       select: { id: true, name: true, email: true },
     });
-  } catch {
-    return null;
   }
+
+  return null;
 }
 
 export async function GET(
@@ -36,7 +50,7 @@ export async function GET(
 ) {
   const { workspaceId } = await params;
 
-  const user = await resolveUserFromRequest(req);
+  const user = await resolveUserFromRequest(req, workspaceId);
   if (!user) {
     return new Response(
       JSON.stringify({ error: 'Unauthorized', message: 'Authentication required' }),

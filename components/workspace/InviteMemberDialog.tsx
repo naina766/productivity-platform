@@ -96,6 +96,7 @@ export function InviteMemberDialog({
   };
 
   const handleCopyLink = (token: string) => {
+    if (!token) return;
     const fullUrl = `${window.location.origin}/invite/${token}`;
     void navigator.clipboard.writeText(fullUrl);
     setCopiedToken(token);
@@ -292,18 +293,20 @@ export function InviteMemberDialog({
                         </div>
 
                         <div className="flex items-center gap-1.5 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => handleCopyLink(inv.token)}
-                            className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--card-main)] transition-colors"
-                            title="Copy invite link"
-                          >
-                            {copiedToken === inv.token ? (
-                              <Check className="w-3.5 h-3.5 text-emerald-400" />
-                            ) : (
-                              <Copy className="w-3.5 h-3.5" />
-                            )}
-                          </button>
+                          {inv.token ? (
+                            <button
+                              type="button"
+                              onClick={() => handleCopyLink(inv.token)}
+                              className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--card-main)] transition-colors"
+                              title="Copy invite link"
+                            >
+                              {copiedToken === inv.token ? (
+                                <Check className="w-3.5 h-3.5 text-emerald-400" />
+                              ) : (
+                                <Copy className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                          ) : null}
                           <button
                             type="button"
                             onClick={() => void handleRevoke(inv.id)}
